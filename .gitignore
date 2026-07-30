@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+data/*.json
+!data/.gitkeep
+outputs/
+node_modules/
+*.log
+Yeni Metin Belgesi.txt
+__pycache__/
+*.pyc

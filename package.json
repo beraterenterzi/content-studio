@@ -1,0 +1,12 @@
+{
+  "name": "youtube-ai-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "setup-render": "py -3.13 -m pip install -r requirements-render.txt",
+    "check": "node --check src/server.js && node --test"
+  },
+  "engines": { "node": ">=20" }
+}

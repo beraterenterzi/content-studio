@@ -1,0 +1,10 @@
+{
+  "outputDir": "C:/Users/kubra/youtube-ai-studio/outputs/horizontal-preview",
+  "imageUrl": "https://images-assets.nasa.gov/image/PIA13001/PIA13001~small.jpg",
+  "title": "A Volcano Hidden on Venus",
+  "narration": "This image takes us to the surface of Venus, a world shaped by intense heat and volcanic activity. Thick clouds hide the planet from ordinary cameras, so scientists use radar to map its landscape and search for clues about how Venus changed over time.",
+  "voice": "en-US-GuyNeural",
+  "credit": "NASA • PIA13001 • images.nasa.gov",
+  "contentType": "youtube",
+  "imageFit": "cover"
+}
