@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "orbit-studio",
+  "account_id": "07a207f4f093ef6e524418607476edcd",
   "main": "./cloudflare/worker.js",
   "compatibility_date": "2026-07-30",
   "compatibility_flags": ["global_fetch_strictly_public"],
@@ -10,12 +11,25 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  "ai": {
+    "binding": "AI"
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "orbit-ai-studio-db",
       "database_id": "ee46501a-c7ba-4d8d-8d40-eeb42ea035de",
       "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "API_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
     }
   ]
 }

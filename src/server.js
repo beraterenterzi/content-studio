@@ -18,6 +18,9 @@ try {
 const DATA_FILE = join(ROOT, "data", "state.json");
 const GENERATED_DIR = join(ROOT, "outputs");
 const PORT = Number(process.env.PORT || 4310);
+const PYTHON_EXECUTABLE = process.env.PYTHON_EXECUTABLE || (process.platform === "win32"
+  ? join(process.env.LOCALAPPDATA || "", "Programs", "Python", "Python313", "python.exe")
+  : "python3");
 const execFileAsync = promisify(execFile);
 const TEXT_MODELS = {
   gemini: ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"],
@@ -533,6 +536,19 @@ async function generateCloudflareImage(prompt, filename) {
   return `/generated/${filename}`;
 }
 
+async function generateCloudflareSpeech(text, lang = "en") {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !token) throw new Error("Cloudflare Account ID veya API Token eksik");
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/@cf/myshell-ai/melotts`;
+  const response = await fetch(endpoint, { method:"POST", headers:{ authorization:`Bearer ${token}`, "content-type":"application/json" }, body:JSON.stringify({ prompt:clean(text, 4000), lang }) });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.success === false) throw new Error(payload.errors?.[0]?.message || "Cloudflare seslendirme isteği başarısız");
+  const audio = payload.result?.audio || payload.result;
+  if (typeof audio !== "string") throw new Error("Cloudflare ses dosyası döndürmedi");
+  return Buffer.from(audio.replace(/^data:audio\/[^;]+;base64,/, ""), "base64");
+}
+
 function escapeXml(value) {
   return String(value || "").replace(/[<>&'"]/g, (character) => ({
     "<": "&lt;",
@@ -655,12 +671,14 @@ async function serveStatic(req, res) {
     res.end(await readFile(join(GENERATED_DIR, name)));
     return true;
   }
-  if (!["/index.html", "/app.js", "/style.css", "/logo.svg"].includes(path)) return false;
+  if (!["/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest", "/sw.js"].includes(path)) return false;
   const types = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
-    ".svg": "image/svg+xml"
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".webmanifest": "application/manifest+json; charset=utf-8"
   };
   const extension = path.slice(path.lastIndexOf("."));
   res.writeHead(200, { "content-type": types[extension] });
@@ -712,6 +730,16 @@ const server = http.createServer(async (req, res) => {
         }
       }
       return json(res, 200, { files });
+    }
+    if (req.method === "POST" && url.pathname === "/api/tts") {
+      const input = await body(req);
+      const text = clean(input.text, 4000);
+      if (!text) return json(res, 400, { error: "Seslendirilecek metin gerekli" });
+      const lang = ["en", "es", "fr", "zh", "ja", "ko"].includes(input.lang) ? input.lang : "en";
+      const audio = await generateCloudflareSpeech(text, lang);
+      res.writeHead(200, { "content-type":"audio/mpeg", "cache-control":"no-store" });
+      res.end(audio);
+      return;
     }
     if (req.method === "PUT" && url.pathname === "/api/config/gemini-key") {
       const input = await body(req);
@@ -941,6 +969,8 @@ const server = http.createServer(async (req, res) => {
         id: crypto.randomUUID(),
         topic,
         sources: clean(input.sources, 2000),
+        contentType: ["reels", "youtube"].includes(input.contentType) ? input.contentType : "shorts",
+        imageFit: input.imageFit === "contain" ? "contain" : "cover",
         status: "new",
         createdAt: new Date().toISOString()
       };
@@ -972,7 +1002,7 @@ const server = http.createServer(async (req, res) => {
         id: crypto.randomUUID(),
         status: "approved",
         content: {
-          mode: "story-to-visual", title,
+          mode: input.manual ? "manual" : "story-to-visual", title,
           hook: sentences[0]?.trim() || title,
           narration, scenes,
           disclosure: "User-provided story"
@@ -1177,6 +1207,23 @@ photorealistic identifiable people. Strong focal point, mobile composition.`;
       await saveState(state);
       return json(res, 200, item);
     }
+    if (req.method === "PATCH" && images) {
+      const state = await loadState();
+      const item = state.productions.find((entry) => entry.id === images[1]);
+      if (!item) return json(res, 404, { error: "Üretim bulunamadı" });
+      const payload = await body(req);
+      item.visualAssets ||= item.sourceAsset ? [item.sourceAsset] : [];
+      const order = Array.isArray(payload.order) ? payload.order.map((id) => clean(id, 160)) : [];
+      const byId = new Map(item.visualAssets.map((asset) => [asset.assetId || asset.nasaId, asset]));
+      if (order.length !== item.visualAssets.length || new Set(order).size !== order.length || order.some((id) => !byId.has(id))) {
+        return json(res, 400, { error: "Görsel sırası geçersiz" });
+      }
+      item.visualAssets = order.map((id) => byId.get(id));
+      item.images = item.visualAssets.map((entry) => entry.previewUrl);
+      item.updatedAt = new Date().toISOString();
+      await saveState(state);
+      return json(res, 200, item);
+    }
     if (req.method === "POST" && images) {
       const state = await loadState();
       const item = state.productions.find((entry) => entry.id === images[1]);
@@ -1300,8 +1347,8 @@ ${item.visualStyle === "animated" ? "Renkli, neşeli, özgün 2D eğitici animas
       await saveState(state);
       try {
         const { stdout } = await execFileAsync(
-          "py",
-          ["-3.13", join(ROOT, "src", "render_video.py"), jobPath],
+          PYTHON_EXECUTABLE,
+          [join(ROOT, "src", "render_video.py"), jobPath],
           { cwd: ROOT, timeout: 240000, maxBuffer: 1024 * 1024 * 4 }
         );
         const result = JSON.parse(stdout.trim().split(/\r?\n/).at(-1));
@@ -1317,9 +1364,12 @@ ${item.visualStyle === "animated" ? "Renkli, neşeli, özgün 2D eğitici animas
         await saveState(state);
         return json(res, 200, item);
       } catch (error) {
+        const renderError = error.code === "ENOENT"
+          ? `Python bulunamadı: ${PYTHON_EXECUTABLE}. PYTHON_EXECUTABLE ayarını kontrol et.`
+          : clean(error.stderr || error.message, 3000);
         item.render = {
           status: "failed",
-          error: clean(error.stderr || error.message, 3000),
+          error: renderError,
           failedAt: new Date().toISOString()
         };
         await saveState(state);

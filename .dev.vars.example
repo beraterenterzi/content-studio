@@ -1,0 +1,2 @@
+# At least 32 random characters. Never commit the real value.
+SESSION_SECRET=replace-with-a-long-random-development-secret
