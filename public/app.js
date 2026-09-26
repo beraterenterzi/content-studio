@@ -1,4 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
+const UI_LANGUAGE_KEY = "orbit-ui-language-v1";
+let preferredUiLanguage = "";
+try { preferredUiLanguage = localStorage.getItem(UI_LANGUAGE_KEY) || ""; } catch {}
 const CUSTOM_NICHES_KEY = "orbit-custom-niches-v1";
 const NICHE_OPTIONS = [
   ["education", "Eğitim", "Education", "Educación"],
@@ -28,8 +31,39 @@ function renderNicheOptions(selected = "") {
   $("#niche").value = selected || "education";
 }
 let state = { settings: {}, ideas: [], productions: [] };
+let accountMode = "register";
 let mediaFiles = [];
+let youtubeTrendItems = new Map();
+let selectedMediaAssets = new Map();
 let activeStep = "dashboard";
+let openAngleIdeaId = null;
+let pendingAiAction = null;
+const editorialAngles = [
+  { id:"hidden-detail", icon:"◉", label:"Gizli ayrıntı", score:94, promise:"İlk bakışta fark edilmeyen ayrıntıyı açığa çıkar", lens:"Reveal one specific detail most viewers would miss and show why it changes the story." },
+  { id:"myth-reality", icon:"↯", label:"Yanlış bilinen", score:92, promise:"Yaygın beklentiyle doğrulanabilir gerçeği karşılaştır", lens:"Challenge one common assumption, then replace it with a source-supported explanation." },
+  { id:"why-now", icon:"⌁", label:"Neden şimdi?", score:89, promise:"Konuyu güncel bir değişim veya sonuçla ilişkilendir", lens:"Explain why this matters now, without inventing urgency or unsupported trend claims." },
+  { id:"scale", icon:"↗", label:"Ölçek şaşkınlığı", score:87, promise:"Soyut büyüklüğü gündelik bir karşılaştırmayla hissettir", lens:"Turn scale, distance, time, cost, or impact into one concrete everyday comparison." },
+  { id:"consequence", icon:"◆", label:"Sonra ne oldu?", score:85, promise:"Tek bir kararın veya olayın beklenmedik sonucunu izle", lens:"Build a cause-and-effect chain with a clear consequence and satisfying payoff." },
+  { id:"human-stakes", icon:"◎", label:"İnsan etkisi", score:82, promise:"Konuyu gerçek bir insan ihtiyacı veya gerilim üzerinden anlat", lens:"Frame the topic through a relatable human need, constraint, or decision without fabricating a person." }
+];
+function angleLabMarkup(idea) {
+  if (openAngleIdeaId !== idea.id && !idea.angle) return `<button class="primary" data-angle-lab="${idea.id}">Önce içerik açısını seç <span>→</span></button>`;
+  if (idea.angle && openAngleIdeaId !== idea.id) return `<div class="selected-angle"><span>SEÇİLEN AÇI</span><b>${esc(idea.angle.label)}</b><small>${esc(idea.angle.promise)}</small></div><div class="button-row"><button class="ghost" data-angle-lab="${idea.id}">Açıyı değiştir</button><button class="primary" data-generate="${idea.id}">${t("generate")} <span>→</span></button></div>`;
+  return `<div class="angle-lab"><div class="angle-lab-head"><div><span>ANLATIM AÇISI</span><b>Bu konu neden izlenmeye değer?</b></div><button class="text-button" data-angle-close="${idea.id}">Kapat</button></div><div class="angle-grid">${editorialAngles.map((angle) => `<button type="button" class="angle-card ${idea.angle?.id === angle.id ? "active" : ""}" data-idea-angle="${idea.id}" data-angle-id="${angle.id}"><i>${angle.icon}</i><span><b>${angle.label}</b><small>${angle.promise}</small></span></button>`).join("")}</div><small class="angle-note">TERZİ, konuya uygun anlatım yaklaşımını seçmene yardım eder.</small></div>`;
+}
+function retentionMapMarkup(item) {
+  const content = item.content || {};
+  const beats = [
+    ["İZLEYİCİ VAADİ", content.viewerPromise],
+    ["MERAK BOŞLUĞU", content.curiosityGap],
+    ["ORTA NOKTA KANCASI", content.midpointHook],
+    ["ÖDÜL / SONUÇ", content.payoff]
+  ].filter((entry) => entry[1]);
+  const hookOptions = Array.isArray(content.hookOptions) ? content.hookOptions.filter(Boolean) : [];
+  const titleOptions = Array.isArray(content.titleOptions) ? content.titleOptions.filter(Boolean) : [];
+  if (!beats.length && !hookOptions.length && !titleOptions.length) return "";
+  return `<section class="retention-map"><div class="retention-map-head"><span>RETENTION İSKELETİ</span><b>İzleyiciyi videoda tutan anlatı zinciri</b></div>${beats.length ? `<div class="retention-beats">${beats.map(([label, value]) => `<div><span>${label}</span><p>${esc(value)}</p></div>`).join("")}</div>` : ""}${hookOptions.length || titleOptions.length ? `<details><summary>Alternatif kanca ve başlıkları gör</summary><div class="option-lists">${hookOptions.length ? `<div><b>Kanca seçenekleri</b><ol>${hookOptions.map((value) => `<li>${esc(value)}</li>`).join("")}</ol></div>` : ""}${titleOptions.length ? `<div><b>Başlık seçenekleri</b><ol>${titleOptions.map((value) => `<li>${esc(value)}</li>`).join("")}</ol></div>` : ""}</div></details>` : ""}</section>`;
+}
 const LOCAL_ANALYTICS_KEY = "orbit-local-analytics-v1";
 let flowAnalyticsStages = new Set();
 
@@ -77,28 +111,28 @@ let flowPlatform = "youtube";
 let customImagePreviewUrl = "";
 const messages = {
   tr: {
-    dashboard:["ORBIT STUDIO / GENEL BAKIŞ","İçerik üretim merkezine hoş geldin"],source:["ADIM 1 / KAYNAK","Hikâyenin görselini bul"],story:["ADIM 2 / HİKÂYE","Kaynağı özgün bir hikâyeye dönüştür"],review:["ADIM 3 / İNCELEME","Yayın öncesi son kontrol"],render:["ADIM 4 / VİDEO","Seslendir, birleştir ve izle"],editor:["PROJE DÜZENLEYİCİ","İçeriğini düzenle"],files:["DOSYA KÜTÜPHANESİ","Üretilen dosyaların"],trash:["ÇÖP KUTUSU","Silinen projeler"],
-    home:"Ana sayfa",homeSub:"Projeler ve geçmiş",sourceNav:"Kaynak",sourceSub:"NASA + Wikimedia",storyNav:"Hikâye",storySub:"AI senaryo",reviewNav:"İnceleme",reviewSub:"Editör onayı",videoNav:"Video",videoSub:"Ses ve render",
+    dashboard:["TERZİ / GENEL BAKIŞ","İçerik üretim merkezine hoş geldin"],source:["ADIM 1 / KAYNAK","Hikâyenin görselini bul"],story:["ADIM 2 / HİKÂYE","Kaynağı özgün bir hikâyeye dönüştür"],review:["ADIM 3 / İNCELEME","Yayın öncesi son kontrol"],render:["ADIM 4 / VİDEO","Seslendir, birleştir ve izle"],editor:["PROJE DÜZENLEYİCİ","İçeriğini düzenle"],files:["DOSYA KÜTÜPHANESİ","Üretilen dosyaların"],trash:["ÇÖP KUTUSU","Silinen projeler"],
+    home:"Ana sayfa",homeSub:"Projeler ve geçmiş",sourceNav:"Kaynak",sourceSub:"Görsel bul veya üret",storyNav:"Hikâye",storySub:"AI senaryo",reviewNav:"İnceleme",reviewSub:"Son kontrol",videoNav:"Video",videoSub:"Ses ve video",
     newProject:"Yeni proje oluştur",projects:"Son projeler",activity:"Aktivite",search:"Arşivde ara",results:"Arşiv sonuçları",edit:"Projeyi düzenle",back:"← Projelere dön",title:"Başlık",hook:"Açılış cümlesi",narration:"Seslendirme metni",save:"Değişiklikleri kaydet",
-    total:"Toplam proje",ready:"Hazır video",inReview:"İncelemede",queue:"Render kuyruğu",allTime:"Tüm zamanlar",downloadable:"İndirilebilir",waiting:"Onay bekliyor",productionReady:"Üretime hazır",noProjects:"Henüz proje yok.",noActivity:"Henüz aktivite yok.",saved:"Proje değişiklikleri kaydedildi",edited:"Son düzenleme",settings:"Kanal ayarları kaydedildi",generate:"Hikâyeyi oluştur",approve:"Onayla ve rendera hazırla",reject:"Reddet",renderVideo:"Videoyu şimdi render et",addScene:"＋ Arşivden sahne ekle",newStory:"Yeni hikâye",addProject:"Projeye ekle",noIdeas:"Henüz kaynak seçilmedi.",noReview:"İncelenecek senaryo yok.",noRender:"Onaylanmış üretim yok.",niche:"Kanal nişi",audience:"Hedef kitle",storyModel:"Hikâye modeli",contentLang:"İçerik dili",uiLang:"Arayüz dili",contentProfile:"İçerik profili",visualStyle:"Görsel stil",apiKey:"Gemini anahtarı",saveSettings:"Kaydet",hero:"Bir sonraki hikâyeni uzaydan bul.",heroSub:"Kaynak, senaryo, ses ve video üretimin tek yerde.",sourceHelp:"NASA ve Wikimedia Commons görsellerini metadata, lisans ve kaynak bilgisiyle getir.",storyQueue:"Hikâye kuyruğu",reviewDesk:"Editör masası",videoLab:"Video laboratuvarı",nextStep:"Sonraki adım",reviewHelp:"Metinlerini kontrol edip kaydet, ardından projeyi onayla.",renderHelp:"Proje hazır. Edge seslendirme, altyazı ve 9:16 MP4 oluştur.",readyHelp:"Video hazır. Buradan izleyebilir veya dosyaları indirebilirsin.",staleHelp:"Metin değişti. Güncel videoyu oluşturmak için yeniden render et.",download:"MP4 indir"
+    total:"Toplam proje",ready:"Hazır video",inReview:"Kontrol edilecek",queue:"Video sırası",allTime:"Tüm zamanlar",downloadable:"İndirilebilir",waiting:"Kontrol bekliyor",productionReady:"Video oluşturmaya hazır",noProjects:"Henüz proje yok.",noActivity:"Henüz aktivite yok.",saved:"Proje değişiklikleri kaydedildi",edited:"Son düzenleme",settings:"Kanal ayarları kaydedildi",generate:"Hikâyeyi oluştur",approve:"Videoya hazırla",reject:"Düzenlemeye geri gönder",renderVideo:"Videoyu oluştur",addScene:"＋ Görsel ekle",newStory:"Hikâyeyi oluştur",addProject:"Projeye ekle",noIdeas:"Henüz kaynak seçilmedi.",noReview:"Kontrol edilecek taslak yok.",noRender:"Video oluşturmaya hazır proje yok.",niche:"Kanal nişi",audience:"Hedef kitle",storyModel:"Hikâye modeli",contentLang:"İçerik dili",uiLang:"Arayüz dili",contentProfile:"İçerik profili",visualStyle:"Görsel stil",apiKey:"Gemini anahtarı",saveSettings:"Kaydet",hero:"Fikrini kanalına göre bir hikâyeye dönüştür.",heroSub:"Kaynak, senaryo, ses ve video üretimin tek yerde.",sourceHelp:"NASA ve Wikimedia Commons görsellerini kullanım ve kaynak bilgileriyle getir.",storyQueue:"Hazırlanan fikirler",reviewDesk:"Son kontrol",videoLab:"Videoyu oluştur",nextStep:"Sıradaki adım",reviewHelp:"Metni ve görselleri kontrol et; hazır olduğunda videoya geç.",renderHelp:"Proje hazır. Seslendirme, altyazı ve videoyu oluştur.",readyHelp:"Video hazır. Buradan izleyebilir veya dosyaları indirebilirsin.",staleHelp:"Metin değişti. Güncel videoyu oluşturmak için videoyu yeniden hazırla.",download:"Videoyu indir"
   },
   en: {
-    dashboard:["ORBIT STUDIO / OVERVIEW","Welcome to your content production center"],source:["STEP 1 / SOURCE","Find visuals for your story"],story:["STEP 2 / STORY","Turn a source into an original story"],review:["STEP 3 / REVIEW","Final check before publishing"],render:["STEP 4 / VIDEO","Narrate, combine and preview"],editor:["PROJECT EDITOR","Edit your content"],files:["FILE LIBRARY","Your generated files"],trash:["TRASH","Deleted projects"],
-    home:"Home",homeSub:"Projects and history",sourceNav:"Sources",sourceSub:"NASA + Wikimedia",storyNav:"Story",storySub:"AI script",reviewNav:"Review",reviewSub:"Editorial approval",videoNav:"Video",videoSub:"Voice and render",
+    dashboard:["TERZİ / OVERVIEW","Welcome to your content production center"],source:["STEP 1 / SOURCE","Find visuals for your story"],story:["STEP 2 / STORY","Turn a source into an original story"],review:["STEP 3 / REVIEW","Final check before publishing"],render:["STEP 4 / VIDEO","Narrate, combine and preview"],editor:["PROJECT EDITOR","Edit your content"],files:["FILE LIBRARY","Your generated files"],trash:["TRASH","Deleted projects"],
+    home:"Home",homeSub:"Projects and history",sourceNav:"Sources",sourceSub:"Find or create visuals",storyNav:"Story",storySub:"AI script",reviewNav:"Review",reviewSub:"Final review",videoNav:"Video",videoSub:"Voice and video",
     newProject:"Create new project",projects:"Recent projects",activity:"Activity",search:"Search archive",results:"Archive results",edit:"Edit project",back:"← Back to projects",title:"Title",hook:"Opening hook",narration:"Narration script",save:"Save changes",
-    total:"Total projects",ready:"Ready videos",inReview:"In review",queue:"Render queue",allTime:"All time",downloadable:"Downloadable",waiting:"Awaiting approval",productionReady:"Ready to produce",noProjects:"No projects yet.",noActivity:"No activity yet.",saved:"Project changes saved",edited:"Last edited",settings:"Channel settings saved",generate:"Generate story",approve:"Approve for rendering",reject:"Reject",renderVideo:"Render video now",addScene:"＋ Add scene from archive",newStory:"New story",addProject:"Add to project",noIdeas:"No source selected yet.",noReview:"No scripts to review.",noRender:"No approved productions.",niche:"Channel niche",audience:"Target audience",storyModel:"Story model",contentLang:"Content language",uiLang:"Interface language",contentProfile:"Content profile",visualStyle:"Visual style",apiKey:"Gemini key",saveSettings:"Save",hero:"Find your next story in space.",heroSub:"Sources, scripts, voice and video production in one place.",sourceHelp:"Browse NASA and Wikimedia Commons with metadata, licensing and attribution.",storyQueue:"Story queue",reviewDesk:"Editorial desk",videoLab:"Video lab",nextStep:"Next step",reviewHelp:"Review and save your copy, then approve the project.",renderHelp:"Project is ready. Create Edge narration, captions and a 9:16 MP4.",readyHelp:"Your video is ready. Preview or download the files here.",staleHelp:"The copy changed. Render again to create an up-to-date video.",download:"Download MP4"
+    total:"Total projects",ready:"Ready videos",inReview:"In review",queue:"Render queue",allTime:"All time",downloadable:"Downloadable",waiting:"Awaiting approval",productionReady:"Ready to produce",noProjects:"No projects yet.",noActivity:"No activity yet.",saved:"Project changes saved",edited:"Last edited",settings:"Channel settings saved",generate:"Generate story",approve:"Prepare video",reject:"Reject",renderVideo:"Create video",addScene:"＋ Add visual",newStory:"Create story",addProject:"Add to project",noIdeas:"No source selected yet.",noReview:"No scripts to review.",noRender:"No approved productions.",niche:"Channel niche",audience:"Target audience",storyModel:"Story model",contentLang:"Content language",uiLang:"Interface language",contentProfile:"Content profile",visualStyle:"Visual style",apiKey:"Gemini key",saveSettings:"Save",hero:"Turn your idea into content that fits your channel.",heroSub:"Sources, scripts, voice and video production in one place.",sourceHelp:"Browse NASA and Wikimedia Commons with metadata, licensing and attribution.",storyQueue:"Story queue",reviewDesk:"Editorial desk",videoLab:"Video lab",nextStep:"Next step",reviewHelp:"Review and save your copy, then approve the project.",renderHelp:"Project is ready. Create narration, captions and the video.",readyHelp:"Your video is ready. Preview or download the files here.",staleHelp:"The copy changed. Render again to create an up-to-date video.",download:"Download MP4"
   },
   es: {
-    dashboard:["ORBIT STUDIO / RESUMEN","Bienvenido a tu centro de producción"],source:["PASO 1 / FUENTE","Encuentra imágenes para tu historia"],story:["PASO 2 / HISTORIA","Convierte una fuente en una historia original"],review:["PASO 3 / REVISIÓN","Control final antes de publicar"],render:["PASO 4 / VÍDEO","Narra, combina y previsualiza"],editor:["EDITOR DE PROYECTO","Edita tu contenido"],files:["ARCHIVOS","Tus archivos generados"],trash:["PAPELERA","Proyectos eliminados"],
-    home:"Inicio",homeSub:"Proyectos e historial",sourceNav:"Fuentes",sourceSub:"NASA + Wikimedia",storyNav:"Historia",storySub:"Guion con IA",reviewNav:"Revisión",reviewSub:"Aprobación editorial",videoNav:"Vídeo",videoSub:"Voz y renderizado",
+    dashboard:["TERZİ / RESUMEN","Bienvenido a tu centro de producción"],source:["PASO 1 / FUENTE","Encuentra imágenes para tu historia"],story:["PASO 2 / HISTORIA","Convierte una fuente en una historia original"],review:["PASO 3 / REVISIÓN","Control final antes de publicar"],render:["PASO 4 / VÍDEO","Narra, combina y previsualiza"],editor:["EDITOR DE PROYECTO","Edita tu contenido"],files:["ARCHIVOS","Tus archivos generados"],trash:["PAPELERA","Proyectos eliminados"],
+    home:"Inicio",homeSub:"Proyectos e historial",sourceNav:"Fuentes",sourceSub:"Busca o crea imágenes",storyNav:"Historia",storySub:"Guion con IA",reviewNav:"Revisión",reviewSub:"Revisión final",videoNav:"Vídeo",videoSub:"Voz y vídeo",
     newProject:"Crear proyecto",projects:"Proyectos recientes",activity:"Actividad",search:"Buscar en archivo",results:"Resultados del archivo",edit:"Editar proyecto",back:"← Volver a proyectos",title:"Título",hook:"Frase inicial",narration:"Texto de narración",save:"Guardar cambios",
-    total:"Proyectos totales",ready:"Vídeos listos",inReview:"En revisión",queue:"Cola de renderizado",allTime:"Todo el tiempo",downloadable:"Descargables",waiting:"Esperando aprobación",productionReady:"Listos para producir",noProjects:"Aún no hay proyectos.",noActivity:"Aún no hay actividad.",saved:"Cambios guardados",edited:"Última edición",settings:"Configuración guardada",generate:"Generar historia",approve:"Aprobar para renderizar",reject:"Rechazar",renderVideo:"Renderizar vídeo ahora",addScene:"＋ Añadir escena del archivo",newStory:"Nueva historia",addProject:"Añadir al proyecto",noIdeas:"Aún no hay fuente seleccionada.",noReview:"No hay guiones para revisar.",noRender:"No hay producciones aprobadas.",niche:"Nicho del canal",audience:"Público objetivo",storyModel:"Modelo de historia",contentLang:"Idioma del contenido",uiLang:"Idioma de interfaz",contentProfile:"Perfil de contenido",visualStyle:"Estilo visual",apiKey:"Clave de Gemini",saveSettings:"Guardar",hero:"Encuentra tu próxima historia en el espacio.",heroSub:"Fuentes, guiones, voz y vídeo en un solo lugar.",sourceHelp:"Explora NASA y Wikimedia Commons con metadatos, licencia y atribución.",storyQueue:"Cola de historias",reviewDesk:"Mesa editorial",videoLab:"Laboratorio de vídeo",nextStep:"Siguiente paso",reviewHelp:"Revisa y guarda el texto; después aprueba el proyecto.",renderHelp:"El proyecto está listo. Crea narración, subtítulos y MP4 vertical.",readyHelp:"El vídeo está listo. Puedes verlo o descargarlo aquí.",staleHelp:"El texto cambió. Vuelve a renderizar para actualizar el vídeo.",download:"Descargar MP4"
+    total:"Proyectos totales",ready:"Vídeos listos",inReview:"En revisión",queue:"Cola de renderizado",allTime:"Todo el tiempo",downloadable:"Descargables",waiting:"Esperando aprobación",productionReady:"Listos para producir",noProjects:"Aún no hay proyectos.",noActivity:"Aún no hay actividad.",saved:"Cambios guardados",edited:"Última edición",settings:"Configuración guardada",generate:"Generar historia",approve:"Preparar vídeo",reject:"Rechazar",renderVideo:"Crear vídeo",addScene:"＋ Añadir imagen",newStory:"Crear historia",addProject:"Añadir al proyecto",noIdeas:"Aún no hay fuente seleccionada.",noReview:"No hay guiones para revisar.",noRender:"No hay producciones aprobadas.",niche:"Nicho del canal",audience:"Público objetivo",storyModel:"Modelo de historia",contentLang:"Idioma del contenido",uiLang:"Idioma de interfaz",contentProfile:"Perfil de contenido",visualStyle:"Estilo visual",apiKey:"Clave de Gemini",saveSettings:"Guardar",hero:"Convierte tu idea en contenido hecho para tu canal.",heroSub:"Fuentes, guiones, voz y vídeo en un solo lugar.",sourceHelp:"Explora NASA y Wikimedia Commons con metadatos, licencia y atribución.",storyQueue:"Cola de historias",reviewDesk:"Mesa editorial",videoLab:"Laboratorio de vídeo",nextStep:"Siguiente paso",reviewHelp:"Revisa y guarda el texto; después aprueba el proyecto.",renderHelp:"El proyecto está listo. Crea la narración, los subtítulos y el vídeo.",readyHelp:"El vídeo está listo. Puedes verlo o descargarlo aquí.",staleHelp:"El texto cambió. Vuelve a renderizar para actualizar el vídeo.",download:"Descargar MP4"
   }
 };
 const flowMessages = {
-  tr: { nav:"Görsel Akış",navSub:"Ücretsiz cihaz içi video",hero:"Fotoğraflarını akan bir videoya dönüştür.",heroSub:"Görseller cihazından ayrılmaz. Video bu tarayıcıda hazırlanır; sunucu, AI kredisi veya bulut depolama kullanılmaz.",demo:"▶ Örnek projeyi dene",photos:"＋ Fotoğraf seç",choose:"Ne oluşturmak istiyorsun?",chooseSub:"Bir şablon seç; görünüm, süre ve video ölçüsü otomatik ayarlansın.",drafts:"TASLAKLARIM",draftsSub:"Çalışmalar yalnızca bu cihazda saklanır.",open:"Taslağı aç",delete:"Sil",save:"Taslağı kaydet",export:"↓ Projeyi dışa aktar",import:"↑ Proje içe aktar",projectTitle:"Proje başlığı",format:"Video formatı",duration:"Varsayılan sahne süresi",motion:"Kamera hareketi",transition:"Sahne geçişi",scenes:"Sahneler",scenesSub:"Sürükle-bırak veya oklarla sırala; her sahnenin yazısını ve süresini değiştirebilirsin.",bulkText:"✎ Metinleri toplu düzenle",applyAll:"Tümüne uygula",render:"Videoyu cihazımda oluştur",publish:"✦ Yayın paketini hazırla",sceneText:"Sahne yazısı",seconds:"Süre",movement:"Hareket",sceneTransition:"Geçiş",emptyScenes:"Başlamak için en az bir fotoğraf seç.",copy:"Kopyala",cover:"▣ Kapak karesini indir",started:"Başladı",media:"Fotoğraf ekledi",rendered:"Video oluşturdu",shared:"İndirdi / paylaştı",completion:"tamamlama oranı",topTemplate:"en çok seçilen şablon",renderError:"render hatası",noDraft:"Kayıtlı taslak yok",selectDraft:"Bir taslak seç"},
-  en: { nav:"Visual Flow",navSub:"Free on-device video",hero:"Turn your photos into a flowing video.",heroSub:"Your media never leaves your device. Rendering happens in this browser without server, AI or cloud storage costs.",demo:"▶ Try a sample project",photos:"＋ Choose photos",choose:"What do you want to create?",chooseSub:"Choose a template and let style, timing and format be configured automatically.",drafts:"MY DRAFTS",draftsSub:"Projects are stored only on this device.",open:"Open draft",delete:"Delete",save:"Save draft",export:"↓ Export project",import:"↑ Import project",projectTitle:"Project title",format:"Video format",duration:"Default scene duration",motion:"Camera motion",transition:"Scene transition",scenes:"Scenes",scenesSub:"Drag and drop or use arrows to reorder; edit each scene's text and duration.",bulkText:"✎ Edit all text",applyAll:"Apply to all",render:"Create video on my device",publish:"✦ Prepare publishing kit",sceneText:"Scene text",seconds:"Duration",movement:"Motion",sceneTransition:"Transition",emptyScenes:"Choose at least one photo to begin.",copy:"Copy",cover:"▣ Download cover frame",started:"Started",media:"Added photos",rendered:"Created video",shared:"Downloaded / shared",completion:"completion rate",topTemplate:"most-used template",renderError:"render errors",noDraft:"No saved drafts",selectDraft:"Choose a draft"},
-  es: { nav:"Flujo visual",navSub:"Vídeo gratuito en el dispositivo",hero:"Convierte tus fotos en un vídeo dinámico.",heroSub:"Tus archivos nunca salen del dispositivo. El vídeo se crea en este navegador sin servidor, IA ni almacenamiento en la nube.",demo:"▶ Probar proyecto de ejemplo",photos:"＋ Elegir fotos",choose:"¿Qué quieres crear?",chooseSub:"Elige una plantilla y configura automáticamente el estilo, la duración y el formato.",drafts:"MIS BORRADORES",draftsSub:"Los proyectos se guardan solo en este dispositivo.",open:"Abrir borrador",delete:"Eliminar",save:"Guardar borrador",export:"↓ Exportar proyecto",import:"↑ Importar proyecto",projectTitle:"Título del proyecto",format:"Formato de vídeo",duration:"Duración predeterminada",motion:"Movimiento de cámara",transition:"Transición de escena",scenes:"Escenas",scenesSub:"Arrastra o usa las flechas para ordenar; edita el texto y la duración de cada escena.",bulkText:"✎ Editar todos los textos",applyAll:"Aplicar a todas",render:"Crear vídeo en mi dispositivo",publish:"✦ Preparar paquete de publicación",sceneText:"Texto de escena",seconds:"Duración",movement:"Movimiento",sceneTransition:"Transición",emptyScenes:"Elige al menos una foto para comenzar.",copy:"Copiar",cover:"▣ Descargar portada",started:"Iniciado",media:"Fotos añadidas",rendered:"Vídeo creado",shared:"Descargado / compartido",completion:"tasa de finalización",topTemplate:"plantilla más usada",renderError:"errores de renderizado",noDraft:"No hay borradores",selectDraft:"Elige un borrador"}
+  tr: { nav:"Hızlı video",navSub:"Fotoğraflardan video",hero:"Fotoğraflarını akan bir videoya dönüştür.",heroSub:"Fotoğraflar ve video cihazında kalır. AI seslendirmeyi açarsan yalnızca sahne metinleri ses üretimi için TERZİ sunucusuna gönderilir.",demo:"▶ Örnek projeyi dene",photos:"＋ Fotoğraf seç",choose:"Ne oluşturmak istiyorsun?",chooseSub:"Bir şablon seç; görünüm, süre ve video ölçüsü otomatik ayarlansın.",drafts:"TASLAKLARIM",draftsSub:"Çalışmalar yalnızca bu cihazda saklanır.",open:"Taslağı aç",delete:"Sil",save:"Taslağı kaydet",export:"↓ Projeyi dışa aktar",import:"↑ Proje içe aktar",projectTitle:"Proje başlığı",format:"Video formatı",duration:"Varsayılan sahne süresi",motion:"Kamera hareketi",transition:"Sahne geçişi",scenes:"Sahneler",scenesSub:"Sürükle-bırak veya oklarla sırala; her sahnenin yazısını ve süresini değiştirebilirsin.",bulkText:"✎ Metinleri toplu düzenle",applyAll:"Tümüne uygula",render:"Videoyu cihazımda oluştur",publish:"✦ Yayın paketini hazırla",sceneText:"Sahne yazısı",seconds:"Süre",movement:"Hareket",sceneTransition:"Geçiş",emptyScenes:"Başlamak için en az bir fotoğraf seç.",copy:"Kopyala",cover:"▣ Kapak karesini indir",started:"Başladı",media:"Fotoğraf ekledi",rendered:"Video oluşturdu",shared:"İndirdi / paylaştı",completion:"tamamlama oranı",topTemplate:"en çok seçilen şablon",renderError:"render hatası",noDraft:"Kayıtlı taslak yok",selectDraft:"Bir taslak seç"},
+  en: { nav:"Quick video",navSub:"Video from photos",hero:"Turn your photos into a flowing video.",heroSub:"Photos and video stay on your device. If you enable AI narration, only scene text is sent to the TERZİ server for speech generation.",demo:"▶ Try a sample project",photos:"＋ Choose photos",choose:"What do you want to create?",chooseSub:"Choose a template and let style, timing and format be configured automatically.",drafts:"MY DRAFTS",draftsSub:"Projects are stored only on this device.",open:"Open draft",delete:"Delete",save:"Save draft",export:"↓ Export project",import:"↑ Import project",projectTitle:"Project title",format:"Video format",duration:"Default scene duration",motion:"Camera motion",transition:"Scene transition",scenes:"Scenes",scenesSub:"Drag and drop or use arrows to reorder; edit each scene's text and duration.",bulkText:"✎ Edit all text",applyAll:"Apply to all",render:"Create video on my device",publish:"✦ Prepare publishing kit",sceneText:"Scene text",seconds:"Duration",movement:"Motion",sceneTransition:"Transition",emptyScenes:"Choose at least one photo to begin.",copy:"Copy",cover:"▣ Download cover frame",started:"Started",media:"Added photos",rendered:"Created video",shared:"Downloaded / shared",completion:"completion rate",topTemplate:"most-used template",renderError:"render errors",noDraft:"No saved drafts",selectDraft:"Choose a draft"},
+  es: { nav:"Vídeo rápido",navSub:"Vídeo desde fotos",hero:"Convierte tus fotos en un vídeo dinámico.",heroSub:"Las fotos y el vídeo permanecen en tu dispositivo. Si activas la narración con IA, solo el texto de las escenas se envía al servidor TERZİ.",demo:"▶ Probar proyecto de ejemplo",photos:"＋ Elegir fotos",choose:"¿Qué quieres crear?",chooseSub:"Elige una plantilla y configura automáticamente el estilo, la duración y el formato.",drafts:"MIS BORRADORES",draftsSub:"Los proyectos se guardan solo en este dispositivo.",open:"Abrir borrador",delete:"Eliminar",save:"Guardar borrador",export:"↓ Exportar proyecto",import:"↑ Importar proyecto",projectTitle:"Título del proyecto",format:"Formato de vídeo",duration:"Duración predeterminada",motion:"Movimiento de cámara",transition:"Transición de escena",scenes:"Escenas",scenesSub:"Arrastra o usa las flechas para ordenar; edita el texto y la duración de cada escena.",bulkText:"✎ Editar todos los textos",applyAll:"Aplicar a todos",render:"Crear vídeo en mi dispositivo",publish:"✦ Preparar paquete de publicación",sceneText:"Texto de escena",seconds:"Duración",movement:"Movimiento",sceneTransition:"Transición",emptyScenes:"Elige al menos una foto para comenzar.",copy:"Copiar",cover:"▣ Descargar portada",started:"Iniciado",media:"Fotos añadidas",rendered:"Vídeo creado",shared:"Descargado / compartido",completion:"tasa de finalización",topTemplate:"plantilla más usada",renderError:"errores de renderizado",noDraft:"No hay borradores",selectDraft:"Elige un borrador"}
 };
 const staticTranslationRows = [
   ["İçeriğe geç","Skip to content","Saltar al contenido"],
@@ -107,7 +141,7 @@ const staticTranslationRows = [
   ["Dosyalar","Files","Archivos"],["Üretilen çıktılar","Generated outputs","Resultados generados"],
   ["Çöp kutusu","Trash","Papelera"],["Silinen projeler","Deleted projects","Proyectos eliminados"],
   ["Yeni üretim","New creation","Nueva creación"],["Yerel stüdyo","Local studio","Estudio local"],
-  ["Verilerin bu cihazda","Your data stays on this device","Tus datos permanecen en este dispositivo"],
+  ["Yerel videolar bu cihazda","Local videos stay on this device","Los vídeos locales permanecen en este dispositivo"],
   ["Çevrimiçi","Online","En línea"],["↓ Uygulamayı yükle","↓ Install app","↓ Instalar aplicación"],
   ["Genel","General","General"],["İçerik & Kitle","Content & Audience","Contenido y audiencia"],
   ["Üretim Kuralları","Production Rules","Reglas de producción"],["Entegrasyonlar","Integrations","Integraciones"],
@@ -134,7 +168,7 @@ const staticTranslationRows = [
   ["Üretim hattındaki en güncel çalışmalar.","Latest work in your production pipeline.","Trabajos más recientes de tu flujo de producción."],
   ["Yeni proje →","New project →","Nuevo proyecto →"],["Aktivite","Activity","Actividad"],["Son işlemler.","Recent actions.","Acciones recientes."],
   ["YALNIZCA BU CİHAZ","THIS DEVICE ONLY","SOLO ESTE DISPOSITIVO"],["Görsel Akış dönüşümü","Visual Flow conversion","Conversión de Flujo visual"],
-  ["Hangi adımda kaldığını gör. Bu veriler Orbit Studio’ya veya başka bir sunucuya gönderilmez.","See where you stopped. This data is never sent to Orbit Studio or another server.","Consulta dónde te quedaste. Estos datos no se envían a Orbit Studio ni a ningún servidor."],
+  ["Hangi adımda kaldığını gör. Bu veriler TERZİ’ye veya başka bir sunucuya gönderilmez.","See where you stopped. This data is never sent to TERZİ or another server.","Consulta dónde te quedaste. Estos datos no se envían a TERZİ ni a ningún servidor."],
   ["Verileri sıfırla","Reset data","Restablecer datos"],["1. ADIM","STEP 1","PASO 1"],
   ["Mekân ve keşif","Places and discovery","Lugares y exploración"],["Güçlü tek mesaj","One strong message","Un mensaje potente"],
   ["Arşiv anlatısı","Archive storytelling","Narrativa de archivo"],["Enerjik akış","Energetic flow","Flujo enérgico"],
@@ -185,15 +219,56 @@ const staticTranslationRows = [
   ["Başlangıç","Setup","Inicio"],["Sahneler","Scenes","Escenas"],["Tasarım","Style","Diseño"],
   ["Ana ekranına ekle","Add to home screen","Añadir a la pantalla de inicio"],["Anladım","Got it","Entendido"],
   ["Safari araç çubuğundaki Paylaş simgesine dokun, ardından “Ana Ekrana Ekle” seçeneğini seç.","Tap Share in Safari, then choose “Add to Home Screen”.","Toca Compartir en Safari y elige “Añadir a pantalla de inicio”."],
-  ["ORBIT STUDIO'YA HOŞ GELDİN","WELCOME TO ORBIT STUDIO","BIENVENIDO A ORBIT STUDIO"],["Şablon seç","Choose a template","Elige una plantilla"],["Görselleri ekle","Add visuals","Añade imágenes"],
+  ["TERZİ'YE HOŞ GELDİN","WELCOME TO TERZİ","BIENVENIDO A TERZİ"],["Şablon seç","Choose a template","Elige una plantilla"],["Görselleri ekle","Add visuals","Añade imágenes"],
   ["Oluştur ve paylaş","Create and share","Crear y compartir"],["Bu tanıtım yalnızca ilk ziyaretinde gösterilir.","This introduction is shown only on your first visit.","Esta introducción solo aparece en tu primera visita."],
   ["Fotoğraflarını seç, sahne yazılarını düzenle ve videoyu hiçbir dosyayı sunucuya göndermeden cihazında oluştur.","Choose photos, edit scene captions and create the video on your device without uploading files.","Elige fotos, edita los textos y crea el vídeo en tu dispositivo sin subir archivos."],
+  ["TERZİ HESABI","TERZİ ACCOUNT","CUENTA TERZİ"],["Projelerini güvenle hesabına bağla.","Securely link your projects to your account.","Vincula tus proyectos de forma segura a tu cuenta."],["Ücretsiz hesap açtığında bu tarayıcıdaki bulut projelerin hesabına taşınır. Cihaz içi video üretimi ücretsiz kalır.","When you create a free account, cloud projects in this browser are linked to it. On-device video creation stays free.","Al crear una cuenta gratuita, los proyectos en la nube de este navegador se vinculan a ella. La creación de vídeo en el dispositivo sigue siendo gratis."],["Hesap oluştur","Create account","Crear cuenta"],["Giriş yap","Sign in","Iniciar sesión"],["E-posta","Email","Correo electrónico"],["Parola","Password","Contraseña"],["En az 12 karakter kullan. Parolan hiçbir zaman düz metin olarak saklanmaz.","Use at least 12 characters. Your password is never stored as plain text.","Usa al menos 12 caracteres. Tu contraseña nunca se guarda como texto sin formato."],["Ücretsiz hesap oluştur","Create free account","Crear cuenta gratis"],["Hesabın hazır.","Your account is ready.","Tu cuenta está lista."],["Atölye Pro'ya geç","Upgrade to Atölye Pro","Pasar a Atölye Pro"],["Üyeliği yönet","Manage membership","Gestionar membresía"],["Çıkış yap","Sign out","Cerrar sesión"],
+  ["Ücretsiz başla, işin büyüdüğünde yükselt.","Start free and upgrade when your work grows.","Empieza gratis y mejora cuando crezca tu trabajo."],["Cihaz içi video ücretsizdir. Yönetilen AI ve bulut kaydı yalnız kullananlar için Pro üyeliğe dahildir.","On-device video is free. Managed AI and cloud storage are included in Pro for those who need them.","El vídeo en el dispositivo es gratis. La IA gestionada y el almacenamiento en la nube se incluyen en Pro."],["1 otomatik proje, demo AI görselleri ve sınırlı seslendirme.","1 automatic project, demo AI visuals and limited narration.","1 proyecto automático, imágenes de IA de demostración y narración limitada."],["Cihaz içi video ücretsiz; AI kullanımı doğrudan kendi sağlayıcından düşer.","On-device video is free; AI usage is billed directly by your provider.","El vídeo en el dispositivo es gratis; el uso de IA se cobra directamente por tu proveedor."],["API anahtarı yok; yönetilen AI, daha yüksek ses kotası ve güvenli bulut kayıt.","No API key; managed AI, higher narration limits and secure cloud storage.","Sin clave API; IA gestionada, más narración y almacenamiento seguro en la nube."],["Pro'ya geç","Upgrade to Pro","Pasar a Pro"],
+  ["PLANIN","YOUR PLAN","TU PLAN"],["Teknik kurulum yapmadan üret.","Create without technical setup.","Crea sin configuración técnica."],["Normal kullanımda API anahtarı gerekmez. Ücretsiz denemeden sonra Atölye Pro ile TERZİ'nin yönetilen AI servislerini kullanırsın.","No API key is needed for normal use. After the free trial, Atölye Pro gives you TERZİ's managed AI services.","No necesitas una clave API para el uso normal. Tras la prueba gratuita, Atölye Pro te ofrece los servicios de IA gestionados por TERZİ."],
+  ["ÜCRETSİZ","FREE","GRATIS"],["ANAHTARSIZ","NO API KEY","SIN CLAVE API"],["Cihazda manuel video ve ücretsiz hesapla bir tam otomatik deneme.","Manual on-device video and one fully automatic trial with a free account.","Vídeo manual en el dispositivo y una prueba totalmente automática con una cuenta gratuita."],["Ayda 30 yönetilen hikâye; AI görsellerinde günlük adil kullanım.","30 managed stories per month; daily fair-use limits for AI visuals.","30 historias gestionadas al mes; uso razonable diario para imágenes de IA."],
+  ["Gelişmiş: Kendi AI hesabımı bağla","Advanced: Connect my own AI account","Avanzado: Conectar mi propia cuenta de IA"],["İsteğe bağlı · teknik kullanıcılar için","Optional · for technical users","Opcional · para usuarios técnicos"],["KENDİ AI HESABIN","YOUR OWN AI ACCOUNT","TU PROPIA CUENTA DE IA"],["Sağlayıcı maliyetini doğrudan kendin yönet.","Manage provider costs directly.","Gestiona directamente los costes del proveedor."],["Bu bölüm normal kullanım için gerekli değildir. Yalnızca kendi Gemini, OpenAI veya Claude hesabını kullanmak istiyorsan bağlantı kur.","This section is not required for normal use. Connect only if you want to use your own Gemini, OpenAI or Claude account.","Esta sección no es necesaria para el uso normal. Conecta solo si quieres usar tu propia cuenta de Gemini, OpenAI o Claude."],
+  ["Bir konu yaz veya fotoğraflarını ekle. TERZİ hikâyeyi ve sahneleri hazırlasın; son karar her zaman sende kalsın.","Enter a topic or add your photos. TERZİ prepares the story and scenes; you always keep the final say.","Escribe un tema o añade tus fotos. TERZİ prepara la historia y las escenas; la decisión final siempre es tuya."],["Fikrini ekle","Add your idea","Añade tu idea"],["Konu veya kendi fotoğrafların.","A topic or your own photos.","Un tema o tus propias fotos."],["TERZİ hazırlasın","Let TERZİ prepare it","Deja que TERZİ lo prepare"],["Hikâye, sahneler ve görseller.","Story, scenes and visuals.","Historia, escenas e imágenes."],["Kontrol et","Review","Revisa"],["Düzenle, seslendir ve indir.","Edit, narrate and download.","Edita, narra y descarga."],["Demo için API anahtarı gerekmez.","No API key is needed for the demo.","No necesitas una clave API para la demo."],
+  ["CİHAZDA VİDEO","VIDEO ON DEVICE","VÍDEO EN EL DISPOSITIVO"],
+  ["Açarsan sahne metinleri ses üretimi için TERZİ sunucusuna veya seçtiğin AI sağlayıcısına gönderilir. Fotoğrafların gönderilmez.","If enabled, scene text is sent to the TERZİ server or your selected AI provider for speech generation. Your photos are not sent.","Si la activas, el texto de las escenas se envía al servidor de TERZİ o al proveedor de IA elegido para generar la voz. Tus fotos no se envían."],
+  ["Bu kayıt başka bir yerde değişti","This record changed elsewhere","Este registro cambió en otro lugar"],["Bu formdaki değerler korunuyor. Sunucudaki son sürümü istediğinde açabilirsin.","The values in this form are preserved. Open the latest server version when you choose.","Los valores de este formulario se conservan. Puedes abrir la última versión del servidor cuando quieras."],["Bu formda kal","Stay on this form","Seguir en este formulario"],["Son sürümü aç","Open latest version","Abrir la última versión"],
   ["Stil ve format hazır gelsin.","Start with style and format ready.","Empieza con estilo y formato listos."],["Kendi fotoğrafların veya demo.","Use your photos or the demo.","Usa tus fotos o la demo."],["MP4 ya da WebM olarak indir.","Download as MP4 or WebM.","Descarga como MP4 o WebM."],
   ["TOPLU DÜZENLEME","BULK EDIT","EDICIÓN MASIVA"],["Satır sırası sahne sırasıyla eşleşir. Boş bıraktığın satırdaki sahne yazısız kalır.","Line order matches scene order. An empty line leaves that scene without text.","El orden de líneas coincide con las escenas. Una línea vacía deja la escena sin texto."],
   ["SAHNE KADRAJI","SCENE CROP","ENCUADRE DE ESCENA"],["Yakınlaştır ve odak noktasını taşı. Kesikli çerçeve platformların güvenli alanını gösterir.","Zoom and move the focal point. The dashed frame shows platform safe areas.","Amplía y mueve el punto focal. El marco discontinuo muestra las zonas seguras."],
   ["Yakınlaştır","Zoom","Zoom"],["Yatay odak","Horizontal focus","Enfoque horizontal"],["Dikey odak","Vertical focus","Enfoque vertical"],
   ["Geri al","Undo","Deshacer"],["İleri al","Redo","Rehacer"],["Müziği kaldır","Remove music","Quitar música"],["Kapat","Close","Cerrar"],
-  ["İnceleme bekliyor","Awaiting review","Esperando revisión"],["Render alınıyor","Rendering","Renderizando"],["Render hatası","Render failed","Error de renderizado"],["Yeni","New","Nuevo"],["Adsız proje","Untitled project","Proyecto sin título"]
+  ["İnceleme bekliyor","Awaiting review","Esperando revisión"],["Render alınıyor","Rendering","Renderizando"],["Render hatası","Render failed","Error de renderizado"],["Yeni","New","Nuevo"],["Adsız proje","Untitled project","Proyecto sin título"],
+  ["KONTROL MERKEZİ","CONTROL CENTER","CENTRO DE CONTROL"],["Ne yapmak istiyorsun?","What do you want to do?","¿Qué quieres hacer?"],
+  ["Tüm üretim yolları tek yerde. Birini seç; seni doğrudan doğru adıma götürelim.","Every creation path in one place. Choose one and go straight to the right step.","Todas las formas de creación en un solo lugar. Elige una y ve directamente al paso correcto."],
+  ["Otomatik üret","Automatic creation","Creación automática"],["Konuyu yaz; hikâye, sahne ve görseller hazırlansın.","Enter a topic and generate the story, scenes and visuals.","Escribe un tema y genera la historia, las escenas y las imágenes."],
+  ["Fikirden videoya →","From idea to video →","De la idea al vídeo →"],["Manuel stüdyo","Manual studio","Estudio manual"],["Metni, görselleri ve bütün ayrıntıları kendin belirle.","Choose the text, visuals and every detail yourself.","Elige tú mismo el texto, las imágenes y cada detalle."],
+  ["Kontrol sende →","You're in control →","Tú tienes el control →"],["YouTube trendleri","YouTube trends","Tendencias de YouTube"],["Ülke ve kategoriye göre popüler içerikleri keşfet.","Discover popular content by country and category.","Descubre contenido popular por país y categoría."],
+  ["Trendleri aç →","Open trends →","Abrir tendencias →"],["Cihazda video oluştur","Create video on device","Crear vídeo en el dispositivo"],["Galerindeki fotoğrafları ücretsiz videoya dönüştür.","Turn your gallery photos into a video for free.","Convierte gratis las fotos de tu galería en un vídeo."],
+  ["Görsel Akış'ı aç →","Open Visual Flow →","Abrir Flujo visual →"],["URL'den görsel kullan","Use an image URL","Usar imagen desde URL"],["İzinli bir görsel adresini doğrula ve projeye ekle.","Validate an authorized image URL and add it to the project.","Valida una URL de imagen autorizada y añádela al proyecto."],
+  ["Kaynak ekle →","Add source →","Añadir fuente →"],["Hikâyeden görsel üret","Create visuals from a story","Crear imágenes desde una historia"],["Hazır metnini sahnelere ayır ve görsellerle eşleştir.","Split your text into scenes and match it with visuals.","Divide tu texto en escenas y relaciónalo con imágenes."],
+  ["Hikâyeyi getir →","Bring your story →","Añadir historia →"],["Daha fazlası:","More:","Más:"],["NASA ve görsel arşivi","NASA and image archive","NASA y archivo de imágenes"],["Projelerim","My projects","Mis proyectos"],["AI ve YouTube entegrasyonları","AI and YouTube integrations","Integraciones de IA y YouTube"],
+  ["← Kontrol Merkezi","← Control Center","← Centro de control"],["Yöntemi değiştir","Change method","Cambiar método"],["1 Başlangıç","1 Start","1 Inicio"],["2 İçerik","2 Content","2 Contenido"],["3 Kontrol","3 Review","3 Revisión"],["4 Video","4 Video","4 Vídeo"],
+  ["YouTube trendlerini keşfet","Explore YouTube trends","Explora las tendencias de YouTube"],["Popüler videoları ülke ve kategoriye göre incele; özgün bir içerik fikri olarak kuyruğa ekle.","Browse popular videos by country and category, then add one to your queue as an original content idea.","Explora vídeos populares por país y categoría y añade uno a tu cola como idea original."],
+  ["API anahtarın yok mu?","Don't have an API key?","¿No tienes una clave API?"],["Google Cloud'da YouTube Data API v3'ü etkinleştir, ardından bir API anahtarı oluştur. Anahtar yalnızca bu cihazda saklanır.","Enable YouTube Data API v3 in Google Cloud, then create an API key. The key is stored only on this device.","Activa YouTube Data API v3 en Google Cloud y crea una clave API. La clave se guarda solo en este dispositivo."],
+  ["Google Cloud'da anahtar al ↗","Get a key in Google Cloud ↗","Obtener clave en Google Cloud ↗"],["Anahtarı uygulamaya gir","Enter key in the app","Introducir clave en la aplicación"],
+  ["Trend verilerinin kaynağı YouTube Data API'dir.","Trend data is provided by the YouTube Data API.","Los datos de tendencias proceden de YouTube Data API."],["YouTube Kullanım Şartları","YouTube Terms of Service","Términos de Servicio de YouTube"],["Google Gizlilik Politikası","Google Privacy Policy","Política de Privacidad de Google"],
+  ["Başlamadan önce","Before you begin","Antes de empezar"],["Stüdyoya gir →","Enter studio →","Entrar al estudio →"],["Kullanım Koşulları","Terms of Use","Términos de uso"],["Veri Hakların","Your data rights","Tus derechos de datos"],["Bağımsız içerik üretim aracı","Independent content creation tool","Herramienta independiente de creación de contenido"],
+  ["TERZİ yetişkin içerik üreticileri için hazırlanmıştır. Çocuklara yönelik içerik üretebilirsin; uygulama çocukların doğrudan kullanımına yönelik değildir.","TERZİ is designed for adult content creators. You may create content for children, but the app is not intended for direct use by children.","TERZİ está diseñado para creadores de contenido adultos. Puedes crear contenido infantil, pero la aplicación no está destinada al uso directo por menores."],
+  ["18 yaşında veya daha büyük olduğumu ve","I confirm that I am 18 or older and accept the","Confirmo que tengo 18 años o más y acepto los"],
+  ["kabul ettiğimi beyan ederim.",".","."],["Kişisel verilerinin nasıl işlendiği hakkında","To learn how your personal data is processed, read the","Para saber cómo se tratan tus datos personales, consulta el"],
+  ["KVKK Aydınlatma Metni’ni","Privacy Notice","Aviso de privacidad"],["okuyabilirsin. Bu metni okumak bir açık rıza değildir.",". Reading this notice does not constitute explicit consent.",". Leer este aviso no constituye consentimiento explícito."],
+  ["KVKK Aydınlatma Metni","Privacy Notice","Aviso de privacidad"],["YASAL BİLGİLENDİRME","LEGAL INFORMATION","INFORMACIÓN LEGAL"],
+  ["Projeye fotoğraf ekle","Add photos to the project","Añadir fotos al proyecto"],["İsteğe bağlı","Optional","Opcional"],["＋ Bir veya birden fazla fotoğraf seç","＋ Choose one or more photos","＋ Elegir una o más fotos"],["Fotoğraf seçilmezse seçtiğin arşiv kaynağı kullanılır.","If you choose no photos, the selected archive source will be used.","Si no eliges fotos, se usará la fuente de archivo seleccionada."],["Fotoğraflar hikâyeye nasıl bağlansın?","How should photos connect to the story?","¿Cómo deben conectarse las fotos con la historia?"],["Tek ortak hikâye · fotoğraflar ardışık sahneler","One shared story · photos become sequential scenes","Una historia compartida · fotos como escenas consecutivas"],["Her fotoğraf için ayrı bölüm · tek video","A separate section for each photo · one video","Una sección por foto · un solo vídeo"],
+  ["Görsel çeşitliliği","Visual variety","Variedad visual"],["Dengeli · 4 farklı görsel","Balanced · 4 different visuals","Equilibrado · 4 imágenes diferentes"],["Zengin · 6 farklı görsel","Rich · 6 different visuals","Rico · 6 imágenes diferentes"],["Maksimum · 8 farklı görsel","Maximum · 8 different visuals","Máximo · 8 imágenes diferentes"],["TERZİ güvenli ve lisans bilgili sonuçları sahnelere sırayla dağıtır.","TERZİ distributes safe, licensed results across scenes in order.","TERZİ distribuye resultados seguros y con licencia entre las escenas."],
+  ["Bir fikirle başla:","Start with an idea:","Empieza con una idea:"],["Pratik öneri","Practical tip","Consejo práctico"],["Merak uyandıran bilgi","Curious fact","Dato curioso"],["İlham veren hikâye","Inspiring story","Historia inspiradora"],
+  ["Bu videonun amacı","Goal of this video","Objetivo de este vídeo"],["İzlenme ve etkileşim","Views and engagement","Visualizaciones e interacción"],["Yeni takipçi kazanmak","Gain new followers","Conseguir nuevos seguidores"],["Bir şeyi anlaşılır öğretmek","Teach something clearly","Enseñar algo con claridad"],["Ürün veya hizmet tanıtmak","Showcase a product or service","Presentar un producto o servicio"],
+  ["Kime hitap edecek?","Who is it for?","¿Para quién es?"],["Anlatım nasıl hissettirsin?","How should it feel?","¿Qué tono debe tener?"],["Merak uyandıran","Curiosity-driven","Que despierte curiosidad"],["Sade ve bilgilendirici","Clear and informative","Claro e informativo"],["Enerjik ve eğlenceli","Energetic and fun","Enérgico y divertido"],["Samimi ve ilham veren","Warm and inspiring","Cercano e inspirador"],
+  ["Taslağımı hazırla","Create my draft","Crear mi borrador"],["Yaklaşık 1–2 dakika sürer. Sonraki ekranda metni, görselleri ve video süresini görebilirsin.","Takes about 1–2 minutes. On the next screen you can review the text, visuals, and duration.","Tarda aproximadamente 1–2 minutos. En la siguiente pantalla podrás revisar el texto, las imágenes y la duración."],
+  ["Hazırlanan fikirler","Prepared ideas","Ideas preparadas"],["Seçtiğin kaynaklardan özgün bir video taslağı oluştur.","Create an original video draft from your selected sources.","Crea un borrador de vídeo original con las fuentes seleccionadas."],["Son kontrol","Final check","Control final"],["Metni ve görselleri gözden geçir, ardından videonu oluştur.","Review the text and visuals, then create your video.","Revisa el texto y las imágenes y crea tu vídeo."],["Videoyu oluştur","Create the video","Crear el vídeo"],["Seslendirmeyi, görselleri ve altyazıyı tek videoda birleştir.","Combine narration, visuals, and captions in one video.","Combina narración, imágenes y subtítulos en un solo vídeo."],
+  ["Videonun ilk saniyelerinde izleyiciyi durduracak cümle.","A line that stops the viewer in the first seconds.","Una frase que atrape al espectador en los primeros segundos."],["Video oluşturulacak","Ready to create video","Listo para crear vídeo"],["Konu önerileri","Topic suggestions","Sugerencias de temas"],
+  ["AÇIK GÖRSEL ARŞİVİ","OPEN VISUAL ARCHIVE","ARCHIVO VISUAL ABIERTO"],["YOUTUBE TRENDLERİ","YOUTUBE TRENDS","TENDENCIAS DE YOUTUBE"],["HİKÂYEDEN GÖRSELE","STORY TO VISUAL","HISTORIA A IMAGEN"],["PROJELERİM","MY PROJECTS","MIS PROYECTOS"],
+  ["AI ile görsel oluştur","Create image with AI","Crear imagen con IA"],["Wikimedia veya NASA arşivinden kullanım bilgili görseller seçilir.","Choose visuals with usage details from Wikimedia or NASA.","Elige imágenes con datos de uso de Wikimedia o NASA."],["Daha hızlı · ücretsiz kaynak","Faster · free source","Más rápido · fuente gratuita"],["✦ AI ile yeni görseller oluştur","✦ Create new visuals with AI","✦ Crear imágenes nuevas con IA"],["Her sahne için konuya özel, dikey bir görsel hazırlanır.","Create a topic-specific vertical visual for each scene.","Crea una imagen vertical específica para cada escena."],["Daha özgün · biraz daha uzun sürer","More original · takes a little longer","Más original · tarda un poco más"],
+  ["Son kontrolde duraklat","Pause for final review","Pausar para revisión final"],["Arşivden veya hazır metinden başlayan projelerde videoya geçmeden önce bekle","Pause before video creation for projects started from an archive or existing text","Pausa antes de crear el vídeo en proyectos iniciados desde un archivo o texto existente"],["Altyazıyı videoda göster","Show captions in the video","Mostrar subtítulos en el vídeo"],["Ayrı altyazı dosyasına ek olarak yazıları videonun içine de ekle","Add captions inside the video as well as in a separate caption file","Añade subtítulos dentro del vídeo además del archivo separado"],
+  ["GÖRSELSİZ İÇERİK","IMAGE-FREE CONTENT","CONTENIDO SIN IMÁGENES"],["Motivasyon cümlelerinden video oluştur","Create a video from motivational sentences","Crea un vídeo con frases motivadoras"],["Her satır ayrı bir sahne olur. Fotoğraf eklemeden, yazı ve tasarım odaklı bir paylaşım hazırla.","Each line becomes a scene. Create a text-and-design-led post without adding photos.","Cada línea se convierte en una escena. Crea una publicación centrada en texto y diseño sin añadir fotos."],["Paylaşım başlığı","Post title","Título de la publicación"],["Cümleler","Sentences","Frases"],["Boş bırakırsan örnek motivasyon cümleleriyle başlarız.","Leave it blank to start with sample motivational sentences.","Déjalo vacío para empezar con frases motivadoras de ejemplo."],["Metin paylaşımını hazırla","Create text post","Crear publicación de texto"],["Her satıra bir motivasyon cümlesi yaz…","Write one motivational sentence per line…","Escribe una frase motivadora por línea…"]
 ];
 const staticTranslations = Object.fromEntries(staticTranslationRows.map(([tr, en, es]) => [tr, { tr, en, es }]));
 const originalTextNodes = new WeakMap();
@@ -227,7 +302,7 @@ function translateStaticTree() {
     });
   });
 }
-const lang = () => state.settings?.uiLanguage || "tr";
+const lang = () => preferredUiLanguage || state.settings?.uiLanguage || "tr";
 const t = (key) => messages[lang()]?.[key] ?? messages.tr[key] ?? key;
 const ft = (key) => flowMessages[lang()]?.[key] ?? flowMessages.tr[key] ?? key;
 const flowTemplateName = (key) => ({
@@ -236,21 +311,21 @@ const flowTemplateName = (key) => ({
   es: { travel:"Viajes",quote:"Frase",culture:"Historia y cultura",motivation:"Motivación",product:"Producto",education:"Educación" }
 }[lang()]?.[key] || key);
 const flowRuntime = (key) => ({
-  tr:{checking:"Kontrol ediliyor",device:"Cihaz uyumluluğu",checkingDetail:"Tarayıcının video özellikleri inceleniyor.",unsupported:"Bu tarayıcıda render kullanılamıyor",mp4:"YouTube, Instagram ve TikTok için en uyumlu çıktı.",webm:"Video oluşturulur; bazı platformlar yüklerken MP4 dönüşümü isteyebilir.",renderAs:"Videoyu {format} olarak oluştur",noRender:"Bu tarayıcı render desteklemiyor",details:"Detay",hide:"Gizle"},
+  tr:{checking:"Kontrol ediliyor",device:"Cihaz uyumluluğu",checkingDetail:"Tarayıcının video özellikleri inceleniyor.",unsupported:"Bu tarayıcıda video oluşturulamıyor",mp4:"YouTube, Instagram ve TikTok için en uyumlu çıktı.",webm:"Video oluşturulur; bazı platformlar yüklerken MP4 dönüşümü isteyebilir.",renderAs:"Videoyu {format} olarak oluştur",noRender:"Bu tarayıcı video oluşturmayı desteklemiyor",details:"Detay",hide:"Gizle"},
   en:{checking:"Checking",device:"Device compatibility",checkingDetail:"Checking your browser's video capabilities.",unsupported:"Rendering is unavailable in this browser",mp4:"The most compatible output for YouTube, Instagram and TikTok.",webm:"Your video will be created; some platforms may request MP4 conversion.",renderAs:"Create video as {format}",noRender:"This browser cannot render video",details:"Details",hide:"Hide"},
   es:{checking:"Comprobando",device:"Compatibilidad del dispositivo",checkingDetail:"Comprobando las funciones de vídeo del navegador.",unsupported:"El renderizado no está disponible en este navegador",mp4:"El formato más compatible con YouTube, Instagram y TikTok.",webm:"El vídeo se creará; algunas plataformas pueden solicitar conversión a MP4.",renderAs:"Crear vídeo como {format}",noRender:"Este navegador no puede renderizar vídeo",details:"Detalles",hide:"Ocultar"}
 }[lang()]?.[key] || key);
 const flowPanel = (key) => ({
-  tr:{textDesign:"Videodaki metin görünümü",music:"Arka plan müziği",musicPick:"♫ Müzik seç",copyHelper:"Bir anlatı yapısıyla başla",showIdeas:"Önerileri göster",bulkTitle:"Her satır bir sahne metni",bulkApply:"Metinleri uygula",cancel:"Vazgeç",cropTitle:"Önemli bölgeyi kadrajda tut",cropApply:"Kadrajı uygula",reset:"Ortala",welcome:"İlk videon birkaç dakika uzakta.",welcomeDemo:"Örnek projeyi aç →",welcomeSkip:"Kendim başlayacağım",publishTitle:"Paylaşmadan önce son dokunuşlar",title:"Başlık",description:"Açıklama",hashtags:"Hashtag'ler",checklist:"Yayın kontrolü"},
-  en:{textDesign:"Text appearance in the video",music:"Background music",musicPick:"♫ Choose music",copyHelper:"Start with a story structure",showIdeas:"Show suggestions",bulkTitle:"One scene caption per line",bulkApply:"Apply captions",cancel:"Cancel",cropTitle:"Keep the important area in frame",cropApply:"Apply crop",reset:"Center",welcome:"Your first video is only minutes away.",welcomeDemo:"Open sample project →",welcomeSkip:"I'll start myself",publishTitle:"Final touches before publishing",title:"Title",description:"Description",hashtags:"Hashtags",checklist:"Publishing checklist"},
-  es:{textDesign:"Apariencia del texto en el vídeo",music:"Música de fondo",musicPick:"♫ Elegir música",copyHelper:"Empieza con una estructura narrativa",showIdeas:"Mostrar sugerencias",bulkTitle:"Un texto de escena por línea",bulkApply:"Aplicar textos",cancel:"Cancelar",cropTitle:"Mantén la zona importante en el encuadre",cropApply:"Aplicar encuadre",reset:"Centrar",welcome:"Tu primer vídeo está a pocos minutos.",welcomeDemo:"Abrir proyecto de ejemplo →",welcomeSkip:"Empezaré por mi cuenta",publishTitle:"Últimos detalles antes de publicar",title:"Título",description:"Descripción",hashtags:"Hashtags",checklist:"Lista de publicación"}
+  tr:{textDesign:"Videodaki metin görünümü",music:"Arka plan müziği",musicPick:"♫ Müzik seç",copyHelper:"Bir anlatı yapısıyla başla",showIdeas:"Önerileri göster",bulkTitle:"Her satır bir sahne metni",bulkApply:"Metinleri uygula",cancel:"Vazgeç",cropTitle:"Önemli bölgeyi kadrajda tut",cropApply:"Kadrajı uygula",reset:"Ortala",welcome:"İlk videonu birlikte hazırlayalım.",welcomeDemo:"İlk videomu oluştur →",welcomeSkip:"Ana sayfayı incele",publishTitle:"Paylaşmadan önce son dokunuşlar",title:"Başlık",description:"Açıklama",hashtags:"Hashtag'ler",checklist:"Yayın kontrolü"},
+  en:{textDesign:"Text appearance in the video",music:"Background music",musicPick:"♫ Choose music",copyHelper:"Start with a story structure",showIdeas:"Show suggestions",bulkTitle:"One scene caption per line",bulkApply:"Apply captions",cancel:"Cancel",cropTitle:"Keep the important area in frame",cropApply:"Apply crop",reset:"Center",welcome:"Let us create your first video together.",welcomeDemo:"Create my first video →",welcomeSkip:"Explore the home page",publishTitle:"Final touches before publishing",title:"Title",description:"Description",hashtags:"Hashtags",checklist:"Publishing checklist"},
+  es:{textDesign:"Apariencia del texto en el vídeo",music:"Música de fondo",musicPick:"♫ Elegir música",copyHelper:"Empieza con una estructura narrativa",showIdeas:"Mostrar sugerencias",bulkTitle:"Un texto de escena por línea",bulkApply:"Aplicar textos",cancel:"Cancelar",cropTitle:"Mantén la zona importante en el encuadre",cropApply:"Aplicar encuadre",reset:"Centrar",welcome:"Creemos juntos tu primer vídeo.",welcomeDemo:"Crear mi primer vídeo →",welcomeSkip:"Explorar la página principal",publishTitle:"Últimos detalles antes de publicar",title:"Título",description:"Descripción",hashtags:"Hashtags",checklist:"Lista de publicación"}
 }[lang()]?.[key] || key);
 const stepMeta = new Proxy({}, { get: (_, key) => {
   if (key === "dashboard") {
     return {
-      tr: ["ORBIT STUDIO / GENEL BAKIŞ", "Fikirlerin harekete geçsin."],
-      en: ["ORBIT STUDIO / OVERVIEW", "Put your ideas in motion."],
-      es: ["ORBIT STUDIO / RESUMEN", "Pon tus ideas en movimiento."]
+      tr: ["TERZİ / GENEL BAKIŞ", "Fikirlerin harekete geçsin."],
+      en: ["TERZİ / OVERVIEW", "Put your ideas in motion."],
+      es: ["TERZİ / RESUMEN", "Pon tus ideas en movimiento."]
     }[lang()];
   }
   if (key === "flow") {
@@ -294,6 +369,7 @@ function localizeStatic() {
   $(".view[data-view=render] .section-head h2").textContent = t("videoLab");
   applyFlowLanguage();
   translateStaticTree();
+  renderAccountAccess();
 }
 function setLeadingText(element, value) {
   if (!element) return;
@@ -371,25 +447,139 @@ function renderFileLibrary() {
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { "content-type": "application/json", ...options.headers }
+  try {
+    const youtubeKey = localStorage.getItem("orbit-device-key-youtube") || "";
+    const configuredProvider = state?.settings?.provider || "gemini";
+    const generationRequest = /^\/api\/ideas\/[^/]+\/generate$/.test(path);
+    const imageGenerationRequest = options.method === "POST" && /^\/api\/productions\/[^/]+\/(images|cloudflare-image)$/.test(path);
+    const aiProvider = imageGenerationRequest
+      ? (readyImageProvider() || configuredProvider)
+      : generationRequest ? (readyTextProvider() || configuredProvider) : configuredProvider;
+    const aiKey = localStorage.getItem(`orbit-device-key-${aiProvider}`) || "";
+    const response = await fetch(path, {
+      ...options,
+      headers: {
+        "content-type": "application/json",
+        ...(youtubeKey && path.startsWith("/api/youtube/trends")
+          ? { "x-orbit-youtube-key": youtubeKey } : {}),
+        ...((generationRequest || imageGenerationRequest) && hasReadyAiCredential(aiProvider)
+          ? { "x-orbit-ai-provider": aiProvider, ...(aiKey ? { "x-orbit-ai-key": aiKey } : {}) } : {}),
+        ...options.headers
+      }
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      const error = new Error(result.error || "İşlem başarısız");
+      error.status = response.status;
+      error.payload = result;
+      error.code = result.code || "";
+      if (response.status === 409 && result.code === "STATE_CONFLICT") {
+        const preservedCopy = {
+          tr:"Bu formdaki değerler, son sürümü açmayı seçene kadar korunur.",
+          en:"The values in this form are preserved until you choose to open the latest version.",
+          es:"Los valores de este formulario se conservan hasta que decidas abrir la última versión."
+        }[lang()] || "Bu formdaki değerler, son sürümü açmayı seçene kadar korunur.";
+        $("#conflict-message").textContent = `${error.message} ${preservedCopy}`;
+        $("#conflict-banner").classList.remove("hidden");
+      }
+      if (["ACCOUNT_REQUIRED", "PRO_REQUIRED"].includes(result.code)) {
+        setTimeout(() => openAccountModal(result.code === "ACCOUNT_REQUIRED" ? "register" : "account"), 0);
+      }
+      throw error;
+    }
+    setServerConnection(true);
+    return result;
+  } catch (error) {
+    if (error instanceof TypeError || /failed to fetch|networkerror/i.test(error.message)) {
+      setServerConnection(false);
+      throw new Error("TERZİ sunucusuna ulaşılamıyor. Bağlantıyı kontrol edip tekrar deneyin.");
+    }
+    throw error;
+  }
+}
+
+function productSurface() {
+  if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) return "pwa";
+  if (/android/i.test(navigator.userAgent)) return "android";
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) return "ios";
+  return "web";
+}
+function trackProductEvent(event, metadata = {}) {
+  const payload = {
+    event,
+    metadata: {
+      language: selectedContentLanguage(),
+      surface: productSurface(),
+      ...(metadata.result ? { result: String(metadata.result).slice(0, 40) } : {})
+    }
+  };
+  fetch("/api/analytics/events", {
+    method:"POST", headers:{ "content-type":"application/json" }, body:JSON.stringify(payload), keepalive:true
+  }).catch(() => {});
+}
+
+const turnstileWidgets = new Map();
+let turnstileLoader;
+function loadTurnstile() {
+  if (!state.runtime?.turnstileSiteKey) return Promise.resolve(false);
+  if (window.turnstile) return Promise.resolve(true);
+  if (turnstileLoader) return turnstileLoader;
+  turnstileLoader = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true; script.defer = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Güvenlik doğrulaması yüklenemedi. Bağlantını kontrol et."));
+    document.head.appendChild(script);
   });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "İşlem başarısız");
-  return result;
+  return turnstileLoader;
+}
+async function ensureTurnstile(containerId) {
+  const container = $(`#${containerId}`);
+  if (!container || !state.runtime?.turnstileSiteKey) return;
+  await loadTurnstile();
+  if (turnstileWidgets.has(containerId)) return;
+  const widgetId = window.turnstile.render(container, {
+    sitekey: state.runtime.turnstileSiteKey,
+    theme:"auto",
+    callback:(token) => { container.dataset.token = token; },
+    "expired-callback":() => { container.dataset.token = ""; }
+  });
+  turnstileWidgets.set(containerId, widgetId);
+}
+function turnstileToken(containerId) { return $(`#${containerId}`)?.dataset.token || ""; }
+function resetTurnstile(containerId) {
+  const container = $(`#${containerId}`);
+  if (container) container.dataset.token = "";
+  const id = turnstileWidgets.get(containerId);
+  if (id !== undefined && window.turnstile) window.turnstile.reset(id);
+}
+function setServerConnection(connected) {
+  const status = $("#connection-status");
+  const banner = $("#connection-banner");
+  if (status) {
+    status.classList.toggle("offline", !connected);
+    status.querySelector("span").textContent = connected ? "Sunucu bağlı" : "Bağlantı yok";
+  }
+  banner?.classList.toggle("hidden", connected);
 }
 function esc(value) {
   return String(value || "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
   })[c]);
 }
+let toastTimer;
 function toast(message, type = "ok") {
   const node = $("#toast");
+  clearTimeout(toastTimer);
   node.textContent = message;
   node.dataset.type = type;
+  node.setAttribute("role", type === "error" ? "alert" : "status");
+  node.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+  node.title = type === "error" ? "Kapatmak için dokun" : "";
   node.classList.add("show");
-  setTimeout(() => node.classList.remove("show"), 3200);
+  node.onclick = () => node.classList.remove("show");
+  toastTimer = setTimeout(() => node.classList.remove("show"), type === "error" ? 12000 : 4200);
 }
 
 const providerRuntimeKeys = {
@@ -443,11 +633,123 @@ function updateAiKeyModalProvider(provider) {
   $("#ai-key-modal-settings").disabled = !$("#ai-transfer-consent").checked;
 }
 
-function ensureAiConfigured(kind = "text") {
-  const provider = kind === "image" ? "cloudflare" : (state.settings.provider || "gemini");
-  if (state.runtime?.[providerRuntimeKeys[provider]] && localStorage.getItem(`orbit-ai-consent-${provider}`) === "yes") return true;
-  openAiKeyModal(provider);
+function hasProviderCredential(provider) {
+  return Boolean(state.runtime?.[providerRuntimeKeys[provider]] ||
+    localStorage.getItem("orbit-device-key-" + provider));
+}
+function hasReadyAiCredential(provider) {
+  return hasProviderCredential(provider) && localStorage.getItem(`orbit-ai-consent-${provider}`) === "yes";
+}
+function readyTextProvider() {
+  const selected = state.settings?.provider || "gemini";
+  return [selected, "openai", "gemini", "claude"]
+    .filter((provider, index, all) => all.indexOf(provider) === index)
+    .find((provider) => hasReadyAiCredential(provider)) || "";
+}
+function configuredTextProvider() {
+  const selected = state.settings?.provider || "gemini";
+  return [selected, "openai", "gemini", "claude"]
+    .filter((provider, index, all) => all.indexOf(provider) === index)
+    .find((provider) => hasProviderCredential(provider)) || "";
+}
+function readyImageProvider() {
+  const selected = state.settings?.provider || "gemini";
+  return [selected, "openai", "gemini"]
+    .filter((provider, index, all) => all.indexOf(provider) === index)
+    .find((provider) => hasReadyAiCredential(provider)) || "";
+}
+function imageCredentialProvider() {
+  const selected = state.settings?.provider || "gemini";
+  return [selected, "openai", "gemini"]
+    .filter((provider, index, all) => all.indexOf(provider) === index)
+    .find((provider) => hasProviderCredential(provider)) || "";
+}
+function managedImageGenerationAvailable() {
+  const entitlement = state.runtime?.entitlement || state.runtime?.account || {};
+  const pro = entitlement.plan === "pro" && ["active", "trialing"].includes(entitlement.status);
+  const textUsesManagedDemo = Boolean(state.runtime?.demoAvailable) && !hasReadyAiCredential(state.settings.provider || "gemini");
+  const localImageProvider = state.runtime?.deployment !== "cloudflare" && Boolean(state.runtime?.cloudflareConfigured || state.runtime?.geminiConfigured);
+  return Boolean(readyImageProvider()) || localImageProvider || Boolean(state.runtime?.managedImageGeneration && (pro || textUsesManagedDemo));
+}
+function promptImageGenerationAvailable() {
+  const entitlement = state.runtime?.entitlement || state.runtime?.account || {};
+  const pro = entitlement.plan === "pro" && ["active", "trialing"].includes(entitlement.status);
+  const localImageProvider = state.runtime?.deployment !== "cloudflare" && Boolean(state.runtime?.cloudflareConfigured || state.runtime?.geminiConfigured);
+  return Boolean(readyImageProvider()) || localImageProvider || Boolean(state.runtime?.managedImageGeneration && pro);
+}
+function ensureAiConfigured(kind = "text", resumeAction = "") {
+  const provider = kind === "image"
+    ? (readyImageProvider() || (["gemini", "openai"].includes(state.settings.provider) ? state.settings.provider : "gemini"))
+    : (state.settings.provider || "gemini");
+  if (kind === "image" && (resumeAction === "prompt-image" ? promptImageGenerationAvailable() : managedImageGenerationAvailable())) return true;
+  if (kind === "image" && state.runtime?.managedImageGeneration) {
+    toast("Bu projede AI görsel erişimi yok. Açık arşiv görsellerini kullanabilirsin.", "warn");
+    return false;
+  }
+  if (hasReadyAiCredential(provider)) return true;
+  if (kind === "text" && readyTextProvider()) return true;
+  pendingAiAction = resumeAction || pendingAiAction;
+  const configuredProvider = kind === "text" ? configuredTextProvider() : provider;
+  const configured = Boolean(configuredProvider);
+  // A saved key without transfer consent must never silently fall through to
+  // the managed demo. Ask once, then resume the exact action with that key.
+  if (kind === "text" && !configured && state.runtime?.demoAvailable) {
+    pendingAiAction = null;
+    return true;
+  }
+  // Cloud users never need an API key for the normal product journey. The
+  // backend applies the free demo or Pro entitlement and returns the upgrade UI.
+  if (kind === "text" && !configured && state.runtime?.deployment === "cloudflare") {
+    if (!state.runtime?.account) {
+      pendingAiAction = resumeAction || pendingAiAction;
+      openAccountModal("register");
+      toast({ tr:"Otomatik denemeyi hesabına bağlamak için ücretsiz hesap oluştur.", en:"Create a free account to attach the automatic trial to you.", es:"Crea una cuenta gratuita para vincular la prueba automática." }[lang()], "warn");
+      return false;
+    }
+    pendingAiAction = null;
+    return true;
+  }
+  openAiKeyModal(configuredProvider || provider);
+  if (configured) {
+    $("#ai-key-modal-copy").textContent = {
+      tr:"API anahtarın kayıtlı. Otomatik üretime devam etmek için AI veri aktarımını onayla.",
+      en:"Your API key is saved. Approve AI data transfer to continue automatic creation.",
+      es:"Tu clave API está guardada. Autoriza la transferencia de datos de IA para continuar."
+    }[lang()];
+    $("#ai-key-modal-settings").textContent = {
+      tr:"Onayla ve devam et →", en:"Approve and continue →", es:"Autorizar y continuar →"
+    }[lang()];
+  }
   return false;
+}
+
+function resumePendingAiAction() {
+  const action = pendingAiAction;
+  pendingAiAction = null;
+  if (!action) return;
+  if (action === "automatic") {
+    const form = $("#automatic-creation-form");
+    if (creationMode === "automatic" && form?.checkValidity()) setTimeout(() => form.requestSubmit(), 0);
+    return;
+  }
+  if (action.startsWith("idea:")) {
+    const ideaId = action.slice(5);
+    const button = [...document.querySelectorAll("[data-generate]")].find((node) => node.dataset.generate === ideaId);
+    if (button) setTimeout(() => button.click(), 0);
+    return;
+  }
+  if (action.startsWith("archive-story:")) {
+    const [, source, encodedAssetId] = action.split(":");
+    const assetId = decodeURIComponent(encodedAssetId || "");
+    const button = [...document.querySelectorAll("[data-media-import]")]
+      .find((node) => node.dataset.source === source && node.dataset.mediaImport === assetId);
+    if (button) setTimeout(() => button.click(), 0);
+    return;
+  }
+  if (action === "archive-story-batch") {
+    const button = document.querySelector("[data-media-batch]");
+    if (button) setTimeout(() => button.click(), 0);
+  }
 }
 
 function startStoryProgress(button) {
@@ -502,7 +804,9 @@ function startServerRenderProgress(button) {
   };
 }
 function showStep(step) {
+  $("#settings-panel")?.classList.add("hidden");
   activeStep = step;
+  if (step === "source" && !creationMode) setCreationMode("automatic");
   const isWorkflow = ["source", "story", "review", "render"].includes(step);
   $("#workflow-nav")?.classList.toggle("open", isWorkflow);
   $("#workflow-toggle")?.classList.toggle("open", isWorkflow);
@@ -524,15 +828,44 @@ function showStep(step) {
     const active = button.dataset.mobileStep === step; button.classList.toggle("active", active);
     if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
   });
+  const mobileCreate = document.querySelector("[data-mobile-create]");
+  mobileCreate?.classList.toggle("active", step === "source");
+  if (step === "source") mobileCreate?.setAttribute("aria-current", "page"); else mobileCreate?.removeAttribute("aria-current");
+  const routeStages = ["source", "story", "review", "render"];
+  const routeStep = step === "editor" ? "review" : step;
+  const routeIndex = routeStages.indexOf(routeStep);
+  $("#workflow-context")?.classList.toggle("hidden", routeIndex < 0);
+  document.querySelectorAll("[data-context-stage]").forEach((node) => {
+    const index = routeStages.indexOf(node.dataset.contextStage);
+    node.classList.toggle("active", index === routeIndex);
+    node.classList.toggle("done", routeIndex >= 0 && index < routeIndex);
+  });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 const mobileFlowOrder = ["setup", "scenes", "style", "export"];
 let mobileFlowPanel = "setup";
+let flowRendering = false;
+function syncMobileFlowAction() {
+  const next = $('#mobile-flow-next');
+  const primary = $('#flow-render');
+  const index = mobileFlowOrder.indexOf(mobileFlowPanel);
+  const exporting = index === mobileFlowOrder.length - 1;
+  const labels = {
+    tr: ['Sahnelere geç →', 'Tasarıma geç →', 'Oluşturmaya geç →'],
+    en: ['Go to scenes →', 'Go to design →', 'Go to export →'],
+    es: ['Ir a escenas →', 'Ir al diseño →', 'Ir a exportar →']
+  };
+  next.disabled = exporting && primary.disabled;
+  next.textContent = exporting ? primary.textContent : (labels[lang()] || labels.tr)[index];
+  next.setAttribute('aria-busy', String(exporting && flowRendering));
+  if (exporting) next.setAttribute('aria-describedby', 'flow-compatibility-detail');
+  else next.removeAttribute('aria-describedby');
+}
 function configureMobileFlowPanels() {
   const groups = {
     setup: [document.querySelector(".flow-onboarding"), document.querySelector(".flow-settings"), $("#flow-platform-note")],
     scenes: [document.querySelector(".flow-controls>.flow-section-head"), document.querySelector(".flow-bulk-tools"), $("#flow-recovery"), $("#flow-scenes")],
-    style: [document.querySelector(".flow-music"), document.querySelector(".flow-text-style"), document.querySelector(".flow-copy-helper")],
+    style: [document.querySelector(".flow-narration"), document.querySelector(".flow-music"), document.querySelector(".flow-text-style"), document.querySelector(".flow-copy-helper")],
     export: [document.querySelector(".flow-preview-panel")]
   };
   Object.entries(groups).forEach(([panel, nodes]) => nodes.filter(Boolean).forEach((node) => { node.dataset.mobilePanel = panel; }));
@@ -547,10 +880,35 @@ function showMobileFlowPanel(panel) {
   });
   const index = mobileFlowOrder.indexOf(panel);
   $("#mobile-flow-prev").disabled = index === 0;
-  $("#mobile-flow-next").textContent = index === mobileFlowOrder.length - 1 ? "Videoyu oluştur" : `${["Sahnelere", "Tasarıma", "Oluşturmaya"][index]} geç →`;
+  syncMobileFlowAction();
   document.querySelector(".flow-controls")?.classList.toggle("mobile-empty", panel === "export");
   document.querySelector(".flow-layout")?.scrollIntoView?.({ behavior:"smooth", block:"start" });
 }
+
+function syncMobileOverlayState() {
+  document.body.classList.toggle("settings-open", !$("#settings-panel")?.classList.contains("hidden"));
+}
+
+const settingsPanelObserver = new MutationObserver(syncMobileOverlayState);
+if ($("#settings-panel")) settingsPanelObserver.observe($("#settings-panel"), { attributes:true, attributeFilter:["class"] });
+syncMobileOverlayState();
+
+const mobileKeyboardField = 'textarea,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"])';
+document.addEventListener("focusin", (event) => {
+  if (!window.matchMedia("(max-width:650px)").matches || !event.target.matches?.(mobileKeyboardField)) return;
+  document.body.classList.add("keyboard-open");
+  window.setTimeout(() => event.target.scrollIntoView?.({ block:"center", behavior:"smooth" }), 180);
+});
+document.addEventListener("focusout", (event) => {
+  if (!event.target.matches?.(mobileKeyboardField)) return;
+  window.setTimeout(() => {
+    if (!document.activeElement?.matches?.(mobileKeyboardField)) document.body.classList.remove("keyboard-open");
+  }, 120);
+});
+window.visualViewport?.addEventListener("resize", () => {
+  if (!document.body.classList.contains("keyboard-open")) return;
+  window.setTimeout(() => document.activeElement?.scrollIntoView?.({ block:"center", behavior:"smooth" }), 80);
+});
 function sourceFigure(item) {
   if (!item.sourceAsset?.previewUrl) return "";
   return `<figure class="source-preview"><img src="${item.sourceAsset.previewUrl}" alt="${esc(item.sourceAsset.title)}"><figcaption><span>${esc(item.sourceAsset.sourceLabel || "NASA")} • ${esc(item.sourceAsset.assetId || item.sourceAsset.nasaId)}</span><a href="${item.sourceAsset.sourcePage}" target="_blank" rel="noreferrer">Kaynağı aç ↗</a></figcaption></figure>`;
@@ -562,19 +920,23 @@ function formatDate(value, withTime = false) {
     ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {})
   }).format(new Date(value));
 }
+function contentModeLabel(content = {}) {
+  if (content.fallback || content.mode === "orbit-demo") return "Kaynak taslağı";
+  return content.model || content.mode || "Manuel";
+}
 function projectStatus(item) {
   if (item.render?.status === "ready") return ["Video hazır", "ready"];
-  if (item.render?.status === "processing") return ["Render alınıyor", "processing"];
-  if (item.render?.status === "failed") return ["Render hatası", "failed"];
-  if (item.status === "approved") return ["Render bekliyor", "approved"];
-  if (item.status === "review") return ["İnceleme bekliyor", "review"];
+  if (item.render?.status === "processing") return ["Video hazırlanıyor", "processing"];
+  if (item.render?.status === "failed") return ["Video oluşturulamadı", "failed"];
+  if (item.status === "approved") return ["Video oluşturulacak", "approved"];
+  if (item.status === "review") return ["Taslak kontrol edilecek", "review"];
   return [item.status || "Yeni", "new"];
 }
 function projectNextAction(item) {
   if (item.render?.status === "ready") return ["Video hazır", "Videoyu aç"];
-  if (item.render?.status === "failed") return ["Render tekrar denenmeli", "Projeyi kontrol et"];
-  if (item.status === "approved") return ["Video oluşturulmayı bekliyor", "Render adımına devam et"];
-  if (item.status === "review") return ["Hikâye onayınızı bekliyor", "İncelemeye devam et"];
+  if (item.render?.status === "failed") return ["Video oluşturulamadı", "Sorunu gör ve tekrar dene"];
+  if (item.status === "approved") return ["Video oluşturulmaya hazır", "Videoyu oluştur"];
+  if (item.status === "review") return ["Taslak kontrol edilmeyi bekliyor", "Kontrol et"];
   return ["Proje düzenlenmeye hazır", "Düzenlemeye devam et"];
 }
 function renderDashboard() {
@@ -603,7 +965,7 @@ function renderDashboard() {
     const [label, className] = projectStatus(item);
     return `<article class="project-row" data-open-project="${item.id}">
       <img src="${item.sourceAsset?.previewUrl || ""}" alt="${esc(item.content?.title)}">
-      <div class="project-main"><h3>${esc(item.content?.title || "Adsız proje")}</h3><p>NASA ${esc(item.sourceAsset?.nasaId || "—")} • ${esc(item.content?.model || item.content?.mode || "Manuel")}</p></div>
+      <div class="project-main"><h3>${esc(item.content?.title || "Adsız proje")}</h3><p>${esc(item.sourceAsset?.sourceLabel || "Proje")} • ${esc(contentModeLabel(item.content))}</p></div>
       <span class="project-status ${className}">${label}</span>
       <time>${formatDate(item.createdAt, true)}</time>
       <button class="row-action" data-open-project="${item.id}">→</button>
@@ -659,6 +1021,32 @@ function renderProjects() {
     </article>`;
   }).join("") : "Bu filtrede proje bulunamadı.";
 }
+function updateCreatorChecklist(itemOverride) {
+  const item = itemOverride || state.productions.find((entry) => entry.id === $("#editor-id").value);
+  const host = $("#creator-checklist");
+  if (!item || !host) return;
+  const title = $("#editor-title").value.trim();
+  const hook = $("#editor-hook").value.trim();
+  const narration = $("#editor-narration").value.trim();
+  const wordCount = narration.split(/\s+/).filter(Boolean).length;
+  const duration = Math.max(1, Math.round(wordCount / 2.65));
+  const assets = (item.visualAssets?.length ? item.visualAssets : item.images?.length ? item.images : [item.sourceAsset]).filter(Boolean);
+  const checks = [
+    { ok:hook.split(/\s+/).filter(Boolean).length >= 6, tr:"Açılış cümlesi ilk saniyelere hazır", en:"The opening line is ready for the first seconds", es:"La frase inicial está lista para los primeros segundos" },
+    { ok:wordCount >= 20, tr:"Seslendirme metni yeterli uzunlukta", en:"The narration has enough detail", es:"La narración tiene suficiente detalle" },
+    { ok:assets.length >= 3, tr:"Akış için en az 3 farklı görsel var", en:"There are at least 3 visuals for the flow", es:"Hay al menos 3 imágenes para el flujo" }
+  ];
+  const copy = {
+    tr:{ kicker:"İÇERİK ÜRETİCİSİ KONTROLÜ", title:"Video özeti", ready:"Videoya hazır", improve:"Küçük düzenleme öneriliyor", chars:"başlık karakteri", seconds:"tahmini saniye", visuals:"görsel" },
+    en:{ kicker:"CREATOR CHECK", title:"Video summary", ready:"Ready for video", improve:"A small edit is recommended", chars:"title characters", seconds:"estimated seconds", visuals:"visuals" },
+    es:{ kicker:"CONTROL DEL CREADOR", title:"Resumen del vídeo", ready:"Listo para vídeo", improve:"Se recomienda un pequeño ajuste", chars:"caracteres del título", seconds:"segundos estimados", visuals:"imágenes" }
+  }[lang()];
+  const allReady = Boolean(title) && checks.every((check) => check.ok);
+  host.innerHTML = `<div class="creator-checklist-head"><div><span>${copy.kicker}</span><h3>${copy.title}</h3></div><b>${allReady ? `✓ ${copy.ready}` : copy.improve}</b></div>
+    <div class="creator-metrics"><div><strong>${title.length}</strong><small>${copy.chars}</small></div><div><strong>≈ ${duration}</strong><small>${copy.seconds}</small></div><div><strong>${assets.length}</strong><small>${copy.visuals}</small></div></div>
+    <div class="creator-checks">${checks.map((check) => `<span class="${check.ok ? "" : "warn"}"><i>${check.ok ? "✓" : "!"}</i>${check[lang()]}</span>`).join("")}</div>`;
+}
+
 function openEditor(id) {
   const item = state.productions.find((entry) => entry.id === id);
   if (!item) return;
@@ -674,8 +1062,9 @@ function openEditor(id) {
     `<figure><img src="${asset.previewUrl}" alt="${esc(asset.title)}">
       <div class="editor-asset-order"><button type="button" title="Sola taşı" data-move-image="left" data-image-index="${index}" data-id="${item.id}" ${index === 0 ? "disabled" : ""}>←</button><b>${index + 1}</b><button type="button" title="Sağa taşı" data-move-image="right" data-image-index="${index}" data-id="${item.id}" ${index === assets.length - 1 ? "disabled" : ""}>→</button></div>
       ${assets.length > 1 ? `<button type="button" class="editor-asset-remove" title="Görseli kaldır" aria-label="Görseli kaldır" data-remove-image="${asset.assetId || asset.nasaId}" data-id="${item.id}">×</button>` : ""}
-      <figcaption>${index + 1}. ${esc(asset.sourceLabel || "NASA")} · ${esc(asset.license || "")}</figcaption></figure>`
+      <figcaption>${index + 1}. ${esc(asset.sourceLabel || "Görsel")}${asset.license ? ` · ${esc(asset.license)}` : ""}</figcaption></figure>`
   ).join("");
+  updateCreatorChecklist(item);
   renderEditorNext(item);
   showStep("editor");
 }
@@ -685,12 +1074,20 @@ function renderEditorNext(item) {
   const help = isReady ? t("readyHelp")
     : item.render?.status === "stale" ? t("staleHelp")
     : needsRender ? t("renderHelp") : t("reviewHelp");
-  let action = `<button class="primary large" data-editor-approve="${item.id}">${t("approve")} →</button>`;
+  const telegramButton = state.runtime?.telegramConfigured
+    ? `<button class="telegram-review" data-telegram-review="${item.id}">Telegram'a gönder ✈</button>` : "";
+  let action = item.telegram?.status === "pending"
+    ? `<div class="telegram-review-state"><b>Telegram editör yanıtı bekleniyor</b><button class="ghost" data-telegram-sync="${item.id}">Yanıtı kontrol et ↻</button></div>`
+    : `<div class="review-actions"><button class="primary large" data-editor-approve="${item.id}">${t("approve")} →</button>${telegramButton}</div>`;
   if (needsRender) {
     action = `<button class="primary large" data-editor-render="${item.id}">${t("renderVideo")} ▶</button>`;
   }
   if (isReady) {
-    action = `<div class="editor-ready-actions"><a class="primary-link" href="${item.render.videoUrl}?download=1">${t("download")}</a><a href="${item.render.audioUrl}?download=1">MP3</a><a href="${item.render.captionsUrl}?download=1">SRT</a>${item.render.creditsUrl ? `<a href="${item.render.creditsUrl}?download=1">Credits</a>` : ""}</div>`;
+    const youtubeAction = item.youtube?.videoId
+      ? `<a class="youtube-uploaded" href="${item.youtube.url}" target="_blank" rel="noopener noreferrer">✓ YouTube Studio'da aç ↗</a>`
+      : state.runtime?.deployment !== "cloudflare" && state.runtime?.youtubeOauthClientConfigured
+        ? `<button class="youtube-upload" data-youtube-upload="${item.id}">YouTube'a gizli yükle ↑</button>` : "";
+    action = `<div class="editor-ready-actions"><a class="primary-link" href="${item.render.videoUrl}?download=1">${t("download")}</a><a href="${item.render.audioUrl}?download=1">Ses dosyası (MP3)</a><a href="${item.render.captionsUrl}?download=1">Altyazı dosyası (SRT)</a>${item.render.creditsUrl ? `<a href="${item.render.creditsUrl}?download=1">Görsel kaynakları</a>` : ""}${youtubeAction}</div>`;
   }
   $("#editor-next").innerHTML = `<div><span>${t("nextStep")}</span><h3>${help}</h3>${action}</div>
     ${isReady ? `<video controls playsinline src="${item.render.videoUrl}"></video>` : ""}`;
@@ -700,8 +1097,10 @@ function renderState() {
   $("#audience").value = state.settings.audience || "";
   $("#provider").value = state.settings.provider || "gemini";
   updateModelChoices(state.settings.textModel);
+  $("#integration-provider").value = state.settings.provider === "claude" ? "anthropic" : (state.settings.provider || "gemini");
   $("#content-language").value = state.settings.contentLanguage || "English";
-  $("#ui-language").value = state.settings.uiLanguage || "tr";
+  if ($("#project-content-language")) $("#project-content-language").value = state.settings.contentLanguage || "English";
+  $("#ui-language").value = lang();
   $("#content-profile").value = state.settings.contentProfile || "general";
   $("#visual-style").value = state.settings.visualStyle || "documentary";
   const selectedAges = state.settings.targetAgeGroups || [];
@@ -717,6 +1116,7 @@ function renderState() {
   $("#kids-search-hints").classList.toggle("hidden", state.settings.contentProfile !== "kids");
   $("#cloudflare-account").value = state.runtime?.cloudflareAccountId || "";
   updateIntegrationForm();
+  renderAccessOverview();
   renderDashboard();
   renderProjects();
   renderFileLibrary();
@@ -740,7 +1140,7 @@ function renderState() {
         <div class="meta-row"><span class="pill">${esc(idea.sourceAsset?.sourceLabel || "NASA")} ${esc(idea.sourceAsset?.assetId || idea.nasaAsset?.nasaId)}</span><span>${(idea.sourceAsset?.dateCreated || idea.nasaAsset?.dateCreated || "").slice(0,10)}</span></div>
         <h3>${esc(idea.topic)}</h3>
         <p>${esc(idea.sourceAsset?.description || idea.nasaAsset?.description).slice(0,260)}…</p>
-        <button class="primary" data-generate="${idea.id}">${t("generate")} <span>→</span></button>
+        ${angleLabMarkup(idea)}
       </div>
     </article>`).join("") : t("noIdeas");
 
@@ -750,9 +1150,10 @@ function renderState() {
     <article class="studio-card review-card">
       ${sourceFigure(item)}
       <div class="script-pane">
-        <div class="meta-row"><span class="pill accent">${esc(item.content.model || item.content.mode)}</span><span>≈ ${Math.max(20, Math.round((item.content.narration || "").length / 14))} sn</span></div>
+        <div class="meta-row"><div class="review-pills"><span class="pill accent">${esc(contentModeLabel(item.content))}</span>${item.angle?.label ? `<span class="pill angle-pill">${esc(item.angle.label)}</span>` : ""}</div><span>≈ ${Math.max(20, Math.round((item.content.narration || "").length / 14))} sn</span></div>
         <h3>${esc(item.content.title)}</h3>
         <blockquote>${esc(item.content.hook)}</blockquote>
+        ${retentionMapMarkup(item)}
         <div class="script-text">${esc(item.content.narration)}</div>
         <div class="button-row"><button class="primary" data-review="approve" data-id="${item.id}">${t("approve")}</button><button class="ghost danger" data-review="reject" data-id="${item.id}">${t("reject")}</button></div>
       </div>
@@ -763,15 +1164,15 @@ function renderState() {
   $("#productions-render").innerHTML = ready.length ? ready.map((item) => `
     <article class="studio-card render-card">
       <div class="render-copy">
-        <div class="meta-row"><span class="pill success">ONAYLANDI</span><span>tr-TR-AhmetNeural</span></div>
+        <div class="meta-row"><span class="pill success">VİDEOYA HAZIR</span><span>Seslendirme + altyazı</span></div>
         <h3>${esc(item.content.title)}</h3>
-        <p>${(item.visualAssets?.length || item.images?.length || 1)} NASA image${(item.visualAssets?.length || item.images?.length || 1) > 1 ? "s" : ""} + English Edge narration + captions + 9:16 video</p>
+        <p>${item.visualAssets?.length || item.images?.length || 1} görsel · ${esc(item.contentLanguage || "Türkçe")} seslendirme · altyazı · ${item.contentType === "youtube" ? "16:9" : "9:16"} video</p>
         <div class="scene-strip">${(item.visualAssets?.length ? item.visualAssets : [item.sourceAsset]).filter(Boolean).map((asset, index, assets) => `
           <div class="scene-thumb"><img src="${asset.previewUrl}" alt="${esc(asset.title)}"><b>${index + 1}</b>
           ${assets.length > 1 ? `<button title="Görseli kaldır" data-remove-image="${asset.assetId || asset.nasaId}" data-id="${item.id}">×</button>` : ""}</div>
         `).join("")}</div>
         <button class="ghost add-scene" data-add-scene="${item.id}">${t("addScene")}</button>
-        ${item.render?.status === "ready" ? `<div class="downloads"><a href="${item.render.videoUrl}?download=1">MP4</a><a href="${item.render.audioUrl}?download=1">MP3</a><a href="${item.render.captionsUrl}?download=1">SRT</a>${item.render.creditsUrl ? `<a href="${item.render.creditsUrl}?download=1">Credits</a>` : ""}</div>` : `<button class="primary large" data-render="${item.id}">${t("renderVideo")} <span>▶</span></button>`}
+        ${item.render?.status === "ready" ? `<div class="downloads"><a href="${item.render.videoUrl}?download=1">Video (MP4)</a><a href="${item.render.audioUrl}?download=1">Ses (MP3)</a><a href="${item.render.captionsUrl}?download=1">Altyazı (SRT)</a>${item.render.creditsUrl ? `<a href="${item.render.creditsUrl}?download=1">Görsel kaynakları</a>` : ""}</div>` : `<button class="primary large" data-render="${item.id}">${t("renderVideo")} <span>▶</span></button>`}
         ${item.render?.status === "failed" ? `<p class="error-box">${esc(item.render.error)}</p>` : ""}
       </div>
       <div class="phone-frame ${item.contentType === "youtube" ? "landscape-frame" : ""}">
@@ -786,6 +1187,7 @@ async function refresh() {
   state = nextState;
   mediaFiles = filesResult.files || [];
   renderState();
+  $("#flow-cloud-save")?.classList.toggle("hidden", !state.runtime?.r2Configured);
 }
 function renderSelectedProjectImages() {
   const projectId = $("#image-project")?.value;
@@ -807,28 +1209,33 @@ function updateSourceMode() {
   const source = $("#media-source").value;
   const cloudflare = source === "cloudflare";
   const custom = source === "custom";
+  const urlSource = source === "url";
   const deviceOnlyUpload = custom && state.runtime?.deployment === "cloudflare";
-  $("#nasa-query").classList.toggle("hidden", custom);
-  $("#nasa-query").disabled = custom;
+  $("#nasa-query").classList.toggle("hidden", custom || urlSource);
+  $("#nasa-query").disabled = custom || urlSource;
   $("#custom-image-upload").classList.toggle("hidden", !custom);
   $("#custom-image-file").required = custom;
+  $("#url-image-import").classList.toggle("hidden", !urlSource);
+  $("#url-image-address").required = urlSource;
   $("#nasa-query").placeholder = cloudflare
     ? "Örn: friendly cartoon robot explaining the solar system"
     : "Mars, Webb, Ay, Dünya…";
   $("#nasa-query").value = cloudflare && $("#nasa-query").value === "Mars"
     ? "" : $("#nasa-query").value;
-  $("#nasa-form button").textContent = custom
+  $("#nasa-form button").textContent = urlSource ? "URL’yi doğrula ve ekle" : custom
     ? deviceOnlyUpload ? "Görseli videoya ekle" : "Görseli projeye ekle"
     : cloudflare ? "AI görsel üret" : t("search");
-  $(".hero-search>p").textContent = custom
+  $(".hero-search>p").textContent = urlSource
+    ? "HTTPS adresi erişilebilirlik, dosya türü ve boyut açısından doğrulanır; kullanım hakkı kullanıcı tarafından onaylanır."
+    : custom
     ? deviceOnlyUpload
       ? "Görsel cihazından ayrılmadan Visual Flow videona eklenir."
       : "Sana ait veya kullanım iznin bulunan JPG, PNG ya da WebP görselini seçili projeye yükle."
     : cloudflare
-      ? "Promptunu FLUX.1 Schnell ile özgün bir 9:16 sahneye dönüştür ve seçili projeye ekle."
+      ? "Ne görmek istediğini yaz; TERZİ özgün bir dikey sahne oluşturup seçili projeye eklesin."
       : t("sourceHelp");
   $("#kids-search-hints").classList.toggle(
-    "hidden", cloudflare || custom || state.settings.contentProfile !== "kids"
+    "hidden", cloudflare || custom || urlSource || state.settings.contentProfile !== "kids"
   );
   translateStaticTree();
 }
@@ -842,26 +1249,31 @@ function clearCustomImageFile() {
   $("#custom-image-preview").classList.add("hidden");
   $("#custom-image-icon").classList.remove("hidden");
 }
-async function readAsDataUrl(file) {
+async function readAsDataUrl(file, options = {}) {
   const bitmap = await createImageBitmap(file).catch(() => null);
   if (!bitmap) throw new Error("Görsel okunamadı");
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const maxDimension = options.maxDimension || 1600;
+  const targetLength = options.targetLength || 1_150_000;
+  const maxLength = options.maxLength || 1_200_000;
+  const minQuality = options.minQuality || .48;
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(bitmap.width * scale));
   canvas.height = Math.max(1, Math.round(bitmap.height * scale));
   canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close?.();
-  let quality = .84;
+  let quality = options.initialQuality || .84;
   let result = canvas.toDataURL("image/jpeg", quality);
-  while (result.length > 1_150_000 && quality > .48) {
+  while (result.length > targetLength && quality > minQuality) {
     quality -= .08;
     result = canvas.toDataURL("image/jpeg", quality);
   }
-  if (result.length > 1_200_000) throw new Error("Görsel yükleme için fazla büyük; daha küçük bir dosya seç");
+  if (result.length > maxLength) throw new Error("Görsel yükleme için fazla büyük; daha küçük bir dosya seç");
   return result;
 }
 function setCreationMode(mode) {
   creationMode = ["visual-story", "story-visual", "manual", "automatic"].includes(mode) ? mode : "";
+  if (["visual-story", "story-visual"].includes(creationMode)) $(".creation-more").open = true;
   document.querySelectorAll("[data-creation-mode]").forEach((button) =>
     (button.classList.toggle("active", button.dataset.creationMode === creationMode), button.setAttribute("aria-pressed", String(button.dataset.creationMode === creationMode)))
   );
@@ -870,6 +1282,9 @@ function setCreationMode(mode) {
   $("#story-visual-mode").classList.toggle("hidden", creationMode !== "story-visual");
   $("#manual-creation-mode").classList.toggle("hidden", creationMode !== "manual");
   $("#automatic-creation-mode").classList.toggle("hidden", creationMode !== "automatic");
+  if (creationMode === "automatic" && !$("#automatic-audience").value.trim()) {
+    $("#automatic-audience").value = state.settings.audience || "";
+  }
   document.querySelectorAll(".creation-progress b").forEach((step, index) => step.classList.toggle("active", Boolean(creationMode) && index <= 1));
   if (creationMode) setTimeout(() => $("#creation-workspace").scrollIntoView({ behavior:"smooth", block:"start" }), 50);
 }
@@ -877,7 +1292,32 @@ function resetCreationWizard() {
   setCreationMode("");
   $("#story-visual-form").reset();
   $("#manual-creation-form").reset();
+  $("#automatic-creation-form")?.reset();
+  if ($("#project-content-language")) $("#project-content-language").value = state.settings.contentLanguage || "English";
+  $("#automatic-progress")?.classList.add("hidden");
+  updateAutomaticPhotoMode();
   $("#manual-files-summary").textContent = { tr:"Henüz görsel seçilmedi", en:"No images selected yet", es:"Aún no se seleccionaron imágenes" }[lang()];
+}
+function openControlAction(action) {
+  if (action === "flow" || action === "projects") return showStep(action);
+  if (action === "integrations") {
+    showStep("dashboard");
+    $("#settings-panel")?.classList.remove("hidden");
+    document.querySelector('[data-settings-tab="integrations"]')?.click();
+    return;
+  }
+  sourceStartsNewProject = true;
+  resetCreationWizard();
+  showStep("source");
+  if (["automatic", "manual", "story-visual", "visual-story"].includes(action)) setCreationMode(action);
+  if (action === "trends" || action === "url") {
+    setCreationMode("visual-story");
+    if (action === "url") {
+      $("#media-source").value = "url";
+      updateSourceMode();
+    }
+    setTimeout(() => $(action === "trends" ? ".trend-discovery" : "#url-image-import")?.scrollIntoView({ behavior:"smooth", block:"start" }), 120);
+  }
 }
 function updateFormatNote() {
   const format = $("#production-format").value;
@@ -889,6 +1329,10 @@ function updateFormatNote() {
 }
 
 let flowScenes = [];
+let flowNarrationContext = { text: "", contentLanguage: "", style: "natural" };
+const flowNarrationAudioCache = new Map();
+const CONTENT_LANGUAGE_CODES = { Turkish:"tr", English:"en", Spanish:"es", German:"de", French:"fr", Portuguese:"pt", Italian:"it", Arabic:"ar", Hindi:"hi", Chinese:"zh", Japanese:"ja", Korean:"ko", Russian:"ru", Dutch:"nl", Polish:"pl", Indonesian:"id", Vietnamese:"vi", Ukrainian:"uk", Thai:"th" };
+function selectedContentLanguage() { return $("#project-content-language")?.value || state.settings.contentLanguage || "English"; }
 let sourceStartsNewProject = false;
 let flowOutput = null;
 let flowMusic = null;
@@ -906,6 +1350,8 @@ const FLOW_PACKAGE_VERSION = 1;
 let currentFlowDraftId = null;
 const FLOW_DB_NAME = "orbit-studio-local";
 const FLOW_STORE_NAME = "flow-drafts";
+const FLOW_VIDEO_STORE_NAME = "flow-videos";
+const FLOW_LATEST_VIDEO_ID = "__latest_video__";
 const WELCOME_SEEN_KEY = "orbit-welcome-seen-v1";
 let flowTemplate = "travel";
 const flowTemplates = {
@@ -948,6 +1394,12 @@ const flowCopyPresets = {
     ["Let us count together", "Kids learning", ["Can you find number one?", "Now let us count two objects.", "Three comes right after two.", "Four means one more.", "Great job — let us try again!"]]
   ]
 };
+const DEFAULT_MOTIVATION_LINES = {
+  tr: ["Bugün attığın küçük adım, yarının büyük değişimini başlatır.", "Hazır hissetmeyi bekleme; ilerledikçe güçlenirsin.", "Kendine verdiğin sözleri tutmak da bir başarıdır.", "Yavaş ilerlemek, yerinde saymak değildir.", "Devam et. Emeğin zamanla görünür olur."],
+  en: ["The small step you take today starts tomorrow's bigger change.", "Do not wait to feel ready; you grow as you move.", "Keeping a promise to yourself is an achievement too.", "Moving slowly is not the same as standing still.", "Keep going. Your effort will become visible with time."],
+  es: ["El pequeño paso de hoy inicia el gran cambio de mañana.", "No esperes a sentirte lista; creces mientras avanzas.", "Cumplir una promesa contigo también es un logro.", "Avanzar lento no es lo mismo que quedarse quieta.", "Sigue. Tu esfuerzo se hará visible con el tiempo."]
+};
+let textPostCreating = false;
 const publishHashtags = {
   travel: ["travel", "explore", "beautifuldestinations", "wanderlust", "reels"],
   quote: ["quotes", "mindset", "dailyreminder", "inspiration", "motivation"],
@@ -978,10 +1430,13 @@ function selectFlowPlatform(platform, applyFormat = true) {
 
 function openFlowDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(FLOW_DB_NAME, 1);
+    const request = indexedDB.open(FLOW_DB_NAME, 2);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(FLOW_STORE_NAME)) {
         request.result.createObjectStore(FLOW_STORE_NAME, { keyPath: "id" });
+      }
+      if (!request.result.objectStoreNames.contains(FLOW_VIDEO_STORE_NAME)) {
+        request.result.createObjectStore(FLOW_VIDEO_STORE_NAME, { keyPath: "id" });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -989,15 +1444,51 @@ function openFlowDatabase() {
   });
 }
 
-async function useFlowStore(mode, operation) {
+async function useFlowStore(mode, operation, storeName = FLOW_STORE_NAME) {
   const database = await openFlowDatabase();
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(FLOW_STORE_NAME, mode);
-    const request = operation(transaction.objectStore(FLOW_STORE_NAME));
+    const transaction = database.transaction(storeName, mode);
+    const request = operation(transaction.objectStore(storeName));
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => database.close();
   });
+}
+
+async function requestPersistentStorage() {
+  if (!navigator.storage?.persist) return false;
+  if (await navigator.storage.persisted?.()) return true;
+  return navigator.storage.persist();
+}
+async function saveLocalFlowOutput() {
+  if (!flowOutput?.blob) throw new Error("Önce videoyu oluştur");
+  const persistent = await requestPersistentStorage().catch(() => false);
+  await useFlowStore("readwrite", (store) => store.put({
+    id:FLOW_LATEST_VIDEO_ID, blob:flowOutput.blob, fileName:flowOutput.fileName,
+    type:flowOutput.type, title:$("#flow-title").value || "TERZİ video",
+    draftId:currentFlowDraftId || null, savedAt:new Date().toISOString()
+  }), FLOW_VIDEO_STORE_NAME);
+  const estimate = await navigator.storage?.estimate?.().catch(() => null);
+  const usedMb = estimate ? Math.round(estimate.usage / 1024 / 1024) : null;
+  const status = $("#flow-local-status");
+  status.classList.remove("hidden");
+  status.textContent = `✓ Video bu cihazda saklandı${persistent ? " · kalıcı depolama açık" : ""}${usedMb !== null ? ` · ${usedMb} MB kullanım` : ""}`;
+  return true;
+}
+async function restoreLocalFlowOutput() {
+  const saved = await useFlowStore("readonly", (store) => store.get(FLOW_LATEST_VIDEO_ID), FLOW_VIDEO_STORE_NAME);
+  if (!saved?.blob || !(saved.blob instanceof Blob) || flowOutput || flowRendering) return false;
+  if (flowOutput?.url) URL.revokeObjectURL(flowOutput.url);
+  flowOutput = { blob:saved.blob, url:URL.createObjectURL(saved.blob),
+    fileName:saved.fileName || "terzi-video.webm", type:saved.type || saved.blob.type,
+    localSavedAt:saved.savedAt };
+  $("#flow-video").src = flowOutput.url;
+  $("#flow-download").href = flowOutput.url;
+  $("#flow-download").download = flowOutput.fileName;
+  $("#flow-result").classList.remove("hidden");
+  $("#flow-local-status").classList.remove("hidden");
+  $("#flow-local-status").textContent = `Son cihaz videosu geri yüklendi · ${new Date(saved.savedAt).toLocaleString()}`;
+  return true;
 }
 
 function flowSnapshot() {
@@ -1150,14 +1641,14 @@ async function exportFlowProject() {
   };
   const blob = new Blob([JSON.stringify(packageData)], { type: "application/json" });
   const url = URL.createObjectURL(blob); const anchor = document.createElement("a");
-  anchor.href = url; anchor.download = `${($("#flow-title").value || "orbit-project").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "orbit-project"}.orbit`;
-  anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast("Orbit proje paketi indirildi");
+  anchor.href = url; anchor.download = `${($("#flow-title").value || "terzi-project").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "terzi-project"}.terzi`;
+  anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast("TERZİ proje paketi indirildi");
 }
 async function importFlowProject(file) {
   if (!file || file.size > 120 * 1024 * 1024) throw new Error("Proje paketi en fazla 120 MB olabilir");
   let packageData;
   try { packageData = JSON.parse(await file.text()); } catch { throw new Error("Proje paketi okunamadı"); }
-  if (packageData?.schema !== "orbit-studio-project" || packageData.version !== FLOW_PACKAGE_VERSION) throw new Error("Desteklenmeyen Orbit proje paketi");
+  if (packageData?.schema !== "orbit-studio-project" || packageData.version !== FLOW_PACKAGE_VERSION) throw new Error("Desteklenmeyen TERZİ proje paketi");
   const project = packageData.project;
   if (!project || !Array.isArray(project.scenes) || !project.scenes.length || project.scenes.length > 100) throw new Error("Proje sahneleri geçersiz");
   for (const saved of project.scenes) {
@@ -1206,12 +1697,13 @@ async function importFlowProject(file) {
   document.querySelectorAll("[data-flow-template]").forEach((button) => button.classList.toggle("active", button.dataset.flowTemplate === flowTemplate));
   $("#flow-template-name").textContent = flowTemplateName(flowTemplate);
   restoringFlowHistory = false; renderFlowScenes(); flowHistory = []; flowHistoryIndex = -1; captureFlowHistory(); showStep("flow");
-  toast("Orbit proje paketi açıldı");
+  toast("TERZİ proje paketi açıldı");
 }
 
 function clearFlowMedia() {
   flowScenes.forEach((scene) => { URL.revokeObjectURL(scene.url); scene.bitmap?.close?.(); });
   flowScenes = [];
+  flowNarrationContext = { text: "", contentLanguage: "", style: "natural" };
   flowMusic = null;
   if (flowOutput?.url) URL.revokeObjectURL(flowOutput.url);
   flowOutput = null;
@@ -1277,7 +1769,7 @@ function wrapCanvasText(context, text, maxWidth) {
     } else line = next;
   }
   if (line) lines.push(line);
-  return lines.slice(0, 4);
+  return lines;
 }
 
 function drawFlowImage(context, scene, progress, width, height, offsetX = 0, opacity = 1) {
@@ -1342,7 +1834,7 @@ function drawFlowFrame(scene, progress = 0, nextScene = null, transitionProgress
   if (centered) gradient.addColorStop(1, "rgba(8,10,17,0)");
   context.fillStyle = gradient;
   context.fillRect(0, top ? 0 : height * .3, width, top ? height * .58 : height * .7);
-  const textScene = nextScene && transitionProgress > .55 && transition !== "none" ? nextScene : scene;
+  const textScene = scene;
   const text = textScene.text || $("#flow-title").value.trim();
   if (text) {
     const sizeScale = { small: .78, medium: 1, large: 1.25 }[flowTextStyle.size] || 1;
@@ -1355,7 +1847,9 @@ function drawFlowFrame(scene, progress = 0, nextScene = null, transitionProgress
     context.fillStyle = flowTextStyle.color;
     context.shadowColor = "rgba(0,0,0,.55)";
     context.shadowBlur = 16;
-    const lines = wrapCanvasText(context, text, width * (flowTextStyle.safe ? .78 : .9));
+    const wrappedLines = wrapCanvasText(context, text, width * (flowTextStyle.safe ? .78 : .9));
+    const captionPages = Array.from({ length:Math.ceil(wrappedLines.length / 4) }, (_, index) => wrappedLines.slice(index * 4, index * 4 + 4));
+    const lines = captionPages[Math.min(captionPages.length - 1, Math.floor(progress * captionPages.length))] || [];
     const lineHeight = fontSize * 1.18;
     const totalHeight = lines.length * lineHeight;
     const safeMargin = flowTextStyle.safe ? height * .11 : height * .045;
@@ -1383,6 +1877,9 @@ function updateFlowPreview() {
   $("#flow-placeholder").classList.toggle("hidden", Boolean(flowScenes.length));
   drawFlowFrame(flowScenes[0]);
   const steps = document.querySelectorAll(".flow-quick-steps span");
+  const isTextOnly = flowScenes.some((scene) => scene.isTextOnly);
+  const secondStep = steps[1];
+  if (secondStep) secondStep.lastChild.nodeValue = ` ${isTextOnly ? ({ tr:"Cümleler", en:"Sentences", es:"Frases" }[lang()] || "Sentences") : ({ tr:"Fotoğraflar", en:"Photos", es:"Fotos" }[lang()] || "Photos")}`;
   steps[1]?.classList.toggle("done", flowScenes.length > 0);
   steps[2]?.classList.toggle("done", flowScenes.length > 0);
   steps[3]?.classList.toggle("done", Boolean(flowOutput));
@@ -1425,6 +1922,7 @@ function applyFlowCopy(index) {
   const preset = flowCopyPresets[flowTemplate]?.[index];
   if (!preset) return;
   activeFlowCopy = { title: preset[0], captions: [...preset[2]] };
+  flowNarrationContext.text = "";
   $("#flow-title").value = preset[0];
   flowScenes.forEach((scene, sceneIndex) => { scene.text = activeFlowCopy.captions[sceneIndex % activeFlowCopy.captions.length]; });
   $("#flow-copy-active-title").textContent = preset[0];
@@ -1437,16 +1935,16 @@ function renderFlowScenes() {
   const container = $("#flow-scenes");
   container.classList.toggle("empty-state", !flowScenes.length);
   container.innerHTML = flowScenes.length ? flowScenes.map((scene, index) => `
-    <article class="flow-scene" data-flow-id="${scene.id}" draggable="true">
-      <img src="${scene.url}" alt="">
-      <button class="scene-crop-button" data-flow-crop title="Kadrajı düzenle">⌗</button>
+    <article class="flow-scene ${scene.isTextOnly ? "text-only" : ""}" data-flow-id="${scene.id}" draggable="true">
+      ${scene.isTextOnly ? '<div class="flow-text-thumb" aria-hidden="true">“</div>' : `<img src="${scene.url}" alt="">`}
+      ${scene.isTextOnly ? "" : '<button class="scene-crop-button" data-flow-crop title="Kadrajı düzenle" aria-label="Kadrajı düzenle">⌗</button>'}
       <b data-flow-drag title="Sürükleyerek sırala">⠿ <small>${index + 1}</small></b>
       <label>Sahne yazısı<input data-flow-text value="${esc(scene.text)}" placeholder="Bu sahnede görünecek yazı"></label>
       <label>Süre<input data-flow-seconds type="number" min="1" max="10" value="${scene.seconds}"></label>
       <label>Hareket<select data-flow-motion><option value="zoom-in" ${scene.motion === "zoom-in" ? "selected" : ""}>Yakınlaş</option><option value="zoom-out" ${scene.motion === "zoom-out" ? "selected" : ""}>Uzaklaş</option><option value="pan-left" ${scene.motion === "pan-left" ? "selected" : ""}>Sola kay</option><option value="pan-right" ${scene.motion === "pan-right" ? "selected" : ""}>Sağa kay</option><option value="still" ${scene.motion === "still" ? "selected" : ""}>Sabit</option></select></label>
       <label>Geçiş<select data-flow-transition><option value="fade" ${scene.transition === "fade" ? "selected" : ""}>Yumuşak</option><option value="slide" ${scene.transition === "slide" ? "selected" : ""}>Kaydır</option><option value="none" ${scene.transition === "none" ? "selected" : ""}>Yok</option></select></label>
       <div><button data-flow-move="up" title="Yukarı">↑</button><button data-flow-move="down" title="Aşağı">↓</button><button data-flow-remove title="Kaldır">×</button></div>
-    </article>`).join("") : "Başlamak için en az bir fotoğraf seç.";
+    </article>`).join("") : "Başlamak için en az bir fotoğraf seç veya metin paylaşımı oluştur.";
   if (!flowScenes.length) container.textContent = ft("emptyScenes");
   container.querySelectorAll(".flow-scene").forEach((card) => {
     const labels = card.querySelectorAll("label");
@@ -1478,6 +1976,7 @@ async function addFlowFiles(files) {
       motion: $("#flow-motion").value, transition: $("#flow-transition").value, cropX: 50, cropY: 50, cropZoom: 1
     });
   }
+  redistributeFlowNarration();
   renderFlowScenes();
   if (flowScenes.length) { beginFlowAnalytics(); trackFlowStage("media"); }
   if (rejected.length) toast(`${rejected.length} görsel açılamadı. JPG, PNG veya WebP kullan.`, "error");
@@ -1495,24 +1994,217 @@ function demoSceneSvg(index) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="${start}"/><stop offset="1" stop-color="${end}"/></linearGradient><linearGradient id="ground"><stop stop-color="#110e34"/><stop offset="1" stop-color="#2e1b58"/></linearGradient></defs><rect width="900" height="1200" fill="url(#sky)"/><circle cx="${650-index*72}" cy="${245+index*28}" r="115" fill="${sun}" opacity=".92"/><circle cx="180" cy="210" r="3" fill="white"/><circle cx="275" cy="145" r="5" fill="white" opacity=".7"/><circle cx="760" cy="430" r="4" fill="white" opacity=".6"/><path d="${land}" transform="translate(0 270)" fill="url(#ground)"/><path d="M0 1020 Q240 880 470 1010 T900 900 V1200 H0Z" fill="#100d29" opacity=".85"/></svg>`;
 }
 
+function textPostBackgroundSvg(index) {
+  const palettes = [["#22134d", "#a72d81", "#ffb0d6"], ["#0e3650", "#146f8f", "#9ce7df"], ["#44205b", "#d95a73", "#ffd08b"], ["#152d3a", "#4f9177", "#d4f0a0"], ["#332046", "#7654b9", "#d7bbff"]];
+  const [start, end, glow] = palettes[index % palettes.length];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200"><defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="${start}"/><stop offset="1" stop-color="${end}"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="34"/></filter></defs><rect width="900" height="1200" fill="url(#bg)"/><circle cx="700" cy="245" r="175" fill="${glow}" opacity=".72" filter="url(#blur)"/><circle cx="180" cy="960" r="230" fill="${glow}" opacity=".22" filter="url(#blur)"/><path d="M0 940 C190 830 320 1050 510 940 S760 790 900 890 V1200 H0Z" fill="#090915" opacity=".24"/></svg>`;
+}
+
+async function createTextOnlyMotivationPost() {
+  if (textPostCreating) return;
+  textPostCreating = true;
+  const button = $("#text-post-create");
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  try {
+  const enteredLines = $("#text-post-lines").value.replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = (enteredLines.length ? enteredLines : (DEFAULT_MOTIVATION_LINES[lang()] || DEFAULT_MOTIVATION_LINES.en)).slice(0, 12);
+  clearFlowMedia(); currentFlowDraftId = null;
+  selectFlowTemplate("motivation");
+  $("#flow-title").value = $("#text-post-title").value.trim() || ({ tr:"Bugün kendine hatırlat", en:"A reminder for today", es:"Un recordatorio para hoy" }[lang()] || "A reminder for today");
+  $("#flow-narration-enabled").checked = false;
+  flowNarrationContext = { text: "", contentLanguage: "", style: "inspiring" };
+  for (let index = 0; index < lines.length; index += 1) {
+    const file = new File([textPostBackgroundSvg(index)], `motivation-text-${index + 1}.svg`, { type: "image/svg+xml" });
+    flowScenes.push({ id: crypto.randomUUID(), file, bitmap: await decodeFlowImage(file), url: URL.createObjectURL(file), isTextOnly: true,
+      text: lines[index].slice(0, 500), seconds: Number($("#flow-duration").value), direction: index % 2 ? -1 : 1,
+      motion: "still", transition: "fade", cropX: 50, cropY: 50, cropZoom: 1 });
+  }
+  renderFlowScenes(); beginFlowAnalytics("motivation"); trackFlowStage("media");
+  showMobileFlowPanel("scenes");
+  toast("Metin odaklı motivasyon paylaşımı hazır");
+  } finally {
+    textPostCreating = false;
+    button.disabled = false;
+    button.setAttribute("aria-busy", "false");
+  }
+}
+
 async function loadFlowDemo() {
   clearFlowMedia(); currentFlowDraftId = null;
   selectFlowTemplate("travel");
   $("#flow-title").value = "Five places that feel unreal";
   const captions = ["Some places feel like another planet.", "Follow the light beyond the horizon.", "Every road hides a new perspective.", "Slow down and notice the colors.", "Where would you go first?"];
   for (let index = 0; index < captions.length; index += 1) {
-    const file = new File([demoSceneSvg(index)], `orbit-demo-${index + 1}.svg`, { type: "image/svg+xml" });
+    const file = new File([demoSceneSvg(index)], `terzi-demo-${index + 1}.svg`, { type: "image/svg+xml" });
     const bitmap = await decodeFlowImage(file);
     flowScenes.push({ id: crypto.randomUUID(), file, bitmap, url: URL.createObjectURL(file), text: captions[index], seconds: 3, direction: index % 2 ? -1 : 1, motion: "zoom-in", transition: "fade", cropX: 50, cropY: 50, cropZoom: 1 });
   }
   renderFlowScenes(); beginFlowAnalytics("travel"); trackFlowStage("media");
   showStep("flow");
   document.querySelector(".flow-onboarding")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-  toast("Örnek proje hazır — metinleri değiştirebilir veya doğrudan render alabilirsin");
+  toast("Örnek proje hazır — metinleri değiştirebilir veya doğrudan videoyu oluşturabilirsin");
+}
+
+function splitNarrationAcrossScenes(text, sceneCount) {
+  const normalized = String(text || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return [""];
+  const count = Math.max(1, Math.min(Number(sceneCount) || 1, normalized.split(" ").length));
+  let segments = normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [normalized];
+  segments = segments.map((segment) => segment.trim()).filter(Boolean);
+  while (segments.length < count) {
+    const index = segments.reduce((longest, segment, candidate) =>
+      segment.split(/\s+/).length > segments[longest].split(/\s+/).length ? candidate : longest, 0);
+    const words = segments[index].split(/\s+/);
+    if (words.length < 2) break;
+    const middle = Math.ceil(words.length / 2);
+    segments.splice(index, 1, words.slice(0, middle).join(" "), words.slice(middle).join(" "));
+  }
+  if (segments.length <= count) return segments;
+  const words = normalized.split(" ");
+  return Array.from({ length:count }, (_, index) => words.slice(
+    Math.floor(index * words.length / count), Math.floor((index + 1) * words.length / count)
+  ).join(" "));
+}
+
+function sceneSecondsValue(value, fallback = 3) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return Math.max(1, Math.min(20, numeric));
+  const range = String(value || "").match(/^\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*$/);
+  if (range) return Math.max(1, Math.min(20, Number(range[2]) - Number(range[1])));
+  return fallback;
+}
+
+function speechWeight(text) {
+  const normalized = String(text || "").trim();
+  if (!normalized) return 0;
+  return Math.max(1, normalized.split(/\s+/).filter(Boolean).length + (normalized.match(/[.!?;:]/g) || []).length * .45);
+}
+
+function redistributeFlowNarration() {
+  if (!flowNarrationContext.text || !flowScenes.length) return;
+  const segments = splitNarrationAcrossScenes(flowNarrationContext.text, flowScenes.length);
+  flowScenes.forEach((scene, index) => { scene.text = segments[index] || ""; });
+}
+
+async function prepareProductionForDeviceRender(projectId) {
+  const project = state.productions.find((item) => item.id === projectId);
+  if (!project) throw new Error("Proje bulunamadı");
+  clearFlowMedia(); currentFlowDraftId = project.id;
+  flowNarrationContext = {
+    text: String(project.content?.narration || "").trim(),
+    contentLanguage: project.contentLanguage || "",
+    style: project.contentProfile === "documentary" || project.contentProfile === "educational"
+      ? "documentary" : project.contentProfile === "kids" ? "inspiring"
+        : ["shorts", "reels"].includes(project.contentType) ? "energetic" : "natural"
+  };
+  $("#flow-narration-enabled").checked = Boolean(flowNarrationContext.text);
+  selectFlowTemplate(project.contentType === "youtube" ? "education" : "culture");
+  $("#flow-title").value = project.content?.title || "TERZİ video";
+  const baseScenes = Array.isArray(project.content?.scenes) && project.content.scenes.length
+    ? project.content.scenes.slice(0, 10)
+    : [{ text:project.content?.hook || project.content?.narration || project.content?.title }];
+  const narrationWords = flowNarrationContext.text.split(/\s+/).filter(Boolean).length;
+  const sentenceCount = (flowNarrationContext.text || "").match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.length || 1;
+  const sceneCount = Math.min(10, Math.max(baseScenes.length, sentenceCount, Math.ceil(narrationWords / 14) || 1));
+  const contentScenes = Array.from({ length:sceneCount }, (_, index) => baseScenes[index % baseScenes.length]);
+  const narrationSegments = splitNarrationAcrossScenes(flowNarrationContext.text, sceneCount);
+  const assets = (project.visualAssets?.length
+    ? project.visualAssets : (project.sourceAsset ? [project.sourceAsset] : []))
+    .filter((asset) => asset?.previewUrl);
+  const knownPreviewUrls = new Set(assets.map((asset) => asset.previewUrl));
+  (project.images || []).filter(Boolean).forEach((previewUrl) => {
+    if (!knownPreviewUrls.has(previewUrl)) assets.push({ previewUrl, sourceLabel:"Proje görseli", title:"Proje görseli" });
+  });
+  let missingVisuals = 0;
+  for (let index = 0; index < contentScenes.length; index += 1) {
+    let file;
+    const asset = assets[index % Math.max(assets.length, 1)];
+    if (asset) {
+      try {
+        const previewUrl = /^https:\/\//i.test(asset.previewUrl)
+          ? `/api/image-proxy?url=${encodeURIComponent(asset.previewUrl)}`
+          : asset.previewUrl;
+        const response = await fetch(previewUrl, { credentials:"include" });
+        if (!response.ok) throw new Error(String(response.status));
+        const blob = await response.blob();
+        file = new File([blob], `terzi-project-${index + 1}.${blob.type.includes("png") ? "png" : "jpg"}`,
+          { type:blob.type || "image/jpeg" });
+      } catch { missingVisuals += 1; }
+    }
+    if (!file) {
+      file = new File([demoSceneSvg(index % 5)], `terzi-scene-${index + 1}.svg`,
+        { type:"image/svg+xml" });
+    }
+    const bitmap = await decodeFlowImage(file);
+    flowScenes.push({
+      id:crypto.randomUUID(), file, bitmap, url:URL.createObjectURL(file),
+      text:String(narrationSegments[index] || contentScenes[index]?.text || "").trim(),
+      seconds:sceneSecondsValue(contentScenes[index]?.seconds, Number($("#flow-duration").value || 3)),
+      direction:index % 2 ? -1 : 1, motion:"zoom-in", transition:"fade",
+      cropX:50, cropY:50, cropZoom:1
+    });
+  }
+  renderFlowScenes(); beginFlowAnalytics("ai-project"); trackFlowStage("media");
+  if (missingVisuals && assets.length) toast(`${missingVisuals} proje görseli okunamadı; bağlantı veya görsel erişimini kontrol et.`, "error");
+  showStep("flow");
+  if (window.matchMedia("(max-width:650px)").matches) showMobileFlowPanel("export");
+  updateFlowCompatibility(); updateFlowPreview();
 }
 
 function animationFrame() {
   return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+function narrationLanguageCode(text, configuredLanguage = "") {
+  const configuredKey = Object.keys(CONTENT_LANGUAGE_CODES).find((name) => name.toLowerCase() === String(configuredLanguage || "").toLowerCase());
+  if (configuredKey) return CONTENT_LANGUAGE_CODES[configuredKey];
+  const sample = String(text || "").toLocaleLowerCase("tr-TR");
+  const turkishWords = sample.match(/\b(ve|bir|bu|için|ile|ama|gibi|daha|olan|olarak|çok|değil|şimdi|sonra|neden|nasıl)\b/g) || [];
+  if (/[çğıöşü]/i.test(sample) || turkishWords.length >= 2) return "tr";
+  const configured = String(configuredLanguage || "").toLowerCase();
+  if (configured.includes("turkish") || configured.includes("türkçe")) return "tr";
+  if (configured.includes("spanish") || configured.includes("español")) return "es";
+  if (configured.includes("french") || configured.includes("français")) return "fr";
+  if (configured.includes("chinese")) return "zh";
+  if (configured.includes("japanese")) return "ja";
+  if (configured.includes("korean")) return "ko";
+  return "en";
+}
+
+function splitNarrationForSpeech(text, maxLength = 4000) {
+  const remaining = String(text || "").trim();
+  if (!remaining) return [];
+  const chunks = [];
+  let cursor = remaining;
+  while (cursor.length > maxLength) {
+    const windowText = cursor.slice(0, maxLength + 1);
+    const sentenceBreak = Math.max(windowText.lastIndexOf(". "), windowText.lastIndexOf("! "), windowText.lastIndexOf("? "), windowText.lastIndexOf("\n"));
+    const wordBreak = windowText.lastIndexOf(" ");
+    const cut = sentenceBreak >= Math.floor(maxLength * .55) ? sentenceBreak + 1
+      : wordBreak >= Math.floor(maxLength * .55) ? wordBreak : maxLength;
+    chunks.push(cursor.slice(0, cut).trim());
+    cursor = cursor.slice(cut).trim();
+  }
+  if (cursor) chunks.push(cursor);
+  return chunks;
+}
+
+function joinAudioBuffers(audioContext, buffers) {
+  if (buffers.length === 1) return buffers[0];
+  const channelCount = Math.max(...buffers.map((buffer) => buffer.numberOfChannels));
+  const pauseLength = Math.round(audioContext.sampleRate * .1);
+  const totalLength = buffers.reduce((sum, buffer) => sum + buffer.length, 0) + pauseLength * (buffers.length - 1);
+  const combined = audioContext.createBuffer(channelCount, totalLength, audioContext.sampleRate);
+  let offset = 0;
+  for (const buffer of buffers) {
+    for (let channel = 0; channel < channelCount; channel += 1) {
+      const source = buffer.getChannelData(Math.min(channel, buffer.numberOfChannels - 1));
+      combined.copyToChannel(source, channel, offset);
+    }
+    offset += buffer.length + pauseLength;
+  }
+  return combined;
 }
 
 function getFlowRecordingProfile() {
@@ -1553,9 +2245,13 @@ function updateFlowCompatibility() {
     <span><b>${audio ? "✓" : "×"}</b> Arka plan müziği</span>
     <span><b>${directShare ? "✓" : "—"}</b> Sistem paylaşım ekranı</span>
     <small>Çıktı: ${profile.format}${directShare ? " · Doğrudan paylaşım destekleniyor" : " · Dosya indirerek paylaşabilirsin"}</small>`;
-  $("#flow-render").disabled = !flowScenes.length || !profile.supported;
-  $("#flow-render").textContent = profile.supported
+  $("#flow-render").disabled = flowRendering || !flowScenes.length || !profile.supported;
+  $('#flow-render').setAttribute('aria-busy', String(flowRendering));
+  $("#flow-render").textContent = flowRendering
+    ? ({ tr: 'Video hazırlanıyor…', en: 'Creating video…', es: 'Creando vídeo…' }[lang()] || 'Creating video…')
+    : profile.supported
     ? flowRuntime("renderAs").replace("{format}", profile.extension.toUpperCase()) : flowRuntime("noRender");
+  syncMobileFlowAction();
 }
 
 async function renderFlowVideo() {
@@ -1569,7 +2265,10 @@ async function renderFlowVideo() {
   let audioContext = null;
   let musicSource = null;
   let narrationSource = null;
-  const narrationText = flowScenes.map((scene) => String(scene.text || "").trim()).filter(Boolean).join(". ").slice(0, 4000);
+  let narrationDuration = 0;
+  const narrationText = String(flowNarrationContext.text || flowScenes
+    .map((scene) => String(scene.text || "").trim()).filter(Boolean).join(". "))
+    .trim();
   if ($("#flow-narration-enabled").checked && !narrationText) throw new Error("Seslendirme için sahnelere metin ekle veya AI seslendirmeyi kapat.");
   const narrationEnabled = $("#flow-narration-enabled").checked && narrationText;
   if (flowMusic || narrationEnabled) {
@@ -1580,33 +2279,70 @@ async function renderFlowVideo() {
     const destination = audioContext.createMediaStreamDestination();
     if (narrationEnabled) {
       $("#flow-progress span").textContent = "AI seslendirme hazırlanıyor…";
-      const language = String(state.settings.contentLanguage || "English").toLowerCase();
-      const lang = language.includes("spanish") || language.includes("español") ? "es"
-        : language.includes("french") ? "fr" : "en";
-      const response = await fetch("/api/tts", { method:"POST", headers:{ "content-type":"application/json" }, body:JSON.stringify({ text:narrationText, lang }) });
-      if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        throw new Error(detail.error || "AI seslendirme hazırlanamadı");
+      const lang = narrationLanguageCode(narrationText,
+        flowNarrationContext.contentLanguage || state.settings.contentLanguage);
+      const geminiKey = localStorage.getItem("orbit-device-key-gemini") || "";
+      const narrationStyle = flowNarrationContext.style || ({ motivation:"inspiring", education:"documentary" }[flowTemplate] || "natural");
+      try {
+        const narrationBuffers = [];
+        const chunks = splitNarrationForSpeech(narrationText);
+        for (let index = 0; index < chunks.length; index += 1) {
+          $("#flow-progress span").textContent = chunks.length > 1
+            ? `AI seslendirme hazırlanıyor… ${index + 1}/${chunks.length}`
+            : "AI seslendirme hazırlanıyor…";
+          const cacheKey = JSON.stringify([lang, narrationStyle, chunks[index]]);
+          let audioBytes = flowNarrationAudioCache.get(cacheKey);
+          if (!audioBytes) {
+            const response = await fetch("/api/tts", {
+              method:"POST",
+              headers:{
+                "content-type":"application/json",
+                ...(geminiKey ? { "x-orbit-ai-key":geminiKey } : {})
+              },
+              body:JSON.stringify({ text:chunks[index], lang, style:narrationStyle })
+            });
+            if (!response.ok) {
+              const detail = await response.json().catch(() => ({}));
+              throw new Error(detail.error || `Seslendirme servisi ${response.status} hatası verdi`);
+            }
+            audioBytes = await response.arrayBuffer();
+            flowNarrationAudioCache.set(cacheKey, audioBytes);
+            if (flowNarrationAudioCache.size > 12) {
+              flowNarrationAudioCache.delete(flowNarrationAudioCache.keys().next().value);
+            }
+          }
+          narrationBuffers.push(await audioContext.decodeAudioData(audioBytes.slice(0)));
+        }
+        const narrationBuffer = joinAudioBuffers(audioContext, narrationBuffers);
+        narrationDuration = narrationBuffer.duration;
+        narrationSource = audioContext.createBufferSource();
+        narrationSource.buffer = narrationBuffer;
+        const narrationGain = audioContext.createGain();
+        narrationGain.gain.value = 1;
+        narrationSource.connect(narrationGain).connect(destination);
+        trackProductEvent("voice_generated", { result:"success" });
+      } catch (error) {
+        trackProductEvent("voice_failed", { result:"failure" });
+        stream.getTracks().forEach((track) => track.stop());
+        canvasStream.getTracks().forEach((track) => track.stop());
+        await audioContext.close();
+        throw new Error(`AI seslendirme oluşturulamadı: ${error.message}`);
       }
-      const narrationBuffer = await audioContext.decodeAudioData(await response.arrayBuffer());
-      narrationSource = audioContext.createBufferSource();
-      narrationSource.buffer = narrationBuffer;
-      const narrationGain = audioContext.createGain();
-      narrationGain.gain.value = 1;
-      narrationSource.connect(narrationGain).connect(destination);
     }
     if (flowMusic) {
     if (!flowMusic.buffer) {
       flowMusic.buffer = await audioContext.decodeAudioData(await flowMusic.file.arrayBuffer());
     }
     const gain = audioContext.createGain();
-    gain.gain.value = (Number($("#flow-music-volume").value) / 100) * (narrationEnabled ? .7 : 1);
+    gain.gain.value = (Number($("#flow-music-volume").value) / 100) * (narrationSource ? .7 : 1);
     musicSource = audioContext.createBufferSource();
     musicSource.buffer = flowMusic.buffer;
     musicSource.loop = true;
     musicSource.connect(gain).connect(destination);
     }
-    destination.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
+    if (flowMusic || narrationSource) {
+      destination.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
+    }
   }
   const chunks = [];
   const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
@@ -1617,13 +2353,23 @@ async function renderFlowVideo() {
   recorder.start(500);
   narrationSource?.start(0);
   musicSource?.start(0);
-  const total = flowScenes.reduce((sum, scene) => sum + scene.seconds, 0);
+  const visualTotal = flowScenes.reduce((sum, scene) => sum + scene.seconds, 0);
+  const targetDuration = narrationDuration > 0 ? Math.max(1, narrationDuration + .2) : visualTotal;
+  const weights = narrationDuration > 0 ? flowScenes.map((scene) => speechWeight(scene.text)) : [];
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const useSpeechTimeline = narrationDuration > 0 && totalWeight > 0;
+  const durationScale = visualTotal > 0 ? targetDuration / visualTotal : 1;
+  const renderDurations = flowScenes.map((scene, index) => useSpeechTimeline
+    ? targetDuration * weights[index] / totalWeight
+    : scene.seconds * durationScale);
+  const total = renderDurations.reduce((sum, seconds) => sum + seconds, 0);
   let elapsed = 0;
   for (let sceneIndex = 0; sceneIndex < flowScenes.length; sceneIndex += 1) {
     const scene = flowScenes[sceneIndex];
     const nextScene = flowScenes[sceneIndex + 1] || null;
     const started = performance.now();
-    const duration = scene.seconds * 1000;
+    const sceneSeconds = renderDurations[sceneIndex];
+    const duration = sceneSeconds * 1000;
     while (performance.now() - started < duration) {
       const sceneElapsed = performance.now() - started;
       const progress = Math.min(1, sceneElapsed / duration);
@@ -1631,12 +2377,12 @@ async function renderFlowVideo() {
       const transitionProgress = nextScene && scene.transition !== "none"
         ? Math.max(0, Math.min(1, (sceneElapsed - (duration - transitionDuration)) / transitionDuration)) : 0;
       drawFlowFrame(scene, progress, nextScene, transitionProgress);
-      const percent = Math.round(((elapsed + progress * scene.seconds) / total) * 100);
+      const percent = Math.round(((elapsed + progress * sceneSeconds) / total) * 100);
       $("#flow-progress i").style.width = `${percent}%`;
       $("#flow-progress span").textContent = `Video hazırlanıyor… %${percent}`;
       await animationFrame();
     }
-    elapsed += scene.seconds;
+    elapsed += sceneSeconds;
   }
   recorder.stop();
   try { narrationSource?.stop(); } catch {}
@@ -1649,19 +2395,20 @@ async function renderFlowVideo() {
   const extension = profile.extension;
   if (flowOutput?.url) URL.revokeObjectURL(flowOutput.url);
   const blob = new Blob(chunks, { type });
-  const fileName = `${($("#flow-title").value || "orbit-video").trim().replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]+/gi, "-").replace(/^-|-$/g, "") || "orbit-video"}.${extension}`;
+  const fileName = `${($("#flow-title").value || "terzi-video").trim().replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]+/gi, "-").replace(/^-|-$/g, "") || "terzi-video"}.${extension}`;
   flowOutput = { blob, url: URL.createObjectURL(blob), fileName, type };
   $("#flow-video").src = flowOutput.url;
   $("#flow-download").href = flowOutput.url;
   $("#flow-download").download = fileName;
   $("#flow-result").classList.remove("hidden");
+  await saveLocalFlowOutput();
   updateFlowPreview();
 }
 
 async function shareFlowVideo(platform = "") {
   if (!flowOutput) throw new Error("Önce videoyu oluştur");
   const file = new File([flowOutput.blob], flowOutput.fileName, { type: flowOutput.type });
-  const shareData = { files: [file], title: $("#flow-title").value || "Orbit Studio video", text: platform ? `${platform} için hazırlandı` : "" };
+  const shareData = { files: [file], title: $("#flow-title").value || "TERZİ video", text: platform ? `${platform} için hazırlandı` : "" };
   if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
     await navigator.share(shareData); trackFlowStage("shared"); return;
   }
@@ -1670,6 +2417,56 @@ async function shareFlowVideo(platform = "") {
   if (platform && urls[platform]) window.open(urls[platform], "_blank", "noopener");
   trackFlowStage("shared");
   toast("Video indirildi. Platformda yeni gönderi oluşturup dosyayı seçebilirsin.");
+}
+
+async function saveFlowVideoToCloud() {
+  if (!flowOutput) throw new Error("Önce videoyu oluştur");
+  if (state.runtime?.deployment !== "cloudflare") throw new Error("Bulut kayıt yalnızca Cloudflare sürümünde kullanılabilir");
+  const button = $("#flow-cloud-save");
+  const status = $("#flow-cloud-status");
+  button.disabled = true;
+  status.classList.remove("hidden");
+  status.textContent = "Bulut yüklemesi hazırlanıyor…";
+  let session = null;
+  try {
+    session = await api("/api/cloud-media/uploads", {
+      method:"POST", body:JSON.stringify({ fileName:flowOutput.fileName,
+        contentType:flowOutput.type, byteSize:flowOutput.blob.size,
+        projectId:currentFlowDraftId || "" })
+    });
+    const parts = [];
+    const totalParts = Math.ceil(flowOutput.blob.size / session.partSize);
+    for (let index = 0; index < totalParts; index += 1) {
+      const chunk = flowOutput.blob.slice(index * session.partSize,
+        Math.min(flowOutput.blob.size, (index + 1) * session.partSize));
+      let response;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        response = await fetch(`/api/cloud-media/uploads/${session.id}/parts/${index + 1}?uploadId=${encodeURIComponent(session.uploadId)}`, {
+          method:"PUT", headers:{ "content-type":"application/octet-stream" }, body:chunk
+        });
+        if (response.ok) break;
+        if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+      }
+      const part = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(part.error || `Video parçası yüklenemedi (${index + 1}/${totalParts})`);
+      parts.push(part);
+      status.textContent = `Buluta yükleniyor… %${Math.round(((index + 1) / totalParts) * 100)}`;
+    }
+    const result = await api(`/api/cloud-media/uploads/${session.id}/complete`, {
+      method:"POST", body:JSON.stringify({ parts })
+    });
+    flowOutput.cloud = result;
+    status.innerHTML = `✓ Video bulutta güvende · <a href="${result.url}" target="_blank" rel="noopener">Aç</a>`;
+    button.textContent = "✓ Buluta kaydedildi";
+    toast("Video TERZİ bulutuna kaydedildi");
+  } catch (error) {
+    if (session?.id) {
+      await api(`/api/cloud-media/uploads/${session.id}`, { method:"DELETE" }).catch(() => {});
+    }
+    throw error;
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function buildPublishKit() {
@@ -1706,14 +2503,24 @@ async function downloadFlowCover() {
   const blob = await new Promise((resolve) => $("#flow-canvas").toBlob(resolve, "image/jpeg", .92));
   if (!blob) throw new Error("Kapak karesi hazırlanamadı");
   const url = URL.createObjectURL(blob); const anchor = document.createElement("a");
-  anchor.href = url; anchor.download = `${($("#flow-title").value || "orbit-cover").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "orbit-cover"}-cover.jpg`;
+  anchor.href = url; anchor.download = `${($("#flow-title").value || "terzi-cover").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "terzi-cover"}-cover.jpg`;
   anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast("Kapak karesi indirildi");
 }
 
 $("#flow-files").addEventListener("change", async (event) => {
   await addFlowFiles([...event.target.files]); event.target.value = "";
 });
+$("#flow-camera").addEventListener("change", async (event) => {
+  const files = [...event.target.files];
+  if (files.length) {
+    await addFlowFiles(files);
+    showMobileFlowPanel("scenes");
+    toast("Kamera fotoğrafı yeni sahne olarak eklendi");
+  }
+  event.target.value = "";
+});
 $("#flow-demo").addEventListener("click", () => loadFlowDemo().catch((error) => toast(error.message, "error")));
+$("#text-post-create").addEventListener("click", () => createTextOnlyMotivationPost().catch((error) => toast(error.message, "error")));
 $("#flow-templates").addEventListener("click", (event) => {
   const button = event.target.closest("[data-flow-template]");
   if (button) { selectFlowTemplate(button.dataset.flowTemplate); beginFlowAnalytics(button.dataset.flowTemplate); }
@@ -1835,6 +2642,15 @@ $("#ai-key-modal-settings").addEventListener("click", () => {
   if (!$("#ai-transfer-consent").checked) return;
   localStorage.setItem(`orbit-ai-consent-${provider}`, "yes");
   closeAiKeyModal();
+  if (hasProviderCredential(provider)) {
+    toast({
+      tr:"AI bağlantısı hazır. Otomatik üretime devam edebilirsin.",
+      en:"AI connection is ready. You can continue automatic creation.",
+      es:"La conexión de IA está lista. Puedes continuar con la creación automática."
+    }[lang()]);
+    resumePendingAiAction();
+    return;
+  }
   $("#settings-panel").classList.remove("hidden");
   document.querySelector("[data-settings-tab=integrations]")?.click();
   $("#integration-provider").value = provider === "claude" ? "anthropic" : provider;
@@ -1848,15 +2664,91 @@ $("#ai-key-modal-settings").addEventListener("click", () => {
 });
 $("#ai-key-modal-pro").addEventListener("click", () => {
   closeAiKeyModal();
-  toast({
-    tr:"Orbit Pro anahtarsız AI paketi yakında. Hazır olduğunda seni uygulama içinden davet edeceğiz.",
-    en:"Keyless AI with Orbit Pro is coming soon. We will invite you in the app when it is ready.",
-    es:"La IA sin claves de Orbit Pro llegará pronto. Te invitaremos desde la aplicación."
-  }[lang()], "warn");
+  openAccountModal(state.runtime?.account ? "account" : "register");
 });
+$("#account-toggle").addEventListener("click", () => openAccountModal(state.runtime?.account ? "account" : "register"));
+$("#account-close").addEventListener("click", closeAccountModal);
+$("#account-modal").addEventListener("click", (event) => { if (event.target.id === "account-modal") closeAccountModal(); });
+document.querySelectorAll("[data-account-mode]").forEach((button) => button.addEventListener("click", () => setAccountMode(button.dataset.accountMode)));
+$("#account-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = $("#account-submit");
+  submit.disabled = true;
+  submit.textContent = accountMode === "login" ? "Giriş yapılıyor…" : "Hesap oluşturuluyor…";
+  try {
+    if (accountMode === "register") trackProductEvent("account_started");
+    const result = await api(`/api/auth/${accountMode}`, { method:"POST", body:JSON.stringify({
+      email:$("#account-email").value, password:$("#account-password").value,
+      turnstileToken:turnstileToken("account-turnstile")
+    }) });
+    $("#account-password").value = "";
+    await refresh();
+    renderAccountAccess();
+    if (accountMode === "register") trackProductEvent("account_created", { result:"success" });
+    toast(accountMode === "login" ? "Hesabına giriş yapıldı"
+      : result.verificationSent ? "Hesabın oluşturuldu. E-postandaki doğrulama bağlantısını aç."
+        : "Hesabın oluşturuldu. Doğrulama e-postası şu an gönderilemedi; biraz sonra yeniden dene.",
+    result.verificationSent === false ? "warn" : "ok");
+    if (pendingAiAction) {
+      if (state.runtime?.account?.emailVerified) { closeAccountModal(); resumePendingAiAction(); }
+    }
+  } catch (error) { toast(error.message, "error"); }
+  finally { submit.disabled = false; resetTurnstile("account-turnstile"); setAccountMode(accountMode); }
+});
+$("#account-forgot").addEventListener("click", async () => {
+  const email = $("#account-email").value.trim();
+  if (!email) { $("#account-email").focus(); return toast("Önce e-posta adresini yaz", "warn"); }
+  const button = $("#account-forgot"); button.disabled = true;
+  try {
+    const result = await api("/api/auth/password/request", { method:"POST", body:JSON.stringify({ email, turnstileToken:turnstileToken("account-turnstile") }) });
+    const message = $("#account-auth-message"); message.textContent = result.message; message.classList.remove("hidden");
+    toast(result.message);
+  } catch (error) { toast(error.message, "error"); }
+  finally { button.disabled = false; resetTurnstile("account-turnstile"); }
+});
+$("#account-resend-verification").addEventListener("click", async (event) => {
+  const button = event.currentTarget; button.disabled = true;
+  try {
+    const result = await api("/api/auth/verify/request", { method:"POST", body:JSON.stringify({ email:state.runtime?.account?.email, turnstileToken:turnstileToken("verify-turnstile") }) });
+    toast(result.message);
+  } catch (error) { toast(error.message, "error"); }
+  finally { button.disabled = false; resetTurnstile("verify-turnstile"); }
+});
+$("#account-delete").addEventListener("click", async (event) => {
+  const password = $("#account-delete-password").value;
+  if (!password) return toast("Hesabını silmek için parolanı yaz", "warn");
+  if (!window.confirm("Hesabın, bulut projelerin ve dosyaların kalıcı olarak silinecek. Devam edilsin mi?")) return;
+  const button = event.currentTarget; button.disabled = true;
+  try {
+    await api("/api/auth/account", { method:"DELETE", body:JSON.stringify({ confirmation:"DELETE", password }) });
+    closeAccountModal(); await refresh(); toast("Hesabın ve bulut verilerin silindi");
+  } catch (error) { toast(error.message, "error"); }
+  finally { button.disabled = false; }
+});
+function closeAuthActionModal() { $("#auth-action-modal").classList.add("hidden"); }
+$("#auth-action-close").addEventListener("click", closeAuthActionModal);
+$("#auth-action-modal").addEventListener("click", (event) => { if (event.target.id === "auth-action-modal") closeAuthActionModal(); });
+$("#password-reset-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const token = new URLSearchParams(window.location.search).get("reset");
+  const button = event.submitter; button.disabled = true;
+  try {
+    await api("/api/auth/password/reset", { method:"POST", body:JSON.stringify({ token, password:$("#password-reset-value").value, turnstileToken:turnstileToken("reset-turnstile") }) });
+    history.replaceState({}, "", window.location.pathname + window.location.hash);
+    closeAuthActionModal(); openAccountModal("login"); toast("Parolan yenilendi. Yeni parolanla giriş yapabilirsin.");
+  } catch (error) { toast(error.message, "error"); resetTurnstile("reset-turnstile"); }
+  finally { button.disabled = false; }
+});
+$("#account-logout").addEventListener("click", async () => {
+  await api("/api/auth/logout", { method:"POST" });
+  closeAccountModal(); await refresh(); toast("Hesaptan çıkış yapıldı");
+});
+$("#account-upgrade").addEventListener("click", () => startProCheckout().catch((error) => toast(error.message, "error")));
+$("#account-manage").addEventListener("click", () => startProCheckout().catch((error) => toast(error.message, "error")));
+$("#pro-upgrade").addEventListener("click", () => startProCheckout().catch((error) => toast(error.message, "error")));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    const visibleModal = ["ai-key-modal","flow-crop-modal","flow-bulk-text-modal","welcome-guide","ios-install-guide"].map((id) => $(`#${id}`)).find((node) => node && !node.classList.contains("hidden"));
+    const visibleModal = ["auth-action-modal","account-modal","ai-key-modal","flow-crop-modal","flow-bulk-text-modal","welcome-guide","ios-install-guide"].map((id) => $(`#${id}`)).find((node) => node && !node.classList.contains("hidden"));
     if (visibleModal) { visibleModal.classList.add("hidden"); return; }
   }
   if (!(event.ctrlKey || event.metaKey) || !["z", "y"].includes(event.key.toLowerCase())) return;
@@ -1870,7 +2762,10 @@ $("#flow-scenes").addEventListener("input", (event) => {
   const card = event.target.closest("[data-flow-id]");
   const scene = flowScenes.find((item) => item.id === card?.dataset.flowId);
   if (!scene) return;
-  if (event.target.hasAttribute("data-flow-text")) scene.text = event.target.value;
+  if (event.target.hasAttribute("data-flow-text")) {
+    scene.text = event.target.value;
+    flowNarrationContext.text = "";
+  }
   if (event.target.hasAttribute("data-flow-seconds")) scene.seconds = Math.max(1, Math.min(10, Number(event.target.value) || 1));
   if (event.target.hasAttribute("data-flow-motion")) scene.motion = event.target.value;
   if (event.target.hasAttribute("data-flow-transition")) scene.transition = event.target.value;
@@ -1881,15 +2776,17 @@ $("#flow-scenes").addEventListener("click", (event) => {
   const card = button?.closest("[data-flow-id]");
   const index = flowScenes.findIndex((item) => item.id === card?.dataset.flowId);
   if (index < 0) return;
+  let timelineChanged = false;
   if (button.hasAttribute("data-flow-crop")) {
     openFlowCrop(flowScenes[index]); return;
   } else if (button.hasAttribute("data-flow-remove")) {
-    URL.revokeObjectURL(flowScenes[index].url); flowScenes.splice(index, 1);
+    URL.revokeObjectURL(flowScenes[index].url); flowScenes.splice(index, 1); timelineChanged = true;
   } else if (button.dataset.flowMove === "up" && index > 0) {
-    [flowScenes[index - 1], flowScenes[index]] = [flowScenes[index], flowScenes[index - 1]];
+    [flowScenes[index - 1], flowScenes[index]] = [flowScenes[index], flowScenes[index - 1]]; timelineChanged = true;
   } else if (button.dataset.flowMove === "down" && index < flowScenes.length - 1) {
-    [flowScenes[index + 1], flowScenes[index]] = [flowScenes[index], flowScenes[index + 1]];
+    [flowScenes[index + 1], flowScenes[index]] = [flowScenes[index], flowScenes[index + 1]]; timelineChanged = true;
   }
+  if (timelineChanged) flowNarrationContext.text = "";
   renderFlowScenes();
 });
 function updateFlowCropPreview() {
@@ -1933,7 +2830,7 @@ $("#flow-scenes").addEventListener("drop", (event) => {
   const target = event.target.closest("[data-flow-id]");
   const from = flowScenes.findIndex((scene) => scene.id === draggedFlowSceneId);
   const to = flowScenes.findIndex((scene) => scene.id === target?.dataset.flowId);
-  if (from >= 0 && to >= 0 && from !== to) { const [moved] = flowScenes.splice(from, 1); flowScenes.splice(to, 0, moved); }
+  if (from >= 0 && to >= 0 && from !== to) { const [moved] = flowScenes.splice(from, 1); flowScenes.splice(to, 0, moved); flowNarrationContext.text = ""; }
   draggedFlowSceneId = null; renderFlowScenes();
 });
 $("#flow-scenes").addEventListener("dragend", () => {
@@ -1955,7 +2852,7 @@ $("#flow-scenes").addEventListener("pointermove", (event) => {
   const from = flowScenes.findIndex((scene) => scene.id === draggedFlowSceneId);
   const to = flowScenes.findIndex((scene) => scene.id === target.dataset.flowId);
   if (from >= 0 && to >= 0) {
-    const [moved] = flowScenes.splice(from, 1); flowScenes.splice(to, 0, moved); renderFlowScenes();
+    const [moved] = flowScenes.splice(from, 1); flowScenes.splice(to, 0, moved); flowNarrationContext.text = ""; renderFlowScenes();
     touchDragCard = document.querySelector(`[data-flow-id="${draggedFlowSceneId}"]`); touchDragCard?.classList.add("dragging");
   }
 });
@@ -1983,18 +2880,33 @@ $("#flow-bulk-text-modal").addEventListener("click", (event) => { if (event.targ
 $("#flow-bulk-text-apply").addEventListener("click", () => {
   const lines = $("#flow-bulk-textarea").value.replace(/\r/g, "").split("\n");
   flowScenes.forEach((scene, index) => { scene.text = (lines[index] || "").trim(); });
+  flowNarrationContext.text = "";
   activeFlowCopy = null; $("#flow-copy-active").classList.add("hidden");
   renderFlowScenes(); closeBulkTextModal(); toast("Sahne metinleri güncellendi");
 });
 $("#flow-render").addEventListener("click", async () => {
-  const button = $("#flow-render"); button.disabled = true;
+  if (flowRendering) return;
+  trackProductEvent("render_started");
+  flowRendering = true;
+  updateFlowCompatibility();
   $("#flow-progress").classList.remove("hidden"); $("#flow-result").classList.add("hidden");
-  try { await renderFlowVideo(); trackFlowStage("rendered"); toast("Video cihazında oluşturuldu"); }
-  catch (error) { trackRenderError(); toast(error.message, "error"); }
-  finally { button.disabled = false; $("#flow-progress").classList.add("hidden"); }
+  try {
+    await renderFlowVideo(); trackFlowStage("rendered"); trackProductEvent("render_completed", { result:"success" });
+    toast(flowOutput?.warning || "Video cihazında oluşturuldu", flowOutput?.warning ? "warn" : "ok");
+  }
+  catch (error) { trackRenderError(); trackProductEvent("render_failed", { result:"failure" }); toast(error.message, "error"); }
+  finally { flowRendering = false; updateFlowCompatibility(); $("#flow-progress").classList.add("hidden"); }
 });
 $("#flow-share").addEventListener("click", () => shareFlowVideo().catch((error) => {
   if (error.name !== "AbortError") toast(error.message, "error");
+}));
+$("#flow-local-save").addEventListener("click", () => saveLocalFlowOutput()
+  .then(() => toast("Video bu cihazda saklandı"))
+  .catch((error) => toast(error.message, "error")));
+$("#flow-cloud-save").addEventListener("click", () => saveFlowVideoToCloud().catch((error) => {
+  $("#flow-cloud-status").classList.remove("hidden");
+  $("#flow-cloud-status").textContent = error.message;
+  toast(error.message, "error");
 }));
 $("#publish-kit-create").addEventListener("click", () => { try { buildPublishKit(); } catch (error) { toast(error.message, "error"); } });
 $("#publish-platform").addEventListener("change", buildPublishKit);
@@ -2005,7 +2917,7 @@ document.querySelectorAll("[data-share-platform]").forEach((button) => button.ad
   shareFlowVideo(button.dataset.sharePlatform).catch((error) => {
     if (error.name !== "AbortError") toast(error.message, "error");
   })));
-$("#flow-download").addEventListener("click", () => trackFlowStage("shared"));
+$("#flow-download").addEventListener("click", () => { trackFlowStage("shared"); trackProductEvent("video_downloaded"); });
 $("#flow-compatibility-more").addEventListener("click", (event) => {
   const details = $("#flow-compatibility-details");
   const open = details.classList.toggle("hidden") === false;
@@ -2021,10 +2933,50 @@ function closeWelcomeGuide() {
   $("#welcome-guide").classList.add("hidden");
   try { localStorage.setItem(WELCOME_SEEN_KEY, "1"); } catch {}
 }
+function showWelcomeWhenReady() {
+  try {
+    const ready = Boolean(preferredUiLanguage)
+      && Boolean(localStorage.getItem("orbit-legal-acceptance-v1"))
+      && $("#language-gate").classList.contains("hidden")
+      && $("#legal-gate").classList.contains("hidden")
+      && !localStorage.getItem(WELCOME_SEEN_KEY);
+    try { updateWelcomeGuideAccess(); } catch {}
+    $("#welcome-guide").classList.toggle("hidden", !ready);
+  } catch {}
+}
+function updateWelcomeGuideAccess() {
+  const serviceReady = Boolean(state.runtime?.capabilities?.managedText || state.runtime?.cloudflareConfigured);
+  const needsAccount = serviceReady && !state.runtime?.account;
+  const demoReady = Boolean(state.runtime?.demoAvailable && serviceReady);
+  const copy = {
+    tr: needsAccount ? { button:"Ücretsiz hesap oluştur →", note:"Demo için API anahtarı gerekmez; yalnızca ücretsiz hesabına bağlanır." } : demoReady ? { button:"İlk videomu oluştur →", note:"Demo için API anahtarı gerekmez." } : { button:"Ücretsiz manuel video oluştur →", note:"Otomatik demo kullanılamıyor; kendi içeriğinle cihazında ücretsiz video oluşturabilirsin." },
+    en: needsAccount ? { button:"Create a free account →", note:"No API key is needed; the demo is simply linked to your free account." } : demoReady ? { button:"Create my first video →", note:"No API key is needed for the demo." } : { button:"Create a free manual video →", note:"The automatic demo is unavailable; you can still create a free on-device video with your own content." },
+    es: needsAccount ? { button:"Crear una cuenta gratis →", note:"No necesitas una clave API; la demo solo se vincula a tu cuenta gratuita." } : demoReady ? { button:"Crear mi primer vídeo →", note:"No necesitas una clave API para la demo." } : { button:"Crear un vídeo manual gratis →", note:"La demo automática no está disponible; aún puedes crear gratis un vídeo en tu dispositivo con tu contenido." }
+  }[lang()];
+  $("#welcome-guide-demo").textContent = copy.button;
+  $("#welcome-guide-access").textContent = copy.note;
+  $("#welcome-guide-demo").dataset.mode = needsAccount ? "register" : demoReady ? "automatic" : "manual";
+}
 $("#welcome-guide-close").addEventListener("click", closeWelcomeGuide);
 $("#welcome-guide-skip").addEventListener("click", closeWelcomeGuide);
 $("#welcome-guide-demo").addEventListener("click", () => {
-  closeWelcomeGuide(); loadFlowDemo().catch((error) => toast(error.message, "error"));
+  closeWelcomeGuide();
+  const mode = $("#welcome-guide-demo").dataset.mode;
+  if (mode === "register") {
+    openAccountModal("register");
+    return;
+  }
+  const automatic = mode !== "manual";
+  openControlAction(automatic ? "automatic" : "manual");
+  if (!automatic) return;
+  const suggestions = {
+    tr:"Çoğu insanın bilmediği şaşırtıcı bir günlük hayat gerçeği",
+    en:"A surprising everyday fact most people do not know",
+    es:"Un dato cotidiano sorprendente que la mayoría desconoce"
+  };
+  if (!$("#automatic-topic").value.trim()) $("#automatic-topic").value = suggestions[lang()] || suggestions.tr;
+  $("#automatic-topic").focus();
+  toast("Konu hazır — istersen değiştir, ardından taslağını oluştur");
 });
 $("#welcome-guide").addEventListener("click", (event) => {
   if (event.target.id === "welcome-guide") closeWelcomeGuide();
@@ -2038,23 +2990,19 @@ $("#brand-home").addEventListener("click", (event) => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 document.querySelectorAll("[data-mobile-step]").forEach((button) => button.addEventListener("click", () => showStep(button.dataset.mobileStep)));
-document.querySelector("[data-mobile-settings]").addEventListener("click", () => {
+document.querySelector("[data-mobile-create]")?.addEventListener("click", () => openControlAction("automatic"));
+document.querySelector("[data-mobile-settings]")?.addEventListener("click", () => {
   showStep("dashboard"); $("#settings-panel").classList.remove("hidden"); $("#settings-panel").scrollIntoView({ behavior:"smooth" });
 });
 document.querySelectorAll("[data-mobile-flow]").forEach((button) => button.addEventListener("click", () => showMobileFlowPanel(button.dataset.mobileFlow)));
 $("#mobile-flow-prev").addEventListener("click", () => showMobileFlowPanel(mobileFlowOrder[Math.max(0, mobileFlowOrder.indexOf(mobileFlowPanel) - 1)]));
 $("#mobile-flow-next").addEventListener("click", () => {
   const index = mobileFlowOrder.indexOf(mobileFlowPanel);
-  if (index >= 1 && !flowScenes.length) return toast("Devam etmek için en az bir fotoğraf ekle", "error");
+  if (!flowScenes.length) return toast("Fotoğraf ekle veya örnek projeyi dene", "error");
   if (index === mobileFlowOrder.length - 1) return $("#flow-render").click();
   showMobileFlowPanel(mobileFlowOrder[index + 1]);
 });
-$("#workflow-toggle").addEventListener("click", () => {
-  const open = $("#workflow-nav").classList.toggle("open");
-  $("#workflow-toggle").classList.toggle("open", open);
-  $("#workflow-toggle").setAttribute("aria-expanded", String(open));
-  if (open) setTimeout(() => $("#workflow-nav").scrollIntoView({ behavior:"smooth", block:"nearest" }), 290);
-});
+$("#workflow-toggle").addEventListener("click", () => openControlAction("automatic"));
 $("#settings-toggle").addEventListener("click", () =>
   $("#settings-panel").classList.toggle("hidden"));
 $("#niche-add-toggle").addEventListener("click", () => {
@@ -2088,9 +3036,7 @@ document.querySelectorAll("[data-settings-tab]").forEach((button) =>
   }));
 const modelCatalog = {
   gemini: [
-    ["gemini-3.6-flash", "Gemini 3.6 Flash"],
-    ["gemini-3.5-flash-lite", "Gemini 3.5 Flash Lite"],
-    ["gemini-2.5-flash", "Gemini 2.5 Flash"]
+    ["gemini-3.6-flash", "Gemini 3.6 Flash"]
   ],
   openai: [
     ["gpt-5.6-luna", "GPT-5.6 Luna · ekonomik"],
@@ -2124,8 +3070,17 @@ function updateModelChoices(preferred) {
   const defaultIndex = provider === "openai" || provider === "claude" ? 1 : 0;
   $("#text-model").value = models.some(([value]) => value === preferred)
     ? preferred : models[defaultIndex][0];
+  const selectedLabel = $("#text-model").selectedOptions[0]?.textContent || "TERZİ önerisi";
+  if ($("#selected-model-summary")) $("#selected-model-summary").textContent = `TERZİ önerisi · ${selectedLabel}`;
 }
-$("#provider").addEventListener("change", () => updateModelChoices());
+$("#provider").addEventListener("change", () => {
+  updateModelChoices();
+  renderAiProviderCards();
+});
+$("#text-model").addEventListener("change", () => {
+  const label = $("#text-model").selectedOptions[0]?.textContent || $("#text-model").value;
+  if ($("#selected-model-summary")) $("#selected-model-summary").textContent = `Manuel · ${label}`;
+});
 const integrationCatalog = {
   gemini: {
     name: "Google Gemini", label: "Gemini API anahtarı",
@@ -2142,42 +3097,240 @@ const integrationCatalog = {
   cloudflare: {
     name: "Cloudflare Workers AI", label: "Cloudflare API Token",
     runtimeKey: "cloudflareConfigured", help: "AI görsellerini üretmek için kullanılır."
+  },
+  youtube: {
+    name: "YouTube Trendleri", label: "YouTube Data API anahtarı",
+    runtimeKey: "youtubeConfigured", help: "Ülke ve kategori bazlı popüler video sinyallerini getirir."
+  },
+  youtubeUpload: {
+    name: "YouTube Yükleme", label: "Google OAuth Client Secret",
+    runtimeKey: "youtubeOauthClientConfigured",
+    help: "Google Cloud OAuth Client ID ve Secret ile kanal yükleme izni bağlantısını hazırlar. Callback: http://127.0.0.1:4310/api/youtube/oauth/callback"
+  },
+  telegram: {
+    name: "Telegram Bot", label: "Telegram Bot tokenı",
+    runtimeKey: "telegramConfigured", help: "Projeleri Telegram üzerinden editör onayına gönderir."
   }
 };
+function renderAccessOverview() {
+  const demo = state.runtime?.demo || { used: 0, limit: 1 };
+  const serviceReady = Boolean(state.runtime?.capabilities?.managedText || state.runtime?.cloudflareConfigured);
+  const ready = Boolean(state.runtime?.demoAvailable && serviceReady);
+  const status = $("#demo-access-status");
+  const statusCopy = {
+    tr:{ready:"Kullanıma hazır · 1/1",used:"Deneme kullanıldı · Pro ile devam et",account:"Ücretsiz hesapla kullanılabilir",verify:"E-postanı doğrulayarak aç",wait:"Demo hazırlanıyor · tekrar dene",off:"Demo şu anda kullanılamıyor"},
+    en:{ready:"Ready · 1/1",used:"Trial used · continue with Pro",account:"Available with a free account",verify:"Verify your email to unlock",wait:"Preparing demo · try again",off:"Demo is currently unavailable"},
+    es:{ready:"Lista · 1/1",used:"Prueba utilizada · continúa con Pro",account:"Disponible con una cuenta gratuita",verify:"Verifica tu correo para activarla",wait:"Preparando la demo · inténtalo de nuevo",off:"La demo no está disponible ahora"}
+  }[lang()];
+  if (status) status.textContent = ready ? statusCopy.ready
+    : Number(demo.used || 0) >= Number(demo.limit || 1) ? statusCopy.used
+      : !state.runtime?.account ? statusCopy.account
+        : state.runtime.account.emailVerified === false ? statusCopy.verify
+        : serviceReady ? statusCopy.wait : statusCopy.off;
+  const card = document.querySelector(".access-plan.demo");
+  const pro = state.runtime?.account?.plan === "pro" && ["active", "trialing"].includes(state.runtime?.account?.status);
+  card?.classList.toggle("active", !pro);
+  card?.classList.toggle("used", !ready && Number(demo.used || 0) >= Number(demo.limit || 1));
+  const creatorReady = ["gemini","openai","claude"].some((provider) => hasReadyAiCredential(provider));
+  document.querySelector(".access-plan.creator")?.classList.toggle("active", creatorReady);
+  if ($("#creator-access-status")) $("#creator-access-status").textContent = creatorReady
+    ? `${providerDisplayNames[readyTextProvider()] || "AI"} hazır` : "Anahtar bekleniyor";
+  updateWelcomeGuideAccess();
+  renderAccountAccess();
+}
+
+const aiProviderCapabilities = {
+  gemini: ["Hikâye", "AI görsel", "Fotoğraf analizi", "Çok dilli ses"],
+  openai: ["Hikâye", "AI görsel", "Fotoğraf analizi"],
+  claude: ["Hikâye", "Fotoğraf analizi"]
+};
+function renderAiProviderCards() {
+  const selected = $("#provider").value || state.settings?.provider || "gemini";
+  document.querySelectorAll("[data-ai-provider]").forEach((button) => {
+    const active = button.dataset.aiProvider === selected;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-checked", String(active));
+  });
+  if ($("#integration-capabilities")) {
+    $("#integration-capabilities").innerHTML = (aiProviderCapabilities[selected] || [])
+      .map((item) => `<span>✓ ${item}</span>`).join("");
+  }
+}
+
+function renderAccountAccess() {
+  const copy = {
+    tr:{create:"Hesap oluştur",account:"Hesabım",creator:"Ücretsiz",creatorCopy:"Cihaz içi üretim ücretsiz · yönetilen özellikler Pro'da",pro:"Atölye Pro",proCopy:"Yönetilen AI ve bulut kayıt aktif",active:"Aktif",ready:"Yükseltmeye hazır",soon:"Ödemeler yakında açılacak",required:"Ücretsiz hesap gerekli",upgrade:"Pro'ya geç",manage:"Üyeliği yönet"},
+    en:{create:"Create account",account:"My account",creator:"Free",creatorCopy:"On-device creation is free · managed features are in Pro",pro:"Atölye Pro",proCopy:"Managed AI and cloud storage are active",active:"Active",ready:"Ready to upgrade",soon:"Payments opening soon",required:"Free account required",upgrade:"Upgrade to Pro",manage:"Manage membership"},
+    es:{create:"Crear cuenta",account:"Mi cuenta",creator:"Gratis",creatorCopy:"La creación en el dispositivo es gratis · las funciones gestionadas están en Pro",pro:"Atölye Pro",proCopy:"IA gestionada y almacenamiento en la nube activos",active:"Activo",ready:"Listo para mejorar",soon:"Pagos disponibles próximamente",required:"Se requiere cuenta gratuita",upgrade:"Pasar a Pro",manage:"Gestionar membresía"}
+  }[lang()] || {};
+  const cloud = state.runtime?.deployment === "cloudflare";
+  const account = state.runtime?.account;
+  const pro = account?.plan === "pro" && ["active", "trialing"].includes(account?.status);
+  $("#account-toggle")?.classList.toggle("hidden", !cloud);
+  if ($("#account-toggle")) $("#account-toggle").textContent = account ? `${pro ? "Pro" : copy.creator} · ${copy.account}` : copy.create;
+  $("#account-guest")?.classList.toggle("hidden", Boolean(account));
+  $("#account-signed")?.classList.toggle("hidden", !account);
+  if (account) {
+    $("#account-email-view").textContent = account.email;
+    $("#account-plan-name").textContent = pro ? copy.pro : copy.creator;
+    $("#account-plan-copy").textContent = pro ? copy.proCopy : copy.creatorCopy;
+    $("#account-upgrade").classList.toggle("hidden", pro);
+    $("#account-upgrade").disabled = !state.runtime?.billingConfigured;
+    $("#account-upgrade").textContent = state.runtime?.billingConfigured ? copy.upgrade : copy.soon;
+    $("#account-manage").classList.toggle("hidden", !pro);
+    $("#account-verification").classList.toggle("hidden", account.emailVerified !== false);
+    if (account.emailVerified === false) ensureTurnstile("verify-turnstile").catch((error) => toast(error.message, "error"));
+  }
+  const proStatus = $("#pro-access-status");
+  const remainingProjects = Number(state.runtime?.managedUsage?.projects?.remaining);
+  if (proStatus) proStatus.textContent = pro
+    ? Number.isFinite(remainingProjects) ? `${copy.active} · ${remainingProjects}/30` : copy.active
+    : account
+    ? state.runtime?.billingConfigured ? copy.ready : copy.soon
+    : copy.required;
+  document.querySelector(".access-plan.pro")?.classList.toggle("active", pro);
+  if ($("#pro-upgrade")) {
+    const billingReady = Boolean(state.runtime?.billingConfigured);
+    $("#pro-upgrade").textContent = pro ? copy.manage : !billingReady ? copy.soon : account ? copy.upgrade : copy.create;
+    $("#pro-upgrade").disabled = !pro && (!billingReady || account?.emailVerified === false);
+  }
+}
+
+function setAccountMode(mode) {
+  const copy = {
+    tr:{login:"Giriş yap",register:"Ücretsiz hesap oluştur",loginHelp:"Hesabına bağlı projeler bu cihazda açılır.",registerHelp:"En az 12 karakter kullan. Parolan hiçbir zaman düz metin olarak saklanmaz."},
+    en:{login:"Sign in",register:"Create free account",loginHelp:"Projects linked to your account open on this device.",registerHelp:"Use at least 12 characters. Your password is never stored as plain text."},
+    es:{login:"Iniciar sesión",register:"Crear cuenta gratis",loginHelp:"Los proyectos vinculados a tu cuenta se abren en este dispositivo.",registerHelp:"Usa al menos 12 caracteres. Tu contraseña nunca se guarda como texto sin formato."}
+  }[lang()];
+  accountMode = mode === "login" ? "login" : "register";
+  document.querySelectorAll("[data-account-mode]").forEach((button) => button.classList.toggle("active", button.dataset.accountMode === accountMode));
+  $("#account-submit").textContent = accountMode === "login" ? copy.login : copy.register;
+  $("#account-password").autocomplete = accountMode === "login" ? "current-password" : "new-password";
+  $("#account-password-help").textContent = accountMode === "login" ? copy.loginHelp : copy.registerHelp;
+}
+
+function openAccountModal(mode = "register") {
+  if (state.runtime?.deployment !== "cloudflare") {
+    toast("Hesap ve üyelik bulut sürümünde kullanılabilir", "warn");
+    return;
+  }
+  if (!state.runtime?.account) setAccountMode(mode);
+  renderAccountAccess();
+  $("#account-modal").classList.remove("hidden");
+  if (!state.runtime?.account) ensureTurnstile("account-turnstile").catch((error) => toast(error.message, "error"));
+  setTimeout(() => (state.runtime?.account ? $("#account-close") : $("#account-email"))?.focus(), 0);
+}
+
+function closeAccountModal() { $("#account-modal").classList.add("hidden"); }
+
+async function startProCheckout() {
+  if (!state.runtime?.account) return openAccountModal("register");
+  if (state.runtime?.account?.plan === "pro") {
+    const portal = await api("/api/billing/portal", { method:"POST" });
+    window.location.assign(portal.url); return;
+  }
+  if (!state.runtime?.billingConfigured) throw new Error("Atölye Pro ödemeleri henüz kullanıma açılmadı");
+  trackProductEvent("checkout_started");
+  const checkout = await api("/api/billing/checkout", { method:"POST" });
+  window.location.assign(checkout.url);
+}
+
 function updateIntegrationForm() {
   const selected = $("#integration-provider").value;
   const config = integrationCatalog[selected];
-  const configured = Boolean(state.runtime?.[config.runtimeKey]);
+  const deviceProvider = selected === "anthropic" ? "claude" : selected;
+  const deviceKey = localStorage.getItem(`orbit-device-key-${deviceProvider}`) || "";
+  const managed = selected === "cloudflare" && promptImageGenerationAvailable();
+  const configured = Boolean(managed || state.runtime?.[config.runtimeKey] || deviceKey);
+  const aiService = ["gemini", "openai", "anthropic"].includes(selected);
+  const ready = aiService ? hasReadyAiCredential(deviceProvider) : configured;
   const copy = {
     tr:{key:"API anahtarı",token:"API Token",ready:"• hazır",missing:"• eksik",saved:"••••••••••••  kayıtlı — değiştirmek için gir",helpText:"Seçtiğin modelle hikâye ve metin üretir.",helpImage:"AI görsellerini üretmek için kullanılır.",enter:"gir"},
     en:{key:"API key",token:"API Token",ready:"• ready",missing:"• missing",saved:"••••••••••••  saved — enter to replace",helpText:"Creates stories and copy with your selected model.",helpImage:"Used to generate AI visuals.",enter:"enter"},
     es:{key:"Clave API",token:"Token API",ready:"• listo",missing:"• falta",saved:"••••••••••••  guardada — escribe para cambiar",helpText:"Crea historias y textos con el modelo seleccionado.",helpImage:"Se utiliza para generar imágenes con IA.",enter:"introducir"}
   }[lang()];
   const providerName = selected === "anthropic" ? "Claude" : config.name.split(" ")[0];
-  const label = selected === "cloudflare" ? `Cloudflare ${copy.token}` : `${providerName} ${copy.key}`;
+  const label = selected === "cloudflare" ? `Cloudflare ${copy.token}`
+    : selected === "youtubeUpload" ? "Google OAuth Client Secret"
+    : selected === "telegram" ? "Telegram Bot Token" : `${providerName} ${copy.key}`;
   $("#integration-name").textContent = config.name;
   $("#integration-key-label").textContent = label;
-  $("#integration-help").textContent = selected === "cloudflare" ? copy.helpImage : copy.helpText;
-  $("#integration-status").textContent = configured ? copy.ready : copy.missing;
-  $("#integration-status").className = configured ? "configured" : "missing";
+  $("#integration-help").textContent = managed
+    ? "AI görselleri TERZİ tarafından yönetiliyor. Account ID veya API Token girmen gerekmez."
+    : config.help;
+  $("#integration-status").textContent = ready ? copy.ready : configured ? "• etkinleştir" : copy.missing;
+  $("#integration-status").className = ready ? "configured" : configured ? "pending" : "missing";
   $("#integration-key").value = "";
   $("#integration-key").placeholder = configured
     ? copy.saved
     : `${label} ${copy.enter}`;
-  $("#cloudflare-account-field").classList.toggle("hidden", selected !== "cloudflare");
+  $("#integration-key-field").classList.toggle("hidden", managed);
+  document.querySelector(".model-advanced")?.classList.toggle("hidden", !aiService);
+  if (aiService) {
+    const textProvider = selected === "anthropic" ? "claude" : selected;
+    $("#provider").value = textProvider;
+    renderAiProviderCards();
+  }
+  const accountField = $("#cloudflare-account-field");
+  accountField.classList.toggle("hidden", managed || !["cloudflare", "telegram", "youtubeUpload"].includes(selected));
+  accountField.querySelector("label").textContent = selected === "telegram" ? "Telegram Chat ID"
+    : selected === "youtubeUpload" ? "Google OAuth Client ID" : "Cloudflare Account ID";
+  $("#cloudflare-account").placeholder = selected === "telegram" ? "Örn. 123456789"
+    : selected === "youtubeUpload" ? "….apps.googleusercontent.com" : "32 karakterli Account ID";
 }
 $("#integration-provider").addEventListener("change", updateIntegrationForm);
+document.querySelectorAll("[data-ai-provider]").forEach((button) => button.addEventListener("click", () => {
+  const provider = button.dataset.aiProvider;
+  $("#provider").value = provider;
+  updateModelChoices();
+  $("#integration-provider").value = provider === "claude" ? "anthropic" : provider;
+  updateIntegrationForm();
+  $("#integration-key").focus();
+}));
+document.querySelectorAll("[data-integration-service]").forEach((button) => button.addEventListener("click", () => {
+  const advanced = document.querySelector(".advanced-ai-connection");
+  if (advanced) advanced.open = true;
+  $("#integration-provider").value = button.dataset.integrationService;
+  updateIntegrationForm();
+  $("#integration-key").scrollIntoView({ behavior:"smooth", block:"center" });
+  $("#integration-key").focus();
+}));
+$("#integration-key-help").addEventListener("click", () => {
+  const selected = $("#integration-provider").value;
+  const provider = selected === "anthropic" ? "claude" : selected;
+  const urls = {
+    ...providerKeyUrls,
+    youtube:"https://console.cloud.google.com/apis/credentials",
+    youtubeUpload:"https://console.cloud.google.com/apis/credentials",
+    telegram:"https://t.me/BotFather"
+  };
+  if (urls[provider]) window.open(urls[provider], "_blank", "noopener,noreferrer");
+});
+$("#close-settings").addEventListener("click", () => $("#settings-panel").classList.add("hidden"));
 $("#save-settings").addEventListener("click", async () => {
   const integrationProvider = $("#integration-provider").value;
   const integrationKey = $("#integration-key").value.trim();
   const cloudflareAccount = $("#cloudflare-account").value.trim();
-  if (integrationKey && integrationProvider === "gemini") {
+  const cloudDeployment = state.runtime?.deployment === "cloudflare";
+  const deviceProviders = ["gemini", "openai", "anthropic", "youtube"];
+  if (integrationKey && ["gemini", "openai", "anthropic"].includes(integrationProvider)) {
+    const selectedTextProvider = integrationProvider === "anthropic" ? "claude" : integrationProvider;
+    $("#provider").value = selectedTextProvider;
+    state.settings.provider = selectedTextProvider;
+    updateModelChoices();
+  }
+  if (integrationKey && cloudDeployment && deviceProviders.includes(integrationProvider)) {
+    const deviceProvider = integrationProvider === "anthropic" ? "claude" : integrationProvider;
+    localStorage.setItem(`orbit-device-key-${deviceProvider}`, integrationKey);
+    state.runtime[integrationCatalog[integrationProvider].runtimeKey] = true;
+  }
+  if (integrationKey && !cloudDeployment && integrationProvider === "gemini") {
     await api("/api/config/gemini-key", {
       method: "PUT",
       body: JSON.stringify({ key: integrationKey })
     });
   }
-  if (integrationKey && ["openai", "anthropic"].includes(integrationProvider)) {
+  if (integrationKey && !cloudDeployment && ["openai", "anthropic"].includes(integrationProvider)) {
     await api(`/api/config/${integrationProvider}-key`, {
       method: "PUT", body: JSON.stringify({ key: integrationKey })
     });
@@ -2190,6 +3343,30 @@ $("#save-settings").addEventListener("click", async () => {
       method: "PUT",
       body: JSON.stringify({ accountId: cloudflareAccount, token: integrationKey })
     });
+  }
+  if (integrationKey && !cloudDeployment && integrationProvider === "youtube") {
+    await api("/api/config/youtube-key", {
+      method: "PUT", body: JSON.stringify({ key: integrationKey })
+    });
+  }
+  if (integrationKey && integrationProvider === "telegram") {
+    if (cloudDeployment) {
+      throw new Error("Cloudflare sürümünde Telegram bilgileri arayüzden değil Worker secret'larıyla yapılandırılır");
+    }
+    if (!cloudflareAccount) throw new Error("Telegram Chat ID gerekli");
+    await api("/api/config/telegram", {
+      method:"PUT", body:JSON.stringify({ token:integrationKey, chatId:cloudflareAccount })
+    });
+  }
+  if (integrationKey && integrationProvider === "youtubeUpload") {
+    if (state.runtime?.deployment === "cloudflare") {
+      throw new Error("YouTube yükleme bağlantısı yerel TERZİ sunucusunda yapılandırılabilir");
+    }
+    if (!cloudflareAccount) throw new Error("Google OAuth Client ID gerekli");
+    const result = await api("/api/config/youtube-oauth", {
+      method:"PUT", body:JSON.stringify({ clientId:cloudflareAccount, clientSecret:integrationKey })
+    });
+    toast(`YouTube OAuth kaydedildi. Google callback adresi: ${result.redirectUri}`);
   }
   $("#integration-key").value = "";
   await api("/api/settings", { method: "PUT", body: JSON.stringify({
@@ -2213,9 +3390,21 @@ $("#save-settings").addEventListener("click", async () => {
   })});
   $("#settings-panel").classList.add("hidden");
   await refresh(); showStep(activeStep); toast(t("settings"));
+  if (integrationKey && ["gemini", "openai", "anthropic"].includes(integrationProvider)) {
+    const consentProvider = integrationProvider === "anthropic" ? "claude" : integrationProvider;
+    if (!hasReadyAiCredential(consentProvider)) {
+      openAiKeyModal(consentProvider);
+      $("#ai-key-modal-copy").textContent = "API anahtarın güvenli biçimde kaydedildi. Hikâye, görsel veya dosyaları bu sağlayıcıya göndermeden önce veri aktarımını onayla.";
+      $("#ai-key-modal-settings").textContent = "Onayla ve bağlantıyı etkinleştir →";
+      return;
+    }
+  }
+  resumePendingAiAction();
 });
 $("#ui-language").addEventListener("change", () => {
-  state.settings.uiLanguage = $("#ui-language").value;
+  preferredUiLanguage = $("#ui-language").value;
+  state.settings.uiLanguage = preferredUiLanguage;
+  try { localStorage.setItem(UI_LANGUAGE_KEY, preferredUiLanguage); } catch {}
   renderState(); showStep(activeStep);
 });
 $("#media-source").addEventListener("change", updateSourceMode);
@@ -2248,9 +3437,125 @@ $("#custom-image-file").addEventListener("change", () => {
 $("#production-format").addEventListener("change", updateFormatNote);
 document.querySelectorAll("[data-creation-mode]").forEach((button) =>
   button.addEventListener("click", (event) => { event.preventDefault(); setCreationMode(button.dataset.creationMode); }));
-$("#automatic-visual-method").addEventListener("change", () => {
-  $("#automatic-archive-source").classList.toggle("hidden", $("#automatic-visual-method").value !== "archive");
-});
+function automaticVisualMethod() {
+  return document.querySelector('[name="automatic-visual-method"]:checked')?.value || "archive";
+}
+function selectDiverseArchiveAssets(items, limit = 6) {
+  const candidates = [];
+  const identities = new Set();
+  const previews = new Set();
+  for (const item of Array.isArray(items) ? items : []) {
+    if (item?.riskFlags?.length) continue;
+    const identity = `${item?.source || ""}:${item?.assetId || item?.nasaId || ""}`;
+    const preview = String(item?.previewUrl || "");
+    if (!item?.source || identity.endsWith(":") || identities.has(identity) || (preview && previews.has(preview))) continue;
+    identities.add(identity);
+    if (preview) previews.add(preview);
+    candidates.push(item);
+  }
+  const target = Math.min(candidates.length, Math.max(1, Math.min(8, Number(limit) || 6)));
+  if (target === candidates.length) return candidates;
+  return Array.from({ length:target }, (_, index) => candidates[Math.floor(index * candidates.length / target)]);
+}
+function automaticBriefDirection() {
+  const goals = {
+    engagement:"maximize watch-through and meaningful engagement",
+    followers:"earn follows by giving the viewer a clear reason to return",
+    education:"teach one useful idea simply and accurately",
+    sales:"introduce the product or service without sounding pushy"
+  };
+  const tones = {
+    curious:"curiosity-driven",
+    clear:"clear and informative",
+    energetic:"energetic and entertaining",
+    inspiring:"warm and inspiring"
+  };
+  const audience = $("#automatic-audience").value.trim() || state.settings.audience || "a general audience";
+  return `Video goal: ${goals[$("#automatic-goal").value] || goals.engagement}. Target audience: ${audience}. Tone: ${tones[$("#automatic-tone").value] || tones.curious}.`;
+}
+function setAutomaticProgress(stage, detail, type = "working") {
+  const host = $("#automatic-progress");
+  host.classList.remove("hidden", "error");
+  host.classList.toggle("error", type === "error");
+  host.querySelector("b").textContent = stage;
+  host.querySelector("span").textContent = detail;
+}
+function friendlyAutomaticError(error) {
+  const message = String(error?.message || "");
+  if (/network|fetch|bağlan|offline/i.test(message)) return "Bağlantı kesildi. Girdilerin duruyor; internetini kontrol edip tekrar dene.";
+  if (/429|limit|quota|kota/i.test(message)) return "Kullanım sınırına ulaşıldı. Biraz sonra tekrar deneyebilirsin.";
+  if (/boş veya eksik bir içerik paketi|geçerli bir hikâye döndüremedi/i.test(message)) return `Model geçerli bir taslak döndüremedi: ${message}`;
+  if (/OpenAI|Gemini|Claude|Anthropic|model|billing|quota|kota|rate limit/i.test(message)) return message;
+  if (/key|anahtar|configured|bağlı değil/i.test(message)) return "AI özelliği henüz bağlı değil. Ayarlar bölümünden bağlantıyı kurabilirsin.";
+  if (/demo|deneme|pro|required|üyelik/i.test(message)) return `${message} Cihazda manuel video ve açık arşiv araçlarını ücretsiz kullanmaya devam edebilirsin.`;
+  if (message && !/^işlem başarısız$/i.test(message)) return message;
+  return "Taslak şu anda hazırlanamadı. Girdilerin korundu; tekrar deneyebilirsin.";
+}
+function updateAutomaticPhotoMode() {
+  const files = [...$("#automatic-files").files];
+  const ownPhotos = files.length > 0;
+  const canAnalyzePhotos = Boolean(readyTextProvider());
+  const aiVisualRadio = document.querySelector('[name="automatic-visual-method"][value="ai"]');
+  const archiveVisualRadio = document.querySelector('[name="automatic-visual-method"][value="archive"]');
+  const aiVisualReady = managedImageGenerationAvailable();
+  const aiVisualCanActivate = aiVisualReady || Boolean(imageCredentialProvider());
+  if (aiVisualRadio) {
+    aiVisualRadio.disabled = !aiVisualCanActivate;
+    aiVisualRadio.closest("label")?.classList.toggle("unavailable", !aiVisualCanActivate);
+    if (!aiVisualCanActivate && aiVisualRadio.checked && archiveVisualRadio) archiveVisualRadio.checked = true;
+  }
+  const aiAccess = document.querySelector("[data-ai-visual-access]");
+  if (aiAccess) aiAccess.textContent = aiVisualReady
+    ? "Daha özgün · ücret seçtiğin AI sağlayıcına yansır"
+    : aiVisualCanActivate ? "API anahtarı kayıtlı · veri aktarımını etkinleştir"
+      : "Gemini veya OpenAI anahtarı bağlayarak açabilirsin";
+  const topic = $("#automatic-topic");
+  topic.required = !ownPhotos || !canAnalyzePhotos;
+  topic.minLength = ownPhotos && !canAnalyzePhotos ? 12 : ownPhotos ? 0 : 3;
+  $("#automatic-topic-label").textContent = ownPhotos
+    ? canAnalyzePhotos ? "Hikâye yönlendirmesi · isteğe bağlı" : "Fotoğrafları nasıl anlatmalıyım?"
+    : "Video konusu";
+  topic.placeholder = ownPhotos
+    ? canAnalyzePhotos ? "Örn: Samimi bir gezi hikâyesi anlat (boş bırakabilirsin)" : "Örn: Bu fotoğraflarla samimi bir gezi hikâyesi anlat"
+    : "Örn: Çocuklar için gezegenleri anlat";
+  $("#automatic-files-summary").textContent = ownPhotos
+    ? `${files.length} fotoğraf ana kaynak olarak kullanılacak · ${files.map((file) => file.name).join(", ")}`
+    : "Fotoğraf seçilmezse konuya göre arşiv veya AI görseli kullanılır.";
+  $("#automatic-photo-ai-note").classList.toggle("hidden", !ownPhotos);
+  if (ownPhotos) {
+    $("#automatic-photo-ai-note").textContent = canAnalyzePhotos
+      ? "Fotoğraflar hikâyeyi anlayabilmesi için seçtiğin AI sağlayıcısına aktarılır."
+      : "Demo fotoğrafların içeriğini analiz etmez. Yanlış bir hikâye oluşmaması için yukarıya ne anlatılacağını yazmalısın.";
+  }
+  $("#automatic-story-mode-field").classList.toggle("hidden", !ownPhotos);
+  $("#automatic-visual-method-field").classList.toggle("hidden", ownPhotos);
+  $("#automatic-archive-source").classList.toggle(
+    "hidden",
+    ownPhotos || automaticVisualMethod() !== "archive"
+  );
+  $("#automatic-archive-count").classList.toggle(
+    "hidden",
+    ownPhotos || automaticVisualMethod() !== "archive"
+  );
+  const automaticNotes = {
+    tr:{ photos:"Arşiv aranmaz. Hikâye, yüklediğin fotoğrafların görünür içeriği ve varsa yönlendirmen üzerinden oluşturulur.", archive:"TERZİ konuya uygun farklı ve lisans bilgili arşiv görsellerini sahnelere dağıtacak; sonuçları yayınlamadan önce değiştirebilirsin.", ai:"TERZİ bir taslak hazırlayacak; yayınlamadan önce metni ve görselleri değiştirebilirsin." },
+    en:{ photos:"The archive is not searched. The story is based on your uploaded photos and optional direction.", archive:"TERZİ will distribute different, licensed archive visuals across the scenes; you can change them before publishing.", ai:"TERZİ will prepare a draft; you can edit the copy and visuals before publishing." },
+    es:{ photos:"No se busca en el archivo. La historia se basa en tus fotos y en las indicaciones opcionales.", archive:"TERZİ distribuirá imágenes diferentes y con licencia entre las escenas; podrás cambiarlas antes de publicar.", ai:"TERZİ preparará un borrador; podrás editar el texto y las imágenes antes de publicar." }
+  }[lang()];
+  $("#automatic-note").textContent = ownPhotos ? automaticNotes.photos
+    : automaticVisualMethod() === "archive" ? automaticNotes.archive : automaticNotes.ai;
+}
+$("#automatic-files").addEventListener("change", updateAutomaticPhotoMode);
+document.querySelectorAll("[data-topic-suggestion]").forEach((button) => button.addEventListener("click", () => {
+  $("#automatic-topic").value = button.dataset.topicSuggestion;
+  $("#automatic-topic").focus();
+}));
+document.querySelectorAll("[data-control-action]").forEach((button) =>
+  button.addEventListener("click", () => openControlAction(button.dataset.controlAction)));
+$("#workflow-context-home")?.addEventListener("click", () => showStep("dashboard"));
+$("#workflow-context-methods")?.addEventListener("click", () => { showStep("source"); setCreationMode("automatic"); document.querySelector(".primary-modes")?.scrollIntoView({ behavior:"smooth", block:"center" }); });
+document.querySelectorAll('[name="automatic-visual-method"]').forEach((input) =>
+  input.addEventListener("change", updateAutomaticPhotoMode));
 $("#manual-project-files").addEventListener("change", (event) => {
   const files = [...event.target.files];
   $("#manual-files-summary").textContent = files.length
@@ -2276,7 +3581,7 @@ $("#delete-project").addEventListener("click", async () => {
   toast("Proje çöp kutusuna taşındı", "warn");
 });
 $("#generate-ai-scenes").addEventListener("click", async () => {
-  if (!ensureAiConfigured("image")) return;
+  if (!ensureAiConfigured("image", "editor-image")) return;
   const id = $("#editor-id").value;
   const item = state.productions.find((entry) => entry.id === id);
   if (item?.status !== "approved") {
@@ -2285,7 +3590,7 @@ $("#generate-ai-scenes").addEventListener("click", async () => {
   }
   const button = $("#generate-ai-scenes");
   button.disabled = true;
-  button.textContent = "FLUX sahneleri üretiyor…";
+  button.textContent = "AI görselleri hazırlanıyor…";
   try {
     await api(`/api/productions/${id}/images`, { method: "POST" });
     await refresh();
@@ -2293,12 +3598,11 @@ $("#generate-ai-scenes").addEventListener("click", async () => {
     toast("Yeni AI sahneleri projeye eklendi");
   } finally {
     button.disabled = false;
-    button.textContent = "✦ Cloudflare FLUX ile animasyon sahnesi üret";
+    button.textContent = "✦ Eksik sahneler için özgün görsel üret";
   }
 });
-$("#project-editor").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await api(`/api/productions/${$("#editor-id").value}`, {
+async function saveProjectEditor(projectId = $("#editor-id").value) {
+  return api(`/api/productions/${projectId}`, {
     method: "PATCH",
     body: JSON.stringify({
       title: $("#editor-title").value,
@@ -2306,10 +3610,17 @@ $("#project-editor").addEventListener("submit", async (event) => {
       narration: $("#editor-narration").value
     })
   });
+}
+$("#project-editor").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveProjectEditor();
   await refresh();
   openEditor($("#editor-id").value);
   toast(t("saved"));
 });
+["#editor-title", "#editor-hook", "#editor-narration"].forEach((selector) =>
+  $(selector).addEventListener("input", () => updateCreatorChecklist())
+);
 $("#story-visual-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = event.submitter;
@@ -2324,6 +3635,7 @@ $("#story-visual-form").addEventListener("submit", async (event) => {
         narration: $("#story-project-text").value,
         visualStyle: $("#story-visual-style").value,
         contentProfile: $("#story-content-profile").value,
+        contentLanguage: selectedContentLanguage(),
         contentType: $("#production-format").value,
         imageFit: $("#image-fit").value
       })
@@ -2331,7 +3643,7 @@ $("#story-visual-form").addEventListener("submit", async (event) => {
     await refresh();
     openEditor(production.id);
     progress.complete();
-    toast("Hikâye sahnelere bölündü; şimdi FLUX görsellerini üretebilirsin");
+    toast("Hikâye sahnelere bölündü; şimdi AI görsellerini oluşturabilirsin");
   } catch (error) {
     progress.fail();
     toast(error.message || "Proje oluşturulamadı. Lütfen tekrar dene.", "error");
@@ -2355,6 +3667,7 @@ $("#manual-creation-form").addEventListener("submit", async (event) => {
       narration: $("#manual-project-text").value,
       visualStyle: state.settings.visualStyle || "documentary",
       contentProfile: state.settings.contentProfile || "general",
+      contentLanguage: selectedContentLanguage(),
       contentType: $("#production-format").value,
       imageFit: $("#image-fit").value,
       manual: true
@@ -2376,45 +3689,179 @@ $("#manual-creation-form").addEventListener("submit", async (event) => {
 });
 $("#automatic-creation-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!ensureAiConfigured("text")) return;
-  const visualMethod = $("#automatic-visual-method").value;
-  if (visualMethod === "ai" && !ensureAiConfigured("image")) return;
-  const topic = $("#automatic-topic").value.trim();
+  trackProductEvent("creation_started");
+  const selectedFiles = [...$("#automatic-files").files].slice(0, 12);
+  if (!ensureAiConfigured("text", "automatic")) return;
+  let visualMethod = selectedFiles.length ? "upload" : automaticVisualMethod();
+  if (visualMethod === "ai" && !managedImageGenerationAvailable()) {
+    if (imageCredentialProvider()) {
+      ensureAiConfigured("image", "automatic");
+      return;
+    }
+    const archiveRadio = document.querySelector('[name="automatic-visual-method"][value="archive"]');
+    if (archiveRadio) archiveRadio.checked = true;
+    visualMethod = "archive";
+    updateAutomaticPhotoMode();
+    toast("AI görsel erişimi olmadığı için açık arşiv otomatik seçildi.", "warn");
+  }
+  const direction = $("#automatic-topic").value.trim();
+  const topic = direction || "Create one coherent, engaging story grounded only in the uploaded photos.";
+  const creativeBrief = automaticBriefDirection();
   const button = event.submitter;
   button.disabled = true;
+  let production = null;
+  setAutomaticProgress("1/4 · Fikir netleştiriliyor", "Konu, hedef kitle ve anlatım tarzı birleştiriliyor.");
   try {
     let idea;
-    if (visualMethod === "archive") {
-      button.textContent = "Uygun görsel aranıyor · %20";
+    let archiveAssetCount = 0;
+    const storyMode = $("#automatic-story-mode").value;
+    const storyBaseTopic = storyMode === "separate" && selectedFiles.length > 1
+      ? `${topic}. Create a clearly separated mini-story section for each of the ${selectedFiles.length} uploaded photos, in the same order. Keep every section concise and ready for one video.`
+      : topic;
+    if (visualMethod === "archive" && !selectedFiles.length) {
+      setAutomaticProgress("2/4 · Görseller seçiliyor", "Konuya uygun, farklı ve kullanım bilgisi bulunan arşiv görselleri aranıyor.");
+      button.textContent = "Farklı arşiv görselleri aranıyor · %20";
       const source = $("#automatic-source").value;
       const search = await api(`/api/media/search?source=${source}&q=${encodeURIComponent(topic)}`);
-      const asset = search.items.find((item) => !item.riskFlags?.length);
-      if (!asset) throw new Error("Bu konu için uygun ve risksiz bir arşiv görseli bulunamadı");
-      idea = await api("/api/media/import", { method:"POST", body:JSON.stringify({ assetId:asset.assetId, source:asset.source, contentType:$("#production-format").value, imageFit:$("#image-fit").value }) });
+      const searchMethod = search.interpretationMode === "visual-intent" ? "görsel niyetiyle" : "anahtar kelimelerle";
+      setAutomaticProgress("2/4 · Görseller seçiliyor", `Konu “${search.interpretedAs || topic}” ${searchMethod} arandı.${search.fallbackReason ? ` ${search.fallbackReason}` : ""}`);
+      const assets = selectDiverseArchiveAssets(search.items, $("#automatic-image-count").value);
+      if (!assets.length) throw new Error("Bu konu için uygun ve risksiz bir arşiv görseli bulunamadı");
+      archiveAssetCount = assets.length;
+      button.textContent = `Arşiv görselleri hazırlanıyor · 1/${assets.length}`;
+      idea = await api("/api/media/import", { method:"POST", body:JSON.stringify({ assetId:assets[0].assetId, source:assets[0].source, contentLanguage:selectedContentLanguage(), contentType:$("#production-format").value, imageFit:$("#image-fit").value }) });
+      button.textContent = `Arşiv görselleri hazırlanıyor · ${assets.length}/${assets.length}`;
+      idea = await api(`/api/ideas/${idea.id}/assets`, { method:"PUT", body:JSON.stringify({ topic:storyBaseTopic, creativeBrief, assets:assets.slice(1).map((asset) => ({ assetId:asset.assetId, source:asset.source })) }) });
     } else {
+      setAutomaticProgress("2/4 · Taslak kuruluyor", selectedFiles.length ? "Fotoğrafların hikâye sırasına hazırlanıyor." : "Video yapısı hazırlanıyor.");
       button.textContent = "Proje taslağı hazırlanıyor · %20";
-      idea = await api("/api/ideas", { method:"POST", body:JSON.stringify({ topic, sources:`User topic: ${topic}`, contentType:$("#production-format").value, imageFit:$("#image-fit").value }) });
+       idea = await api("/api/ideas", { method:"POST", body:JSON.stringify({ topic:storyBaseTopic, sources:selectedFiles.length ? `User-provided photos are the primary source. Filenames: ${selectedFiles.map((file) => file.name).join(", ")}. User direction: ${direction}. Creative brief: ${creativeBrief}` : `User topic: ${topic}. Creative brief: ${creativeBrief}`, contentLanguage:selectedContentLanguage(), contentType:$("#production-format").value, imageFit:$("#image-fit").value }) });
     }
-    button.textContent = "AI hikâyeyi yazıyor · %50";
-    const production = await api(`/api/ideas/${idea.id}/generate`, { method:"POST" });
+    const imageInputs = [];
+    if (selectedFiles.length) {
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        button.textContent = `Fotoğraflar analiz için hazırlanıyor · ${index + 1}/${selectedFiles.length}`;
+        imageInputs.push({
+          name: selectedFiles[index].name,
+          dataUrl: await readAsDataUrl(selectedFiles[index], {
+            maxDimension: 768,
+            targetLength: 260_000,
+            maxLength: 320_000,
+            initialQuality: .72,
+            minQuality: .32
+          })
+        });
+      }
+    }
+    const analyzePhotos = selectedFiles.length && Boolean(readyTextProvider());
+    setAutomaticProgress("3/4 · Hikâye yazılıyor", analyzePhotos ? "Fotoğraflar incelenip tek bir anlatıya dönüştürülüyor." : "Açılış, anlatım ve sahneler hazırlanıyor.");
+    button.textContent = analyzePhotos ? "AI fotoğrafları inceliyor · %50"
+      : readyTextProvider() ? "AI hikâyeyi yazıyor · %50" : "Kaynak temelli taslak hazırlanıyor · %50";
+    production = await api(`/api/ideas/${idea.id}/generate`, {
+      method:"POST",
+      body: JSON.stringify({ imageInputs: analyzePhotos ? imageInputs : [] })
+    });
+    trackProductEvent("story_generated", { result:"success" });
     button.textContent = "Sahneler hazırlanıyor · %75";
-    await api(`/api/productions/${production.id}/approve`, { method:"POST" });
-    if (visualMethod === "ai") {
-      button.textContent = "AI görselleri hazırlıyor · %85";
-      await api(`/api/productions/${production.id}/images`, { method:"POST" });
+    // “TERZİ hazırlasın” yolu bir onay kuyruğunda durmaz; düzenleme yine isteğe bağlıdır.
+    const automaticApproval = true;
+    if (automaticApproval && production.status !== "approved") {
+      await api(`/api/productions/${production.id}/approve`, { method:"POST" });
     }
+    if (visualMethod === "ai" && automaticApproval) {
+      setAutomaticProgress("4/4 · Görseller hazırlanıyor", "Sahneler için birbirinden farklı görseller oluşturuluyor.");
+      button.textContent = "AI görselleri hazırlanıyor · %85";
+      let imageBatch = await api(`/api/productions/${production.id}/images`, { method:"POST" });
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const generatedCount = (imageBatch.visualAssets || []).filter((asset) => ["cloudflare", "gemini", "openai"].includes(asset.source)).length;
+        const sceneCount = imageBatch.content?.scenes?.length || production.content?.scenes?.length || 1;
+        if (generatedCount >= sceneCount || imageBatch.visualFallback) break;
+        button.textContent = `AI görselleri hazırlanıyor · ${Math.min(99, 85 + generatedCount * 2)}%`;
+        imageBatch = await api(`/api/productions/${production.id}/images`, { method:"POST" });
+      }
+    }
+    if (selectedFiles.length) {
+      setAutomaticProgress("4/4 · Fotoğraflar ekleniyor", "Seçtiğin fotoğraflar sahne sırasına yerleştiriliyor.");
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        button.textContent = `Fotoğraflar ekleniyor · ${index + 1}/${selectedFiles.length}`;
+        await api(`/api/productions/${production.id}/custom-image`, { method:"POST", body:JSON.stringify({ name:selectedFiles[index].name, dataUrl:await readAsDataUrl(selectedFiles[index]) }) });
+      }
+    }
+    setAutomaticProgress("✓ Taslağın hazır", "Metni ve görselleri kontrol edebilir veya doğrudan videoyu oluşturabilirsin.", "complete");
     await refresh(); openEditor(production.id);
-    toast("Otomatik proje hazır; son kontrol ve düzenleme sende");
+    toast(archiveAssetCount > 1
+      ? `Otomatik proje hazır · ${archiveAssetCount} farklı arşiv görseli sahnelere dağıtıldı`
+      : archiveAssetCount === 1
+        ? "Proje hazır; arşivde yalnız bir uygun görsel bulundu, editörden görsel ekleyebilirsin"
+        : "Otomatik proje hazır; son kontrol ve düzenleme sende");
+  } catch (error) {
+    trackProductEvent("story_failed", { result:"failure" });
+    if (production?.id) {
+      await refresh().catch(() => {});
+      if (state.productions.some((item) => item.id === production.id)) openEditor(production.id);
+      toast("Taslak kaydedildi; eksik görselleri bu ekrandan tamamlayabilirsin", "warn");
+      return;
+    }
+    const friendlyMessage = friendlyAutomaticError(error);
+    setAutomaticProgress("Taslak hazırlanamadı", friendlyMessage, "error");
+    toast(friendlyMessage, "error");
   } finally {
     button.disabled = false;
-    button.innerHTML = "Otomatik projeyi hazırla <span>→</span>";
+    button.innerHTML = "Taslağımı hazırla <span>→</span>";
   }
 });
+
+async function generateImportedArchiveStory(idea, button) {
+  const progress = startStoryProgress(button);
+  button.disabled = true;
+  button.textContent = "Hikâye hazırlanıyor…";
+  try {
+    const preparedIdea = idea.angle ? idea : await api(`/api/ideas/${idea.id}/angle`, {
+      method:"PUT",
+      body:JSON.stringify({ angle:editorialAngles[0] })
+    });
+    const production = await api(`/api/ideas/${preparedIdea.id}/generate`, { method:"POST" });
+    progress.complete();
+    await refresh();
+    openEditor(production.id);
+    const provider = contentModeLabel(production.content);
+    toast(`${provider} hikâyesi hazır; metni ve sahneleri düzenleyebilirsin`);
+    return production;
+  } catch (error) {
+    progress.fail();
+    await refresh().catch(() => {});
+    showStep("story");
+    throw new Error(`${error.message || "Hikâye oluşturulamadı."} Kaynak korundu; Hikâye ekranından tekrar deneyebilirsin.`);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 $("#nasa-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const container = $("#nasa-results");
   container.className = "media-grid loading";
   const source = $("#media-source").value;
+  if (source === "url") {
+    try {
+      const productionId = $("#image-project").value;
+      if (!productionId) throw new Error("Önce onaylanmış bir proje seç");
+      if (!$("#url-image-rights").checked) throw new Error("Görseli kullanma hakkını onaylamalısın");
+      container.innerHTML = "<div class='loader'></div><p>URL ve görsel doğrulanıyor…</p>";
+      const result = await api("/api/media/url-import", { method:"POST", body:JSON.stringify({
+        projectId:productionId, url:$("#url-image-address").value, rightsConfirmed:true
+      }) });
+      await refresh();
+      container.className = "media-grid empty-state";
+      container.innerHTML = `<div><p class="safe">✓ ${esc(result.asset.title)} doğrulandı ve projeye eklendi.</p><small>${esc(result.asset.contentType)} · ${formatBytes(result.asset.byteSize)}</small></div>`;
+      $("#url-image-address").value = ""; $("#url-image-rights").checked = false;
+      toast("URL görseli doğrulandı ve projeye eklendi");
+    } catch (error) {
+      container.className = "media-grid empty-state"; container.textContent = error.message;
+      toast(error.message, "error");
+    }
+    return;
+  }
   if (source === "custom") {
     try {
       const file = $("#custom-image-file").files[0];
@@ -2440,14 +3887,14 @@ $("#nasa-form").addEventListener("submit", async (event) => {
   }
   if (source === "cloudflare") {
     try {
-      if (!ensureAiConfigured("image")) {
+      if (!ensureAiConfigured("image", "prompt-image")) {
         container.className = "media-grid empty-state";
         container.textContent = "";
         return;
       }
       const productionId = $("#image-project").value;
       if (!productionId) throw new Error("Önce onaylanmış bir proje oluştur");
-      container.innerHTML = "<div class='loader'></div><p>Cloudflare FLUX görseli üretiyor…</p>";
+      container.innerHTML = "<div class='loader'></div><p>AI görseli hazırlanıyor…</p>";
       const result = await api(`/api/productions/${productionId}/cloudflare-image`, {
         method: "POST", body: JSON.stringify({ prompt: $("#nasa-query").value })
       });
@@ -2455,7 +3902,7 @@ $("#nasa-form").addEventListener("submit", async (event) => {
       container.className = "media-grid empty-state";
       container.innerHTML = `<div><p class="safe">✓ ${esc(result.asset.title)} projeye eklendi.</p><button class="ghost" data-generate-another>＋ Bir görsel daha üret</button></div>`;
       $("#result-count").textContent = "1 görsel üretildi";
-      toast("FLUX görseli projeye eklendi");
+      toast("AI görseli projeye eklendi");
     } catch (error) {
       container.className = "media-grid empty-state";
       container.textContent = error.message;
@@ -2465,17 +3912,23 @@ $("#nasa-form").addEventListener("submit", async (event) => {
   container.innerHTML = `<div class='loader'></div><p>${source === "wikimedia" ? "Wikimedia Commons" : "NASA"} arşivi taranıyor…</p>`;
   try {
     const result = await api(`/api/media/search?source=${source}&q=${encodeURIComponent($("#nasa-query").value)}`);
-    $("#result-count").textContent = `${result.items.length} sonuç`;
-    container.className = "media-grid";
+    selectedMediaAssets.clear(); $("#media-selection-toolbar").classList.add("hidden");
+    const interpretationLabel = result.interpretationMode === "visual-intent" ? "görsel niyetiyle" : "anahtar kelimelerle";
+    $("#result-count").textContent = `${result.items.length} sonuç · “${result.interpretedAs || $("#nasa-query").value}” ${interpretationLabel} arandı`;
+    container.className = result.items.length ? "media-grid" : "media-grid empty-state";
+    if (!result.items.length) {
+      container.innerHTML = `<div><p>Bu aramada uygun açık kaynak görsel bulunamadı.</p><small>Daha kısa bir Türkçe anahtar kelime dene veya NASA / Wikimedia kaynağını değiştir.</small><br><button class="ghost" type="button" data-retry-media>Tekrar ara</button></div>`;
+      return;
+    }
     container.innerHTML = result.items.map((item) => `
       <article class="media-card">
         <div class="media-image"><img src="${item.previewUrl}" alt="${esc(item.title)}" loading="lazy"><span>${esc(item.sourceLabel)}</span></div>
-        <div class="media-copy"><small>${esc(item.license || item.assetId)}</small><h3>${esc(item.title)}</h3>
+        <div class="media-copy"><label class="media-select"><input type="checkbox" data-media-select="${item.assetId}" data-source="${item.source}" ${item.riskFlags.length ? "disabled" : ""}><span>${item.riskFlags.length ? "Seçilemez" : "Hikâyeye seç"}</span></label><small>${esc(item.license || item.assetId)}</small><h3>${esc(item.title)}</h3>
         ${item.riskFlags.length ? `<p class="risk">⚠ ${esc(item.riskFlags[0])}</p>` : `<p class="safe">✓ Belirgin kullanım riski yok</p>`}
         <div class="media-actions">
-          <button data-media-import="${item.assetId}" data-source="${item.source}">${t("newStory")} <span>→</span></button>
+          <button data-media-import="${item.assetId}" data-source="${item.source}" ${item.riskFlags.length ? "disabled title='Bu görsel otomatik kullanım kontrolünden geçmedi'" : ""}>${item.riskFlags.length ? "Kullanım kontrolü gerekli" : t("newStory")} <span>→</span></button>
           ${state.productions.some((entry) => entry.status === "approved")
-            ? `<button class="secondary-action" data-media-add="${item.assetId}" data-source="${item.source}">${t("addProject")} <span>＋</span></button>`
+            ? `<button class="secondary-action" data-media-add="${item.assetId}" data-source="${item.source}" ${item.riskFlags.length ? "disabled title='Bu görsel otomatik kullanım kontrolünden geçmedi'" : ""}>${t("addProject")} <span>＋</span></button>`
             : ""}
         </div></div>
       </article>`).join("");
@@ -2484,10 +3937,109 @@ $("#nasa-form").addEventListener("submit", async (event) => {
     container.textContent = error.message;
   }
 });
+function compactNumber(value) {
+  return new Intl.NumberFormat(lang() === "tr" ? "tr-TR" : lang(), {
+    notation: "compact", maximumFractionDigits: 1
+  }).format(Number(value || 0));
+}
+function videoDuration(seconds) {
+  const total = Number(seconds || 0);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remainder = total % 60;
+  return hours ? `${hours}:${String(minutes).padStart(2,"0")}:${String(remainder).padStart(2,"0")}`
+    : `${minutes}:${String(remainder).padStart(2,"0")}`;
+}
+$("#youtube-trends-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const container = $("#youtube-trend-results");
+  container.className = "trend-grid loading";
+  container.innerHTML = "<div class='loader'></div><p>YouTube popüler videoları getiriliyor…</p>";
+  try {
+    const region = $("#youtube-trend-region").value;
+    const category = $("#youtube-trend-category").value;
+    const result = await api(`/api/youtube/trends?region=${region}&category=${category}`);
+    youtubeTrendItems = new Map(result.items.map((item) => [item.id, item]));
+    container.className = "trend-grid";
+    container.innerHTML = result.items.length ? result.items.map((item) => `
+      <article class="trend-card">
+        <a class="trend-thumbnail" href="${item.url}" target="_blank" rel="noopener noreferrer"><img src="${item.thumbnailUrl}" alt="${esc(item.title)}" loading="lazy"><b>#${item.rank}</b><span>${videoDuration(item.durationSeconds)}</span></a>
+        <div><small>${esc(item.channelTitle)}</small><h3>${esc(item.title)}</h3>
+        <p class="trend-metrics"><span>▶ ${compactNumber(item.views)}</span><span>♥ ${compactNumber(item.likes)}</span><span>◉ ${compactNumber(item.comments)}</span></p>
+        <button class="primary" data-trend-import="${item.id}">Fikir kuyruğuna ekle →</button></div>
+      </article>`).join("") : "Bu filtreler için popüler video bulunamadı.";
+  } catch (error) {
+    container.className = "trend-grid empty-state";
+    container.textContent = error.message;
+  }
+});
 document.addEventListener("click", async (event) => {
-  const target = event.target.closest("button,[data-open-project]");
+  const target = event.target.closest("button,input,[data-open-project]");
   if (!target) return;
   try {
+    if (target.dataset.retryMedia) {
+      $("#nasa-form").requestSubmit();
+      return;
+    }
+    if (target.dataset.youtubeUpload) {
+      const projectId = target.dataset.youtubeUpload;
+      const project = state.productions.find((entry) => entry.id === projectId);
+      if (!project) throw new Error("Proje bulunamadı");
+      if (state.runtime?.deployment === "cloudflare") throw new Error("YouTube yükleme yalnızca yerel TERZİ sunucusunda kullanılabilir");
+      if (!state.runtime?.youtubeUploadConfigured) {
+        if (!state.runtime?.youtubeOauthClientConfigured) throw new Error("Önce .env dosyasına YouTube OAuth Client ID ve Client Secret ekleyin");
+        const popup = window.open("about:blank", "orbit-youtube-oauth", "width=620,height=760");
+        const oauth = await api("/api/youtube/oauth/start");
+        if (popup) popup.location = oauth.authUrl;
+        else window.open(oauth.authUrl, "_blank", "noopener");
+        target.disabled = true; target.textContent = "YouTube bağlantısı bekleniyor…";
+        for (let attempt = 0; attempt < 60; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await refresh();
+          if (state.runtime?.youtubeUploadConfigured) {
+            openEditor(projectId); toast("YouTube kanalı bağlandı; yüklemeyi başlatabilirsiniz"); return;
+          }
+        }
+        throw new Error("YouTube bağlantısı zaman aşımına uğradı");
+      }
+      if (!window.confirm("Video YouTube kanalına GİZLİ olarak yüklensin mi?")) return;
+      target.disabled = true; target.textContent = "YouTube'a yükleniyor…";
+      const rawTags = project.content?.hashtags || project.content?.keywords || [];
+      const result = await api(`/api/productions/${projectId}/youtube-upload`, {
+        method:"POST", body:JSON.stringify({ title:project.content?.title,
+          description:[project.content?.hook, project.content?.description].filter(Boolean).join("\n\n"),
+          tags:Array.isArray(rawTags) ? rawTags : String(rawTags).split(/[#,]/), categoryId:"22" })
+      });
+      await refresh(); openEditor(projectId); toast("Video YouTube'a gizli olarak yüklendi");
+      window.open(result.url, "_blank", "noopener"); return;
+    }
+    if (target.dataset.telegramReview) {
+      if (!state.runtime?.telegramConfigured) throw new Error("Önce Ayarlar > Entegrasyonlar bölümünden Telegram botunu bağlayın");
+      target.disabled = true; target.textContent = "Telegram'a gönderiliyor…";
+      const review = await api(`/api/productions/${target.dataset.telegramReview}/telegram-review`, { method:"POST" });
+      await refresh(); openEditor(target.dataset.telegramReview);
+      toast(review.status === "sending" ? "Bu proje için Telegram gönderimi zaten devam ediyor" : "Proje Telegram editör onayına gönderildi"); return;
+    }
+    if (target.dataset.telegramSync) {
+      target.disabled = true; target.textContent = "Yanıt kontrol ediliyor…";
+      const result = await api("/api/telegram/sync", { method:"POST" });
+      await refresh(); openEditor(target.dataset.telegramSync);
+      toast(result.processed ? "Telegram yanıtı projeye işlendi" : "Henüz yeni bir yanıt yok"); return;
+    }
+    if (target.dataset.trendImport) {
+      const item = youtubeTrendItems.get(target.dataset.trendImport);
+      if (!item) throw new Error("Trend verisi yenilenmeli");
+      target.disabled = true;
+      target.textContent = "Kuyruğa ekleniyor…";
+      await api("/api/youtube/trends/import", { method:"POST", body:JSON.stringify({
+        videoId:item.id, title:item.title, channelTitle:item.channelTitle, views:item.views,
+        contentType:$("#production-format").value
+      }) });
+      await refresh();
+      target.textContent = "✓ Fikir kuyruğuna eklendi";
+      toast("YouTube trendi özgün fikir briefi olarak eklendi");
+      return;
+    }
     if (target.dataset.goStep) {
       if (target.dataset.goStep === "source") {
         sourceStartsNewProject = true;
@@ -2557,14 +4109,26 @@ document.addEventListener("click", async (event) => {
       return;
     }
     if (target.dataset.editorRender) {
+      const projectId = target.dataset.editorRender;
+      if (activeStep === "editor" && $("#editor-id").value === projectId) {
+        target.disabled = true;
+        target.textContent = "Değişiklikler kaydediliyor…";
+        await saveProjectEditor(projectId);
+        await refresh();
+      }
+      if (state.runtime?.deployment === "cloudflare") {
+        await prepareProductionForDeviceRender(projectId);
+        toast("Proje cihaz renderına hazır — Videoyu oluştur düğmesine dokun");
+        return;
+      }
       target.disabled = true;
       target.textContent = { tr:"Ses ve video hazırlanıyor…", en:"Preparing audio and video…", es:"Preparando audio y vídeo…" }[lang()];
       const progress = startServerRenderProgress(target);
       try {
-        await api(`/api/productions/${target.dataset.editorRender}/render`, { method: "POST" });
+        await api(`/api/productions/${projectId}/render`, { method: "POST" });
         progress.complete();
         await new Promise((resolve) => setTimeout(resolve, 300));
-        await refresh(); openEditor(target.dataset.editorRender);
+        await refresh(); openEditor(projectId);
         toast(t("ready"));
       } catch (error) {
         progress.fail();
@@ -2573,13 +4137,48 @@ document.addEventListener("click", async (event) => {
       return;
     }
     if (target.dataset.mediaImport) {
-      target.disabled = true; target.textContent = "Kuyruğa ekleniyor…";
-      await api("/api/media/import", { method: "POST", body: JSON.stringify({
-        assetId: target.dataset.mediaImport, source: target.dataset.source,
-        contentType: $("#production-format").value,
-        imageFit: $("#image-fit").value
-      }) });
-      await refresh(); showStep("story"); toast("Kaynak hikâye kuyruğuna eklendi");
+      const resumeAction = `archive-story:${target.dataset.source}:${encodeURIComponent(target.dataset.mediaImport)}`;
+      if (!ensureAiConfigured("text", resumeAction)) return;
+      const originalLabel = target.innerHTML;
+      target.disabled = true; target.textContent = "Kaynak hazırlanıyor…";
+      try {
+        const idea = await api("/api/media/import", { method: "POST", body: JSON.stringify({
+          assetId: target.dataset.mediaImport, source: target.dataset.source,
+          contentLanguage: selectedContentLanguage(),
+          contentType: $("#production-format").value,
+          imageFit: $("#image-fit").value
+        }) });
+        await generateImportedArchiveStory(idea, target);
+      } finally {
+        target.disabled = false;
+        target.innerHTML = originalLabel;
+      }
+      return;
+    }
+    if (target.dataset.mediaSelect) {
+      const id = target.dataset.mediaSelect;
+      if (target.checked) selectedMediaAssets.set(id, { assetId:id, source:target.dataset.source });
+      else selectedMediaAssets.delete(id);
+      $("#media-selection-count").textContent = selectedMediaAssets.size;
+      $("#media-selection-toolbar").classList.toggle("hidden", selectedMediaAssets.size < 2);
+      return;
+    }
+    if (target.dataset.mediaBatch !== undefined) {
+      if (selectedMediaAssets.size < 2) throw new Error("En az iki görsel seçmelisin");
+      if (!ensureAiConfigured("text", "archive-story-batch")) return;
+      const originalLabel = target.innerHTML;
+      target.disabled = true; target.textContent = "Kaynaklar hazırlanıyor…";
+      const assets = [...selectedMediaAssets.values()];
+      try {
+        const first = await api("/api/media/import", { method:"POST", body:JSON.stringify({ ...assets[0], contentLanguage:selectedContentLanguage(), contentType:$("#production-format").value, imageFit:$("#image-fit").value }) });
+        const idea = await api(`/api/ideas/${first.id}/assets`, { method:"PUT", body:JSON.stringify({ assets:assets.slice(1) }) });
+        await generateImportedArchiveStory(idea, target);
+        selectedMediaAssets.clear(); $("#media-selection-toolbar").classList.add("hidden");
+      } finally {
+        target.disabled = false;
+        target.innerHTML = originalLabel;
+      }
+      return;
     }
     if (target.dataset.mediaAdd) {
       const productionId = $("#image-project").value;
@@ -2625,8 +4224,20 @@ document.addEventListener("click", async (event) => {
       toast({ tr:"Görsel sırası güncellendi", en:"Image order updated", es:"Orden de imágenes actualizado" }[lang()]);
       return;
     }
-    if (target.dataset.generate) {
-      if (!ensureAiConfigured("text")) return;
+    if (target.dataset.angleLab) {
+      openAngleIdeaId = target.dataset.angleLab; await refresh(); return;
+    }
+    if (target.dataset.angleClose) {
+      openAngleIdeaId = null; await refresh(); return;
+    }
+    if (target.dataset.ideaAngle) {
+      const angle = editorialAngles.find((item) => item.id === target.dataset.angleId);
+      if (!angle) throw new Error("İçerik açısı bulunamadı");
+      await api(`/api/ideas/${target.dataset.ideaAngle}/angle`, { method:"PUT", body:JSON.stringify({ angle }) });
+      openAngleIdeaId = null; await refresh();
+      toast(`${angle.label} açısı seçildi`); return;
+    }    if (target.dataset.generate) {
+      if (!ensureAiConfigured("text", `idea:${target.dataset.generate}`)) return;
       target.disabled = true;
       target.textContent = { tr:"AI hikâyeyi yazıyor…", en:"AI is writing the story…", es:"La IA está escribiendo la historia…" }[lang()];
       const progress = startStoryProgress(target);
@@ -2648,9 +4259,14 @@ document.addEventListener("click", async (event) => {
       else toast("Hikâye reddedildi", "warn");
     }
     if (target.dataset.render) {
+      if (state.runtime?.deployment === "cloudflare") {
+        await prepareProductionForDeviceRender(target.dataset.render);
+        toast("Proje cihaz renderına hazır — Videoyu oluştur düğmesine dokun");
+        return;
+      }
       target.disabled = true; target.innerHTML = "Ses ve video hazırlanıyor…";
       const progress = startServerRenderProgress(target);
-      toast({ tr:"Seslendirme ve video render başladı", en:"Narration and video rendering started", es:"Comenzó el renderizado de voz y vídeo" }[lang()]);
+      toast({ tr:"Seslendirme ve video hazırlanmaya başladı", en:"Narration and video rendering started", es:"Comenzó el renderizado de voz y vídeo" }[lang()]);
       try {
         await api(`/api/productions/${target.dataset.render}/render`, { method: "POST" });
         progress.complete();
@@ -2677,10 +4293,36 @@ const isIosSafari = /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.
 
 function updateConnectionStatus() {
   const online = navigator.onLine;
-  const status = $("#connection-status");
-  status.classList.toggle("offline", !online);
-  status.querySelector("span").textContent = online ? "Çevrimiçi" : "Çevrimdışı";
+  if (!online) setServerConnection(false);
 }
+
+$("#connection-retry").addEventListener("click", async (event) => {
+  event.currentTarget.disabled = true;
+  event.currentTarget.textContent = "Bağlanıyor…";
+  try {
+    await refresh();
+    toast("TERZİ sunucusuna yeniden bağlandı");
+  } catch (error) {
+    toast(error.message, "error");
+  } finally {
+    event.currentTarget.disabled = false;
+    event.currentTarget.textContent = "Tekrar dene";
+  }
+});
+$("#conflict-dismiss").addEventListener("click", () => $("#conflict-banner").classList.add("hidden"));
+$("#conflict-reload").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await refresh();
+    $("#conflict-banner").classList.add("hidden");
+    toast("Sunucudaki son sürüm açıldı", "ok");
+  } catch (error) {
+    toast(error.message, "error");
+  } finally {
+    button.disabled = false;
+  }
+});
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -2690,7 +4332,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
 window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
   installButton.classList.add("hidden");
-  toast("Orbit Studio cihazına yüklendi");
+  toast("TERZİ cihazına yüklendi");
 });
 window.addEventListener("online", updateConnectionStatus);
 window.addEventListener("offline", updateConnectionStatus);
@@ -2714,11 +4356,11 @@ $("#ios-install-guide").addEventListener("click", (event) => {
 const legalDocuments = {
   privacy: {
     title:"KVKK Aydınlatma Metni",
-    html:`<div class="legal-copy"><p><b>Sürüm:</b> 4 Ağustos 2026</p><p>Orbit Studio; proje oluşturma, dosya saklama, AI entegrasyonu ve video üretimi hizmetlerini sunarken aşağıdaki verileri işler.</p><h3>Veri sorumlusu</h3><p>Orbit Studio işletmecisi veri sorumlusudur. Ticari unvan, tebligat adresi ve KVKK başvuru e-postası ücretli hizmet yayına alınmadan önce burada tamamlanacaktır.</p><h3>İşlenen veriler ve amaçlar</h3><ul><li>Çalışma alanı kimliği ve zorunlu oturum çerezi: oturumu güvenli şekilde sürdürmek.</li><li>Proje metinleri, görseller ve çıktılar: talep edilen üretim ve saklama hizmetini sağlamak.</li><li>Entegrasyon tercihi ve API kimlik bilgileri: seçilen sağlayıcıya istek göndermek.</li><li>Güvenlik ve kota kayıtları: kötüye kullanımı önlemek ve hizmet güvenliğini sağlamak.</li></ul><h3>Hukuki sebepler</h3><p>Hizmetin kurulması ve ifası, veri sorumlusunun hukuki yükümlülükleri ve temel haklarına zarar vermemek kaydıyla meşru menfaati. Yurt dışındaki AI sağlayıcısına aktarımın açık rızaya dayandığı durumda bu rıza ayrıca alınır.</p><h3>Aktarım</h3><p>AI özelliğini açarsan promptların, hikâyelerin ve seçtiğin dosyalar Google, OpenAI, Anthropic veya Cloudflare altyapısında yurt dışında işlenebilir. Sağlayıcı seçimi ve açık rıza ayrı olarak alınır. AI kullanmadan çalışan cihaz içi özelliklerde bu aktarım yapılmaz.</p><h3>Saklama</h3><p>Proje verileri sen silene veya çalışma alanı kapatılana kadar; güvenlik ve işlem kayıtları amaç için gerekli sınırlı süre boyunca tutulur. Yasal zorunluluk doğarsa ilgili süre uygulanır.</p></div>`
+    html:`<div class="legal-copy"><p><b>Sürüm:</b> 9 Eylül 2026</p><p>TERZİ; proje oluşturma, dosya saklama, AI entegrasyonu ve video üretimi hizmetlerini sunarken aşağıdaki verileri işler.</p><h3>Veri sorumlusu</h3><p>TERZİ işletmecisi veri sorumlusudur. Ticari unvan, tebligat adresi ve KVKK başvuru e-postası ücretli hizmet yayına alınmadan önce burada tamamlanacaktır.</p><h3>İşlenen veriler ve amaçlar</h3><ul><li>Çalışma alanı kimliği ve zorunlu oturum çerezi: oturumu güvenli şekilde sürdürmek.</li><li>Proje metinleri, görseller ve çıktılar: talep edilen üretim ve saklama hizmetini sağlamak.</li><li>Entegrasyon tercihi ve API kimlik bilgileri: seçilen sağlayıcıya istek göndermek.</li><li>Güvenlik ve kota kayıtları: kötüye kullanımı önlemek ve hizmet güvenliğini sağlamak.</li></ul><h3>Hukuki sebepler</h3><p>Hizmetin kurulması ve ifası, veri sorumlusunun hukuki yükümlülükleri ve temel haklarına zarar vermemek kaydıyla meşru menfaati. Yurt dışındaki AI sağlayıcısına aktarımın açık rızaya dayandığı durumda bu rıza ayrıca alınır.</p><h3>Aktarım</h3><p>AI özelliğini açarsan promptların, hikâyelerin ve seçtiğin dosyalar Google, OpenAI, Anthropic veya Cloudflare altyapısında yurt dışında işlenebilir. Sağlayıcı seçimi ve açık rıza ayrı olarak alınır. AI kullanmadan çalışan cihaz içi özelliklerde bu aktarım yapılmaz.</p><h3>Saklama</h3><p>Proje verileri sen silene veya çalışma alanı kapatılana kadar; güvenlik ve işlem kayıtları amaç için gerekli sınırlı süre boyunca tutulur. Yasal zorunluluk doğarsa ilgili süre uygulanır.</p></div>`
   },
   terms: {
     title:"Kullanım Koşulları",
-    html:`<div class="legal-copy"><p><b>Sürüm:</b> 4 Ağustos 2026</p><ul><li>Orbit Studio yalnızca 18 yaş ve üzerindeki içerik üreticileri içindir; çocukların doğrudan kullanımına yönelik değildir.</li><li>Yüklediğin metin, görsel, müzik ve diğer materyalleri kullanma hakkına sahip olduğunu beyan edersin.</li><li>AI çıktıları hatalı, benzer veya üçüncü kişi haklarıyla çelişen içerik barındırabilir. Yayın öncesi kontrol kullanıcıya aittir.</li><li>Orbit Studio; Google, OpenAI, Anthropic veya Cloudflare tarafından desteklenen, onaylanan ya da ortak işletilen bir ürün değildir. İsimler yalnız entegrasyonları tanımlar.</li><li>Yasa dışı, yanıltıcı, taciz edici, hak ihlal eden veya sağlayıcı güvenlik önlemlerini aşan kullanım yasaktır.</li><li>API kullanım bedelleri, seçilen plana göre kullanıcıya veya Orbit Pro kotasına aittir.</li></ul></div>`
+    html:`<div class="legal-copy"><p><b>Sürüm:</b> 25 Eylül 2026</p><ul><li>TERZİ yalnızca 18 yaş ve üzerindeki içerik üreticileri içindir; çocukların doğrudan kullanımına yönelik değildir.</li><li>Yüklediğin metin, görsel, müzik ve diğer materyalleri kullanma hakkına sahip olduğunu beyan edersin.</li><li>AI çıktıları hatalı, benzer veya üçüncü kişi haklarıyla çelişen içerik barındırabilir. Yayın öncesi kontrol kullanıcıya aittir.</li><li>TERZİ; Google, OpenAI, Anthropic veya Cloudflare tarafından desteklenen, onaylanan ya da ortak işletilen bir ürün değildir. İsimler yalnız entegrasyonları tanımlar.</li><li>Yasa dışı, yanıltıcı, taciz edici, hak ihlal eden veya sağlayıcı güvenlik önlemlerini aşan kullanım yasaktır.</li><li>API kullanım bedelleri, seçilen plana göre kullanıcıya veya Atölye Pro kotasına aittir.</li><li>Pro üyeliği hesap ekranındaki müşteri portalından iptal edilebilir. İptal mevcut fatura döneminin sonunda yürürlüğe girer; tüketicinin emredici mevzuattan doğan cayma ve iade hakları saklıdır.</li></ul></div>`
   },
   rights: {
     title:"Veri Hakların",
@@ -2728,7 +4370,15 @@ const legalDocuments = {
 function openLegalDocument(name) {
   const document = legalDocuments[name] || legalDocuments.privacy;
   $("#legal-modal-title").textContent = document.title;
-  $("#legal-modal-content").innerHTML = document.html;
+  const legal = state.runtime?.legal || {};
+  let html = document.html;
+  if (legal.businessName && legal.supportEmail) {
+    const identity = `${esc(legal.businessName)}${legal.businessAddress ? ` · ${esc(legal.businessAddress)}` : ""} · ${esc(legal.supportEmail)}`;
+    html = html
+      .replace("TERZİ işletmecisi veri sorumlusudur. Ticari unvan, tebligat adresi ve KVKK başvuru e-postası ücretli hizmet yayına alınmadan önce burada tamamlanacaktır.", identity)
+      .replace("Veri sorumlusu ticari kimliği ve doğrulanmış başvuru adresi lansmandan önce eklenecektir. Bu bilgiler tamamlanmadan ücretli üyelik açılmamalıdır.", `Başvurularını ${esc(legal.supportEmail)} adresine iletebilirsin. Veri sorumlusu: ${identity}.`);
+  }
+  $("#legal-modal-content").innerHTML = html;
   $("#legal-modal").classList.remove("hidden");
 }
 function closeLegalDocument() { $("#legal-modal").classList.add("hidden"); }
@@ -2747,8 +4397,25 @@ $("#legal-age").addEventListener("change", (event) => { $("#legal-enter").disabl
 $("#legal-enter").addEventListener("click", () => {
   localStorage.setItem("orbit-legal-acceptance-v1", new Date().toISOString());
   $("#legal-gate").classList.add("hidden");
+  showWelcomeWhenReady();
 });
-try { if (!localStorage.getItem("orbit-legal-acceptance-v1")) $("#legal-gate").classList.remove("hidden"); } catch {}
+document.querySelectorAll("[data-language-choice]").forEach((button) => button.addEventListener("click", () => {
+  preferredUiLanguage = button.dataset.languageChoice;
+  state.settings.uiLanguage = preferredUiLanguage;
+  try { localStorage.setItem(UI_LANGUAGE_KEY, preferredUiLanguage); } catch {}
+  $("#ui-language").value = preferredUiLanguage;
+  localizeStatic();
+  showStep(activeStep);
+  $("#language-gate").classList.add("hidden");
+  try {
+    if (!localStorage.getItem("orbit-legal-acceptance-v1")) $("#legal-gate").classList.remove("hidden");
+    else showWelcomeWhenReady();
+  } catch {}
+}));
+try {
+  if (!preferredUiLanguage) $("#language-gate").classList.remove("hidden");
+  else if (!localStorage.getItem("orbit-legal-acceptance-v1")) $("#legal-gate").classList.remove("hidden");
+} catch {}
 updateConnectionStatus();
 if (isIosSafari && !isStandalone()) installButton.classList.remove("hidden");
 
@@ -2759,9 +4426,40 @@ if ("serviceWorker" in navigator) {
 renderFlowCopyPresets();
 configureMobileFlowPanels(); showMobileFlowPanel("setup");
 captureFlowHistory();
-refresh().then(() => {
-  updateSourceMode(); updateFormatNote(); updateFlowPreview();
+// Device-only drafts and output must not wait for the server, even when offline.
+function initializeLocalFlow() {
+  updateFlowPreview();
   refreshFlowDrafts().catch(() => toast("Yerel taslaklar okunamadı", "error"));
   checkFlowRecovery().catch(() => {});
-  try { if (!localStorage.getItem(WELCOME_SEEN_KEY) && $("#legal-gate").classList.contains("hidden")) $("#welcome-guide").classList.remove("hidden"); } catch {}
+  restoreLocalFlowOutput().catch(() => toast("Son yerel video geri yüklenemedi", "error"));
+}
+initializeLocalFlow();
+refresh().then(() => {
+  updateSourceMode(); updateFormatNote(); updateFlowCompatibility();
+  showWelcomeWhenReady();
+  const actionParams = new URLSearchParams(window.location.search);
+  const verificationToken = actionParams.get("verify");
+  const resetToken = actionParams.get("reset");
+  const billingResult = actionParams.get("billing");
+  if (verificationToken) {
+    api("/api/auth/verify/confirm", { method:"POST", body:JSON.stringify({ token:verificationToken }) })
+      .then(async () => {
+        history.replaceState({}, "", window.location.pathname + window.location.hash);
+        await refresh(); toast("E-posta adresin doğrulandı. Otomatik deneme kullanıma hazır.");
+      })
+      .catch((error) => toast(error.message, "error"));
+  } else if (resetToken) {
+    $("#auth-action-modal").classList.remove("hidden");
+    ensureTurnstile("reset-turnstile").catch((error) => toast(error.message, "error"));
+    setTimeout(() => $("#password-reset-value").focus(), 0);
+  }
+  if (billingResult) {
+    history.replaceState({}, "", window.location.pathname + window.location.hash);
+    trackProductEvent("checkout_returned", { result:billingResult });
+    toast(billingResult === "success"
+      ? "Ödeme tamamlandı; üyelik webhook doğrulamasından sonra etkinleşir"
+      : billingResult === "cancelled" ? "Ödeme yapılmadı; ücretsiz planın devam ediyor" : "Üyelik ekranından dönüldü",
+    billingResult === "success" ? "success" : "warn");
+    if (billingResult === "success") setTimeout(() => refresh().catch(() => {}), 1800);
+  }
 }).catch((error) => toast(error.message, "error"));

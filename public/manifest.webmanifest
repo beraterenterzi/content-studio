@@ -1,6 +1,6 @@
 {
-  "name": "Orbit Studio",
-  "short_name": "Orbit",
+  "name": "TERZİ",
+  "short_name": "TERZİ",
   "description": "Fotoğraflarını ve fikirlerini paylaşılabilir videolara dönüştür.",
   "start_url": "/",
   "id": "/",
@@ -8,7 +8,7 @@
   "display": "standalone",
   "background_color": "#eef1f8",
   "theme_color": "#171925",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "categories": ["photo", "video", "productivity"],
   "icons": [
     {

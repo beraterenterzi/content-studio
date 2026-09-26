@@ -82,7 +82,7 @@ def create_visual(source: Path, target: Path, title: str, width: int, height: in
         draw.rounded_rectangle(
             (pad, 38, width - pad, header_bottom), 28, fill=(8, 8, 12, 200)
         )
-        draw.text((pad + 34, 65), "ORBIT STUDIO", font=font(28, True), fill="#ff5369")
+        draw.text((pad + 34, 65), "TERZİ", font=font(28, True), fill="#ff5369")
         title_lines = wrap(title, 48 if width > height else 30)[:2]
         for index, line in enumerate(title_lines):
             draw.text(
@@ -95,15 +95,17 @@ def create_visual(source: Path, target: Path, title: str, width: int, height: in
         )
 
 
-def make_srt(text: str, target: Path):
+def make_srt(text: str, target: Path, exact_total: float | None = None):
     words = re.sub(r"\s+", " ", text).strip().split()
     chunks = [" ".join(words[index:index + 7]) for index in range(0, len(words), 7)]
     if not chunks:
         chunks = [text.strip()]
+    weights = [max(1.4, len(chunk.split()) / 2.65) for chunk in chunks]
+    durations = ([exact_total * weight / sum(weights) for weight in weights]
+                 if exact_total and exact_total > 0 else weights)
     seconds = 0
     blocks = []
-    for index, chunk in enumerate(chunks, 1):
-        duration = max(1.4, len(chunk.split()) / 2.65)
+    for index, (chunk, duration) in enumerate(zip(chunks, durations), 1):
         start, end = seconds, seconds + duration
         fmt = lambda value: (
             f"00:{int(value // 60):02d}:{int(value % 60):02d},"
@@ -116,8 +118,19 @@ def make_srt(text: str, target: Path):
 
 
 async def synthesize(text: str, target: Path, voice: str):
-    communicate = edge_tts.Communicate(text, voice, rate="+2%")
+    communicate = edge_tts.Communicate(text, voice, rate="0%")
     await communicate.save(str(target))
+
+
+def probe_audio_duration(ffmpeg: str, audio: Path):
+    result = subprocess.run(
+        [ffmpeg, "-i", str(audio), "-f", "null", "-"],
+        capture_output=True, text=True
+    )
+    match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", result.stderr)
+    if not match:
+        return None
+    return int(match.group(1)) * 3600 + int(match.group(2)) * 60 + float(match.group(3))
 
 
 async def main():
@@ -145,7 +158,6 @@ async def main():
             job.get("imageFit") or "cover"
         )
         visuals.append(visual)
-    total_seconds = make_srt(job["narration"], captions)
     credit_lines = [
         "VISUAL CREDITS — copy this section into the YouTube description",
         "",
@@ -161,6 +173,9 @@ async def main():
     )
 
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    total_seconds = make_srt(
+        job["narration"], captions, probe_audio_duration(ffmpeg, audio)
+    )
     subtitle_path = str(captions).replace("\\", "/").replace(":", "\\:")
     segment_seconds = max(1.0, total_seconds / len(visuals))
     frames = max(1, math.ceil(segment_seconds * 30))

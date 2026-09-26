@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+.deploy.env
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
@@ -12,3 +13,13 @@ node_modules/
 Yeni Metin Belgesi.txt
 __pycache__/
 *.pyc
+.gradle/
+android/.gradle/
+android/local.properties
+android/app/build/
+.wrangler/
+.codex/
+recovery/
+mobile-focus-check*.png
+mobile-nav-*.png
+ux-mobile-check.png

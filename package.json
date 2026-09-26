@@ -1,5 +1,5 @@
 {
-  "name": "youtube-ai-studio",
+  "name": "terzi-content-studio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,9 @@
     "start": "node src/server.js",
     "cloud:dev": "wrangler dev",
     "cloud:deploy": "wrangler deploy",
+    "mobile:sync": "cap sync android",
+    "mobile:open": "cap open android",
+    "mobile:run": "cap run android",
     "setup-render": "py -3.13 -m pip install -r requirements-render.txt",
     "check": "node --check src/server.js && node --test"
   },
@@ -14,6 +17,11 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "wrangler": "^4.116.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
   }
 }

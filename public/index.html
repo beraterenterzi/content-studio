@@ -2,10 +2,13 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#171925">
   <meta name="description" content="Fotoğraflarını ve fikirlerini paylaşılabilir videolara dönüştür.">
-  <title>Orbit Studio</title>
+  <title>TERZİ</title>
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/icon-192.png">
@@ -29,15 +32,15 @@
   </svg>
   <div class="shell">
     <aside class="sidebar">
-      <a id="brand-home" class="brand" href="#dashboard" aria-label="Orbit Studio ana sayfa"><span class="brand-mark"><img src="/logo.svg" alt=""></span><span>Orbit Studio</span></a>
+      <a id="brand-home" class="brand" href="#dashboard" aria-label="TERZİ ana sayfa"><span class="brand-mark"><img src="/logo.svg" alt=""></span><span>TERZİ</span></a>
       <p class="workspace-label">ÜRETİM AKIŞI</p>
       <nav id="steps">
         <button class="nav-step active" data-step="dashboard"><b><svg><use href="#i-home"/></svg></b><span>Ana sayfa<small>Projeler ve geçmiş</small></span></button>
         <button class="nav-step" data-step="projects"><b><svg><use href="#i-projects"/></svg></b><span>Projeler<small>Tüm çalışmalar</small></span></button>
-        <button class="nav-step" data-step="files"><b><svg><use href="#i-files"/></svg></b><span>Dosyalar<small>Üretilen çıktılar</small></span></button>
-        <button class="nav-step" data-step="trash"><b><svg><use href="#i-trash"/></svg></b><span>Çöp kutusu<small>Silinen projeler</small></span></button>
-        <button class="nav-step flow-nav" data-step="flow"><b><svg><use href="#i-video"/></svg></b><span>Görsel Akış<small>Ücretsiz cihaz içi video</small></span></button>
-        <button id="workflow-toggle" class="workflow-toggle" type="button" aria-expanded="false" aria-controls="workflow-nav"><span><svg><use href="#i-plus"/></svg> Yeni üretim</span><i>⌄</i></button>
+        <button class="nav-step product-deferred" data-step="files"><b><svg><use href="#i-files"/></svg></b><span>Dosyalar<small>Üretilen çıktılar</small></span></button>
+        <button class="nav-step product-deferred" data-step="trash"><b><svg><use href="#i-trash"/></svg></b><span>Çöp kutusu<small>Silinen projeler</small></span></button>
+        <button class="nav-step flow-nav product-deferred" data-step="flow"><b><svg><use href="#i-video"/></svg></b><span>Hızlı video<small>Fotoğraflardan video</small></span></button>
+        <button id="workflow-toggle" class="workflow-toggle" type="button" aria-expanded="false" aria-controls="workflow-nav"><span><svg><use href="#i-plus"/></svg> Yeni video</span><i>＋</i></button>
         <div id="workflow-nav" class="workflow-nav">
           <button class="nav-step workflow-step" data-step="source"><b><svg><use href="#i-image"/></svg></b><span>Kaynak<small>Görsel bul veya üret</small></span></button>
           <button class="nav-step workflow-step" data-step="story"><b><svg><use href="#i-story"/></svg></b><span>Hikâye<small>AI senaryo</small></span></button>
@@ -47,35 +50,53 @@
       </nav>
       <div class="sidebar-foot">
         <span class="pulse"></span>
-        <div><strong>Yerel stüdyo</strong><small>Verilerin bu cihazda</small></div>
+        <div><strong>Yerel stüdyo</strong><small>Yerel videolar bu cihazda</small></div>
       </div>
     </aside>
 
     <main id="main-content" tabindex="-1">
       <header class="topbar">
         <div>
-          <p id="step-kicker">ORBIT STUDIO / GENEL BAKIŞ</p>
+          <p id="step-kicker">TERZİ / GENEL BAKIŞ</p>
           <h1 id="step-title">Fikirlerin harekete geçsin.</h1>
         </div>
         <div class="topbar-actions">
           <span id="connection-status" class="connection-status"><i></i><span>Çevrimiçi</span></span>
           <button id="pwa-install" class="install-button hidden" type="button">↓ Uygulamayı yükle</button>
+          <button id="account-toggle" class="account-button hidden" type="button">Hesap oluştur</button>
           <button id="settings-toggle" class="icon-button" aria-label="Kanal ayarları"><svg><use href="#i-settings"/></svg></button>
         </div>
       </header>
+      <aside id="connection-banner" class="connection-banner hidden" role="status">
+        <div><b>TERZİ sunucusuna ulaşılamıyor</b><span>Bağlantıyı veya yerel sunucuyu kontrol edin.</span></div>
+        <button id="connection-retry" type="button">Tekrar dene</button>
+      </aside>
+      <aside id="conflict-banner" class="connection-banner conflict-banner hidden" role="alert">
+        <div><b>Bu kayıt başka bir yerde değişti</b><span id="conflict-message">Bu formdaki değerler korunuyor. Sunucudaki son sürümü istediğinde açabilirsin.</span></div>
+        <div class="conflict-actions"><button id="conflict-dismiss" type="button">Bu formda kal</button><button id="conflict-reload" type="button">Son sürümü aç</button></div>
+      </aside>
+
+      <nav id="workflow-context" class="workflow-context hidden" aria-label="Üretim yolu">
+        <button id="workflow-context-home" class="workflow-context-home" type="button">← Kontrol Merkezi</button>
+        <div class="workflow-context-steps" aria-label="İlerleme">
+          <span data-context-stage="source">1 Başlangıç</span><i></i>
+          <span data-context-stage="story">2 İçerik</span><i></i>
+          <span data-context-stage="review">3 Kontrol</span><i></i>
+          <span data-context-stage="render">4 Video</span>
+        </div>
+        <button id="workflow-context-methods" class="workflow-context-methods" type="button">Yöntemi değiştir</button>
+      </nav>
 
       <section id="settings-panel" class="settings-panel hidden">
         <div class="settings-tabs">
           <button class="active" data-settings-tab="general">Genel</button>
           <button data-settings-tab="content">İçerik & Kitle</button>
           <button data-settings-tab="rules">Üretim Kuralları</button>
-          <button data-settings-tab="integrations">Entegrasyonlar</button>
+          <button data-settings-tab="integrations">Plan & Bağlantılar</button>
         </div>
         <div class="settings-pane active" data-settings-pane="general">
           <div class="niche-field"><label for="niche">Kanal nişi</label><div class="niche-picker"><select id="niche"></select><button id="niche-add-toggle" type="button" title="Yeni niş ekle" aria-label="Yeni niş ekle">＋</button></div><div id="niche-add-row" class="niche-add-row hidden"><input id="niche-custom" maxlength="60" placeholder="Yeni niş adı"><button id="niche-add-confirm" type="button">Ekle</button></div></div>
-          <div><label for="provider">AI sağlayıcısı</label><select id="provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option></select></div>
-          <div><label for="text-model">Hikâye modeli</label><select id="text-model"></select></div>
-          <div><label for="content-language">İçerik dili</label><select id="content-language"><option value="English">English</option><option value="Turkish">Türkçe</option></select></div>
+          <div><label for="content-language">İçerik dili</label><select id="content-language"><option value="Turkish">Türkçe</option><option value="English">English</option><option value="Spanish">Español</option><option value="German">Deutsch</option><option value="French">Français</option><option value="Portuguese">Português</option><option value="Italian">Italiano</option><option value="Arabic">العربية</option><option value="Hindi">हिन्दी</option><option value="Chinese">中文</option><option value="Japanese">日本語</option><option value="Korean">한국어</option><option value="Russian">Русский</option><option value="Dutch">Nederlands</option><option value="Polish">Polski</option><option value="Indonesian">Bahasa Indonesia</option><option value="Vietnamese">Tiếng Việt</option><option value="Ukrainian">Українська</option><option value="Thai">ไทย</option></select></div>
           <div><label for="ui-language">Arayüz dili</label><select id="ui-language"><option value="tr">Türkçe</option><option value="en">English</option><option value="es">Español</option></select></div>
         </div>
         <div class="settings-pane" data-settings-pane="content">
@@ -85,30 +106,69 @@
           <div><label for="audience">Ek hedef kitle notu</label><input id="audience" placeholder="İlgi alanı, bilgi seviyesi, bölge…"></div>
         </div>
         <div class="settings-pane rules-pane" data-settings-pane="rules">
-          <label class="switch-row"><span><b>Editör onayı</b><small>Render öncesinde insan onayı iste</small></span><input id="rule-approval" type="checkbox"><i></i></label>
+          <label class="switch-row"><span><b>Son kontrolde duraklat</b><small>Arşivden veya hazır metinden başlayan projelerde videoya geçmeden önce bekle</small></span><input id="rule-approval" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>Çocuk güvenliği</b><small>Korkutucu ve taklit edilebilir davranışlardan kaçın</small></span><input id="rule-child-safe" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>Yalnızca doğrulanabilir bilgi</b><small>Kaynak dışı tarih, sayı ve iddia üretme</small></span><input id="rule-factual" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>CTA ekle</b><small>Metnin sonuna uygun bir harekete geçirici çağrı ekle</small></span><input id="rule-cta" type="checkbox"><i></i></label>
-          <label class="switch-row"><span><b>Videoya altyazı yak</b><small>SRT yanında altyazıyı videonun içine de ekle</small></span><input id="rule-captions" type="checkbox"><i></i></label>
+          <label class="switch-row"><span><b>Altyazıyı videoda göster</b><small>Ayrı altyazı dosyasına ek olarak yazıları videonun içine de ekle</small></span><input id="rule-captions" type="checkbox"><i></i></label>
         </div>
         <div class="settings-pane" data-settings-pane="integrations">
-          <div><label for="integration-provider">Entegrasyon seç</label><select id="integration-provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic Claude</option><option value="cloudflare">Cloudflare Workers AI</option></select></div>
-          <div id="cloudflare-account-field" class="hidden"><label for="cloudflare-account">Cloudflare Account ID</label><input id="cloudflare-account" autocomplete="off" placeholder="32 karakterli Account ID"></div>
-          <div><label for="integration-key"><span id="integration-key-label">Gemini API anahtarı</span> <span id="integration-status"></span></label><input id="integration-key" type="password" autocomplete="new-password" placeholder="API anahtarını gir"></div>
-          <div class="integration-note"><b id="integration-name">Google Gemini</b><small id="integration-help">Hikâye ve metin üretimi için kullanılır.</small></div>
+          <section class="access-overview compact" aria-labelledby="access-overview-title"><div class="access-overview-head"><span>PLANIN</span><h3 id="access-overview-title">Teknik kurulum yapmadan üret.</h3><p>Normal kullanımda API anahtarı gerekmez. Ücretsiz denemeden sonra Atölye Pro ile TERZİ'nin yönetilen AI servislerini kullanırsın.</p></div><div class="access-plans"><article class="access-plan demo"><small>ÜCRETSİZ</small><b>Başlangıç</b><p>Cihazda manuel video ve ücretsiz hesapla bir tam otomatik deneme.</p><em id="demo-access-status">Kullanıma hazır</em></article><article class="access-plan pro"><small>ANAHTARSIZ</small><b>Atölye Pro</b><p>Ayda 30 yönetilen hikâye; AI görsellerinde günlük adil kullanım.</p><em id="pro-access-status">Hesap gerekli</em><button id="pro-upgrade" type="button">Pro'ya geç</button></article></div></section>
+          <details class="advanced-ai-connection">
+            <summary><span><b>Gelişmiş: Kendi AI hesabımı bağla</b><small>İsteğe bağlı · teknik kullanıcılar için</small></span><i>＋</i></summary>
+          <section class="ai-connect" aria-labelledby="ai-connect-title">
+            <div class="ai-connect-head"><span>KENDİ AI HESABIN</span><h3 id="ai-connect-title">Sağlayıcı maliyetini doğrudan kendin yönet.</h3><p>Bu bölüm normal kullanım için gerekli değildir. Yalnızca kendi Gemini, OpenAI veya Claude hesabını kullanmak istiyorsan bağlantı kur.</p></div>
+            <div class="ai-provider-cards" role="radiogroup" aria-label="AI servisi">
+              <button type="button" data-ai-provider="gemini" role="radio" aria-checked="false"><i>ÖNERİLEN</i><b>Google Gemini</b><span>Hikâye · Görsel · Fotoğraf analizi · Ses</span><small>Tek anahtarla en kapsamlı seçenek</small></button>
+              <button type="button" data-ai-provider="openai" role="radio" aria-checked="false"><b>OpenAI</b><span>Hikâye · Görsel · Fotoğraf analizi</span><small>Güçlü metin ve görsel üretimi</small></button>
+              <button type="button" data-ai-provider="claude" role="radio" aria-checked="false"><b>Anthropic Claude</b><span>Hikâye · Fotoğraf analizi</span><small>Görsel ve ses için ek servis gerekir</small></button>
+            </div>
+            <div class="ai-connect-form">
+              <select id="provider" class="visually-hidden" aria-label="Seçili AI sağlayıcısı"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option></select>
+              <select id="integration-provider" class="visually-hidden" aria-label="Bağlanacak servis"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic Claude</option><option value="cloudflare">TERZİ Görsel AI</option><option value="youtube">YouTube Trendleri</option><option value="youtubeUpload">YouTube Yükleme</option><option value="telegram">Telegram Bot</option></select>
+              <div id="integration-key-field"><label for="integration-key"><span id="integration-key-label">Gemini API anahtarı</span> <span id="integration-status"></span></label><div class="key-input-row"><input id="integration-key" type="password" autocomplete="new-password" placeholder="API anahtarını buraya yapıştır"><button id="integration-key-help" class="ghost" type="button">Anahtar nasıl alınır? ↗</button></div></div>
+              <div id="cloudflare-account-field" class="hidden"><label for="cloudflare-account">Cloudflare Account ID</label><input id="cloudflare-account" autocomplete="off" placeholder="32 karakterli Account ID"></div>
+              <div class="integration-note"><b id="integration-name">Google Gemini</b><small id="integration-help">Bir anahtar; hikâye, görsel ve ses özelliklerini açar.</small><div id="integration-capabilities" class="integration-capabilities"></div></div>
+            </div>
+            <details class="model-advanced"><summary><span>Model seçimi</span><b id="selected-model-summary">TERZİ önerisi</b></summary><div><label for="text-model">Kullanılacak model</label><select id="text-model"></select><small>Çoğu kullanıcı için TERZİ’nin önerdiği varsayılan model en iyi hız–kalite dengesini sağlar.</small></div></details>
+          </section>
+          </details>
+          <details class="other-integrations"><summary>Yayın ve diğer bağlantılar <small>İsteğe bağlı</small></summary><div class="other-integration-grid">
+            <button type="button" data-integration-service="youtube">YouTube trendleri</button>
+            <button type="button" data-integration-service="youtubeUpload">YouTube yükleme</button>
+            <button type="button" data-integration-service="telegram">Telegram</button>
+            <button type="button" data-integration-service="cloudflare">Cloudflare hesabı</button>
+          </div></details>
         </div>
-        <div class="settings-footer"><span>Ayarlar yeni üretimlerde uygulanır.</span><button id="save-settings">Değişiklikleri kaydet</button></div>
+        <div class="settings-footer"><span>Ayarlar yeni üretimlerde uygulanır.</span><div><button id="close-settings" class="ghost" type="button">Kapat</button><button id="save-settings" type="button">Değişiklikleri kaydet</button></div></div>
       </section>
 
       <section class="view active" data-view="dashboard">
         <div class="dashboard-hero">
-          <div><span>CONTENT OPERATIONS</span><h2>Bir sonraki hikâyeni<br>uzaydan bul.</h2><p>Kaynak, senaryo, ses ve video üretimin tek yerde.</p></div>
-          <button class="primary large" data-go-step="source">Yeni proje oluştur <span>＋</span></button>
+          <div><span>İÇERİK ATÖLYESİ</span><h2>Fikrini kanalına göre<br>bir hikâyeye dönüştür.</h2><p>Kaynak, senaryo, ses ve video üretimin tek yerde.</p></div>
+          <button class="primary large" type="button" data-control-action="automatic">Yeni video oluştur <span>＋</span></button>
         </div>
+        <section class="control-center" aria-labelledby="control-center-title">
+          <div class="control-center-head">
+            <div><span>KONTROL MERKEZİ</span><h2 id="control-center-title">Ne yapmak istiyorsun?</h2><p>Tüm üretim yolları tek yerde. Birini seç; seni doğrudan doğru adıma götürelim.</p></div>
+          </div>
+          <div class="control-center-grid">
+            <button class="featured" type="button" data-control-action="automatic"><b>✦</b><span><strong>Otomatik üret</strong><small>Konuyu yaz; hikâye, sahne ve görseller hazırlansın.</small><em>Fikirden videoya →</em></span></button>
+            <button type="button" data-control-action="manual"><b>✎</b><span><strong>Manuel stüdyo</strong><small>Metni, görselleri ve bütün ayrıntıları kendin belirle.</small><em>Kontrol sende →</em></span></button>
+            <button type="button" data-control-action="flow"><b>▶</b><span><strong>Cihazda video oluştur</strong><small>Galerindeki fotoğrafları ücretsiz videoya dönüştür.</small><em>Görsel Akış'ı aç →</em></span></button>
+          </div>
+          <details class="control-center-more"><summary>Diğer üretim yolları ve araçlar</summary><div class="control-center-grid secondary">
+            <button type="button" data-control-action="visual-story"><b>◉</b><span><strong>Arşivden başla</strong><small>NASA, Wikimedia veya kendi görselinle hikâye oluştur.</small><em>Kaynak seç →</em></span></button>
+            <button type="button" data-control-action="story-visual"><b>▤</b><span><strong>Hazır hikâyeyi kullan</strong><small>Metnini sahnelere ayır, görsellerle eşleştir.</small><em>Metni getir →</em></span></button>
+            <button type="button" data-control-action="trends"><b>↗</b><span><strong>YouTube trendleri</strong><small>Popüler videolardan yeni fikirler bul.</small><em>Trendleri aç →</em></span></button>
+            <button type="button" data-control-action="url"><b>⌁</b><span><strong>URL'den görsel kullan</strong><small>İzinli bir görsel adresini projene ekle.</small><em>Kaynak ekle →</em></span></button>
+          </div></details>
+          <div class="control-center-links"><button type="button" data-control-action="projects">Projelerim</button><button type="button" data-control-action="integrations">Plan ve bağlantılar</button></div>
+        </section>
         <section id="resume-project" class="resume-project hidden" aria-live="polite"></section>
         <div id="dashboard-stats" class="stat-grid"></div>
         <section class="local-analytics" aria-labelledby="local-analytics-title">
-          <div class="local-analytics-head"><div><span>YALNIZCA BU CİHAZ</span><h2 id="local-analytics-title">Görsel Akış dönüşümü</h2><p>Hangi adımda kaldığını gör. Bu veriler Orbit Studio’ya veya başka bir sunucuya gönderilmez.</p></div><button id="analytics-reset" class="text-button" type="button">Verileri sıfırla</button></div>
+          <div class="local-analytics-head"><div><span>YALNIZCA BU CİHAZ</span><h2 id="local-analytics-title">Görsel Akış dönüşümü</h2><p>Hangi adımda kaldığını gör. Bu veriler TERZİ’ye veya başka bir sunucuya gönderilmez.</p></div><button id="analytics-reset" class="text-button" type="button">Verileri sıfırla</button></div>
           <div id="analytics-funnel" class="analytics-funnel"></div>
           <div id="analytics-summary" class="analytics-summary"></div>
         </section>
@@ -126,8 +186,8 @@
 
       <section class="view" data-view="flow">
         <div class="flow-hero">
-          <div><span>ZERO-COST CREATOR</span><h2>Fotoğraflarını akan bir videoya dönüştür.</h2><p>Görseller cihazından ayrılmaz. Video bu tarayıcıda hazırlanır; sunucu, AI kredisi veya bulut depolama kullanılmaz.</p></div>
-          <div class="flow-hero-actions"><button id="flow-demo" class="flow-demo" type="button">▶ Örnek projeyi dene</button><label class="flow-upload">＋ Fotoğraf seç<input id="flow-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label></div>
+          <div><span>CİHAZDA VİDEO</span><h2>Fotoğraflarını akan bir videoya dönüştür.</h2><p>Fotoğraflar ve video cihazında kalır. AI seslendirmeyi açarsan yalnızca sahne metinleri ses üretimi için TERZİ sunucusuna gönderilir.</p></div>
+          <div class="flow-hero-actions"><button id="flow-demo" class="flow-demo" type="button">▶ Örnek projeyi dene</button><label class="flow-camera">◎ Kamerayla çek<input id="flow-camera" type="file" accept="image/*" capture="environment"></label><label class="flow-upload">＋ Galeriden seç<input id="flow-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label></div>
         </div>
         <nav id="mobile-flow-steps" class="mobile-flow-steps" aria-label="Video oluşturma adımları"><button class="active" type="button" data-mobile-flow="setup"><b>1</b><span>Başlangıç</span></button><button type="button" data-mobile-flow="scenes"><b>2</b><span>Sahneler</span></button><button type="button" data-mobile-flow="style"><b>3</b><span>Tasarım</span></button><button type="button" data-mobile-flow="export"><b>4</b><span>Oluştur</span></button></nav>
         <section class="flow-onboarding" aria-labelledby="flow-template-heading">
@@ -140,7 +200,15 @@
             <button type="button" data-flow-template="product"><i>◇</i><b>Ürün</b><small>Temiz tanıtım</small></button>
             <button type="button" data-flow-template="education"><i>123</i><b>Eğitim</b><small>Renkli ve anlaşılır</small></button>
           </div>
-          <div class="flow-quick-steps"><span class="done"><b>1</b> Şablon</span><span><b>2</b> Fotoğraflar</span><span><b>3</b> Düzenle</span><span><b>4</b> Oluştur ve paylaş</span></div>
+          <section class="flow-text-post-builder" aria-labelledby="text-post-heading">
+            <div><span>GÖRSELSİZ İÇERİK</span><h3 id="text-post-heading">Motivasyon cümlelerinden video oluştur</h3><p>Her satır ayrı bir sahne olur. Fotoğraf eklemeden, yazı ve tasarım odaklı bir paylaşım hazırla.</p></div>
+            <div class="flow-text-post-fields">
+              <label>Paylaşım başlığı<input id="text-post-title" maxlength="120" placeholder="Örn: Bugün kendine hatırlat"></label>
+              <label>Cümleler<textarea id="text-post-lines" maxlength="2400" placeholder="Her satıra bir motivasyon cümlesi yaz…"></textarea></label>
+            </div>
+            <div class="flow-text-post-actions"><small>Boş bırakırsan örnek motivasyon cümleleriyle başlarız.</small><button id="text-post-create" class="primary" type="button">Metin paylaşımını hazırla <span>→</span></button></div>
+          </section>
+          <div class="flow-quick-steps" aria-live="polite"><span class="done"><b>1</b> Şablon</span><span><b>2</b> Fotoğraflar</span><span><b>3</b> Düzenle</span><span><b>4</b> Oluştur ve paylaş</span></div>
           <div class="flow-drafts">
             <div><span>TASLAKLARIM</span><small>Çalışmalar yalnızca bu cihazda saklanır.</small></div>
             <select id="flow-draft-select" aria-label="Kayıtlı taslaklar"><option value="">Kayıtlı taslak yok</option></select>
@@ -148,7 +216,7 @@
             <button id="flow-draft-delete" class="ghost danger" type="button" disabled>Sil</button>
             <button id="flow-draft-save" class="primary" type="button">Taslağı kaydet</button>
             <button id="flow-project-export" class="ghost" type="button">↓ Projeyi dışa aktar</button>
-            <label class="flow-project-import">↑ Proje içe aktar<input id="flow-project-import-file" type="file" accept=".orbit,application/json"></label>
+            <label class="flow-project-import">↑ Proje içe aktar<input id="flow-project-import-file" type="file" accept=".terzi,.orbit,application/json"></label>
           </div>
         </section>
         <div class="flow-layout">
@@ -171,7 +239,7 @@
               <label>Arka plan<select id="flow-text-background"><option value="none">Yok</option><option value="soft">Yumuşak kutu</option><option value="solid">Belirgin kutu</option></select></label>
               <label class="flow-safe-toggle"><input id="flow-text-safe" type="checkbox" checked><i></i><span><b>Güvenli alan</b><small>Platform düğmelerinden ve kenarlardan uzak tutar.</small></span></label>
             </section>
-            <label class="flow-narration"><input id="flow-narration-enabled" type="checkbox" checked><i></i><span><b>AI seslendirme</b><small>Sahne metinlerini videonun sesine dönüştürür. İngilizce ve İspanyolca içeriklerde en iyi sonucu verir.</small></span></label>
+            <label class="flow-narration"><input id="flow-narration-enabled" type="checkbox"><i></i><span><b>AI seslendirme</b><small>Açarsan sahne metinleri ses üretimi için TERZİ sunucusuna veya seçtiğin AI sağlayıcısına gönderilir. Fotoğrafların gönderilmez.</small></span></label>
             <div class="flow-music">
               <div><span>İSTEĞE BAĞLI</span><b>Arka plan müziği</b><small>MP3, WAV veya M4A dosyan cihazında işlenir.</small></div>
               <label class="flow-music-pick">♫ Müzik seç<input id="flow-music-file" type="file" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg"></label>
@@ -189,7 +257,7 @@
             <div id="flow-scenes" class="flow-scenes empty-state">Başlamak için en az bir fotoğraf seç.</div>
           </section>
           <aside class="flow-preview-panel">
-            <div id="flow-device" class="flow-device"><canvas id="flow-canvas" width="720" height="1280"></canvas><div id="flow-placeholder"><b>Orbit Studio</b><span>Önizleme burada görünecek</span></div></div>
+            <div id="flow-device" class="flow-device"><canvas id="flow-canvas" width="720" height="1280"></canvas><div id="flow-placeholder"><b>TERZİ</b><span>Önizleme burada görünecek</span></div></div>
             <div id="flow-compatibility" class="flow-compatibility" role="status">
               <span id="flow-compatibility-badge">Kontrol ediliyor</span>
               <div><b id="flow-compatibility-title">Cihaz uyumluluğu</b><small id="flow-compatibility-detail">Tarayıcının video özellikleri inceleniyor.</small></div>
@@ -200,7 +268,9 @@
             <div id="flow-progress" class="flow-progress hidden"><i></i><span>Video hazırlanıyor…</span></div>
             <div id="flow-result" class="flow-result hidden">
               <video id="flow-video" controls playsinline></video>
-              <div class="flow-result-actions"><a id="flow-download" class="primary-link" download>Videoyu indir</a><button id="flow-share" type="button">Paylaş</button></div>
+              <div class="flow-result-actions"><a id="flow-download" class="primary-link" download>Videoyu indir</a><button id="flow-share" type="button">Paylaş</button><button id="flow-local-save" type="button">Cihazda sakla ⬇</button><button id="flow-cloud-save" class="hidden" type="button">Buluta kaydet ☁</button></div>
+              <div id="flow-local-status" class="flow-local-status hidden" role="status"></div>
+              <div id="flow-cloud-status" class="flow-cloud-status hidden" role="status"></div>
               <div class="platform-share"><button data-share-platform="YouTube">YouTube</button><button data-share-platform="Instagram">Instagram</button><button data-share-platform="TikTok">TikTok</button><button data-share-platform="Facebook">Facebook</button><button data-share-platform="Pinterest">Pinterest</button><button data-share-platform="LinkedIn">LinkedIn</button><button data-share-platform="X">X</button></div>
               <small>Mobil cihazda platform düğmesi sistem paylaşım ekranını açar. Bilgisayarda video indirilir ve platformun yükleme sayfası açılır.</small>
             </div>
@@ -220,29 +290,33 @@
       </section>
 
       <section class="view" data-view="source">
-        <div class="creation-wizard-head"><span>YENİ PROJE</span><h2>Nasıl başlamak istiyorsun?</h2><p>Elindeki içeriği seç; Orbit yalnızca ihtiyacın olan adımları göstersin.</p><div class="creation-progress"><b class="active">1 <small>Başlangıç</small></b><i></i><b>2 <small>İçerik</small></b><i></i><b>3 <small>Görseller</small></b><i></i><b>4 <small>Kontrol</small></b></div></div>
-        <div class="creation-mode-switch">
-          <button type="button" data-creation-mode="visual-story"><b>01</b><span>Görsel seç<small>Kendi görselini yükle veya arşivden seç; AI hikâyeyi oluştursun</small><em>Görsel → AI hikâye → Kontrol</em></span></button>
-          <button type="button" data-creation-mode="story-visual"><b>02</b><span>Hikâyem var<small>Metnini sahnelere ayır ve uygun görseller üret</small><em>Hikâye → Sahne → Görsel</em></span></button>
-          <button type="button" data-creation-mode="manual"><b>03</b><span>Kendim oluşturacağım<small>Hikâyeyi ve görselleri tamamen kendin ekle</small><em>Manuel metin + kendi görsellerin</em></span></button>
-          <button type="button" data-creation-mode="automatic"><b>04</b><span>Her şeyi otomatik yap<small>Konuyu söyle; hikâye, sahneler ve görseller hazırlansın</small><em>Fikir → Otomatik proje</em></span></button>
+        <div class="creation-wizard-head"><span>YENİ VİDEO</span><h2>Fikrini veya fotoğraflarını ekle.</h2><p>Bir başlangıç seç; gerisini TERZİ hazırlasın.</p><div class="creation-progress"><b class="active">1 <small>Başlangıç</small></b><i></i><b>2 <small>İçerik</small></b><i></i><b>3 <small>Görseller</small></b><i></i><b>4 <small>Kontrol</small></b></div></div>
+        <div class="creation-mode-switch primary-modes">
+          <button class="recommended" type="button" data-creation-mode="automatic"><b>✦</b><span>TERZİ hazırlasın<small>Bir konu yaz veya fotoğraf ekle; hikâye ve sahneler oluşsun.</small><em>En hızlı yol →</em></span></button>
+          <button type="button" data-creation-mode="manual"><b>＋</b><span>İçeriğim hazır<small>Metnini ve görsellerini ekle; TERZİ yalnızca videoyu kursun.</small><em>Kontrol tamamen sende →</em></span></button>
         </div>
+        <details class="creation-more product-deferred"><summary>Diğer başlangıç yolları</summary><div class="creation-mode-switch secondary-modes">
+          <button type="button" data-creation-mode="visual-story"><b>03</b><span>Görsel seç<small>Kendi görselini yükle veya arşivden seç; AI hikâyeyi oluştursun</small><em>Görsel → AI hikâye → Kontrol</em></span></button>
+          <button type="button" data-creation-mode="story-visual"><b>04</b><span>Hikâyem var<small>Metnini sahnelere ayır ve uygun görseller üret</small><em>Hikâye → Sahne → Görsel</em></span></button>
+        </div></details>
         <div id="creation-workspace" class="creation-workspace hidden">
         <div class="format-bar">
           <div><label for="production-format">İçerik türü</label><select id="production-format"><option value="shorts">YouTube Shorts · 9:16</option><option value="reels">Instagram Reels · 9:16</option><option value="youtube">YouTube Video · 16:9</option></select></div>
-          <div><label for="image-fit">Görsel kadrajı</label><select id="image-fit"><option value="cover">Ekranı doldur</option><option value="contain">Görselin tamamını göster</option></select></div>
+          <div><label for="project-content-language">İçerik ve ses dili</label><select id="project-content-language"><option value="Turkish">Türkçe</option><option value="English">English</option><option value="Spanish">Español</option><option value="German">Deutsch</option><option value="French">Français</option><option value="Portuguese">Português</option><option value="Italian">Italiano</option><option value="Arabic">العربية</option><option value="Hindi">हिन्दी</option><option value="Chinese">中文</option><option value="Japanese">日本語</option><option value="Korean">한국어</option><option value="Russian">Русский</option><option value="Dutch">Nederlands</option><option value="Polish">Polski</option><option value="Indonesian">Bahasa Indonesia</option><option value="Vietnamese">Tiếng Việt</option><option value="Ukrainian">Українська</option><option value="Thai">ไทย</option></select></div>
+          <div class="advanced-format"><label for="image-fit">Görsel kadrajı</label><select id="image-fit"><option value="cover">Ekranı doldur</option><option value="contain">Görselin tamamını göster</option></select></div>
           <p id="format-note">Dikey, kısa içerik. Süre metne göre otomatik hesaplanır.</p>
         </div>
         <div id="visual-story-mode">
         <div class="hero-search">
-          <span>OPEN MEDIA LIBRARY</span>
+          <span>AÇIK GÖRSEL ARŞİVİ</span>
           <form id="nasa-form">
-            <select id="media-source" aria-label="Görsel kaynağı"><option value="nasa">NASA</option><option value="wikimedia">Wikimedia Commons</option><option value="cloudflare">Cloudflare FLUX · AI</option><option value="custom">Kendi görselim · Yükle</option></select>
+            <select id="media-source" aria-label="Görsel kaynağı"><option value="nasa">NASA</option><option value="wikimedia">Wikimedia Commons</option><option value="url">Görsel URL’si</option><option value="cloudflare">AI ile görsel oluştur</option><option value="custom">Kendi görselim · Yükle</option></select>
             <input id="nasa-query" required minlength="2" value="Mars" placeholder="Mars, Webb, Ay, Dünya…">
             <label id="custom-image-upload" class="custom-image-upload hidden"><input id="custom-image-file" type="file" accept="image/jpeg,image/png,image/webp"><span><b id="custom-image-icon">↑</b><img id="custom-image-preview" class="hidden" alt="Seçilen görsel önizlemesi"><span><strong>Görsel seç</strong><small>JPG, PNG veya WebP · en fazla 10 MB</small></span></span><em id="custom-image-name">Dosya seçilmedi</em></label>
+            <div id="url-image-import" class="url-image-import hidden"><label>Doğrudan HTTPS görsel adresi<input id="url-image-address" type="url" inputmode="url" placeholder="https://example.com/image.jpg"></label><label class="url-rights"><input id="url-image-rights" type="checkbox"><span>Bu görseli kullanma hakkım veya uygun lisansım var.</span></label></div>
             <button type="submit">Arşivde ara</button>
           </form>
-          <p>NASA ve Wikimedia Commons görsellerini metadata, lisans ve kaynak bilgisiyle getir.</p>
+          <p>NASA ve Wikimedia Commons görsellerini kullanım ve kaynak bilgileriyle getir.</p>
           <div id="kids-search-hints" class="search-hints hidden"><button type="button" data-search-hint="solar system illustration">Solar system</button><button type="button" data-search-hint="cute animals illustration">Animals</button><button type="button" data-search-hint="human body diagram children">Human body</button><button type="button" data-search-hint="dinosaur illustration">Dinosaurs</button></div>
         </div>
         <div class="section-head"><div><h2>Arşiv sonuçları</h2><p>Bir görsel seçtiğinde hikâye kuyruğu otomatik hazırlanır.</p></div><span id="result-count"></span></div>
@@ -254,10 +328,26 @@
           <div class="project-image-tray-head"><div><strong>Projeye eklenen görseller</strong><small id="project-image-summary"></small></div><button id="open-image-project" class="ghost" type="button">Projeyi aç →</button></div>
           <div id="project-image-list" class="project-image-list"></div>
         </section>
-        <div id="nasa-results" class="media-grid empty-state">Aramaya başlamak için yukarıdaki alanı kullan.</div>
+         <div id="media-selection-toolbar" class="media-selection-toolbar hidden"><span><b id="media-selection-count">0</b> görsel seçildi</span><button type="button" class="primary" data-media-batch>Seçilenlerle hikâye oluştur →</button></div>
+         <div id="nasa-results" class="media-grid empty-state">Aramaya başlamak için yukarıdaki alanı kullan.</div>
+        <section class="trend-discovery product-deferred">
+            <div class="section-head"><div><span>YOUTUBE TRENDLERİ</span><h2>YouTube trendlerini keşfet</h2><p>Popüler videoları ülke ve kategoriye göre incele; özgün bir içerik fikri olarak kuyruğa ekle.</p></div></div>
+          <aside class="trend-api-help">
+            <div><b>API anahtarın yok mu?</b><small>Google Cloud'da YouTube Data API v3'ü etkinleştir, ardından bir API anahtarı oluştur. Anahtar yalnızca bu cihazda saklanır.</small></div>
+            <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener noreferrer">Google Cloud'da anahtar al ↗</a>
+            <button type="button" data-control-action="integrations">Anahtarı uygulamaya gir</button>
+          </aside>
+          <form id="youtube-trends-form" class="trend-filters">
+            <label>Ülke<select id="youtube-trend-region"><option value="TR">Türkiye</option><option value="US">Amerika Birleşik Devletleri</option><option value="GB">Birleşik Krallık</option><option value="DE">Almanya</option><option value="FR">Fransa</option><option value="ES">İspanya</option></select></label>
+            <label>Kategori<select id="youtube-trend-category"><option value="0">Tüm kategoriler</option><option value="1">Film ve animasyon</option><option value="10">Müzik</option><option value="15">Hayvanlar</option><option value="17">Spor</option><option value="20">Oyun</option><option value="22">İnsanlar ve bloglar</option><option value="24">Eğlence</option><option value="25">Haberler</option><option value="26">Nasıl yapılır ve stil</option><option value="27">Eğitim</option><option value="28">Bilim ve teknoloji</option></select></label>
+            <button class="primary" type="submit">Trendleri getir →</button>
+          </form>
+          <div id="youtube-trend-results" class="trend-grid empty-state">Trend listesini getirmek için filtreleri seç.</div>
+          <p class="youtube-attribution">Trend verilerinin kaynağı YouTube Data API'dir. <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">YouTube Kullanım Şartları</a> · <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Gizlilik Politikası</a></p>
+        </section>
         </div>
         <div id="story-visual-mode" class="story-visual-panel hidden">
-          <div class="story-visual-intro"><span>STORY TO VISUAL</span><h2>Hikâyeni sahnelere dönüştür.</h2><p>Metni yapıştır; sistem anlatımı sahnelere bölsün ve Cloudflare FLUX üretimine hazır bir proje oluştursun.</p></div>
+          <div class="story-visual-intro"><span>HİKÂYEDEN GÖRSELE</span><h2>Hikâyeni sahnelere dönüştür.</h2><p>Metni yapıştır; TERZİ anlatımı sahnelere bölsün ve görsel üretimine hazır bir proje oluştursun.</p></div>
           <form id="story-visual-form">
             <label>Proje başlığı<input id="story-project-title" required maxlength="180" placeholder="Örn: Sayılar Ormanındaki Macera"></label>
             <label>Hikâye / seslendirme metni<textarea id="story-project-text" required minlength="40" maxlength="12000" placeholder="Hikâyeni buraya yaz…"></textarea></label>
@@ -275,45 +365,57 @@
           </form>
         </div>
         <div id="automatic-creation-mode" class="automatic-creation-panel hidden">
-          <div class="manual-creation-intro"><span>AUTOPILOT</span><h2>Sen konuyu söyle, Orbit hazırlasın.</h2><p>Sistem hikâyeyi yazar, sahnelere böler ve seçtiğin yönteme göre açık arşivden görsel bulur veya AI görsel üretimine hazırlar.</p></div>
+          <div class="manual-creation-intro"><span>TERZİ HAZIRLASIN</span><h2>Bir fikir yeter.</h2><p>Konunu yaz veya fotoğraflarını ekle. TERZİ hikâyeyi, sahneleri ve görselleri tek akışta hazırlasın.</p></div>
           <form id="automatic-creation-form">
-            <label>Video konusu<input id="automatic-topic" required minlength="3" maxlength="180" placeholder="Örn: Çocuklar için gezegenleri anlat"></label>
-            <label>Görseller nasıl hazırlansın?<select id="automatic-visual-method"><option value="archive">Ücretsiz açık arşivden bul</option><option value="ai">Prompt ile AI görsel üret</option></select></label>
+            <label id="automatic-topic-field"><span id="automatic-topic-label">Video konusu</span><input id="automatic-topic" required minlength="3" maxlength="180" placeholder="Örn: Çocuklar için gezegenleri anlat"></label>
+            <div class="automatic-topic-ideas" aria-label="Konu önerileri"><span>Bir fikirle başla:</span><button type="button" data-topic-suggestion="Bugün uygulanabilecek üç pratik üretkenlik önerisi">Pratik öneri</button><button type="button" data-topic-suggestion="Çoğu kişinin bilmediği şaşırtıcı bir tarih detayı">Merak uyandıran bilgi</button><button type="button" data-topic-suggestion="Küçük bir adımla başlayan ilham verici dönüşüm hikâyesi">İlham veren hikâye</button></div>
+            <div class="automatic-brief-grid">
+              <label>Bu videonun amacı<select id="automatic-goal"><option value="engagement">İzlenme ve etkileşim</option><option value="followers">Yeni takipçi kazanmak</option><option value="education">Bir şeyi anlaşılır öğretmek</option><option value="sales">Ürün veya hizmet tanıtmak</option></select></label>
+              <label>Kime hitap edecek?<input id="automatic-audience" maxlength="160" placeholder="Örn: Yeni başlayan içerik üreticileri"></label>
+              <label>Anlatım nasıl hissettirsin?<select id="automatic-tone"><option value="curious">Merak uyandıran</option><option value="clear">Sade ve bilgilendirici</option><option value="energetic">Enerjik ve eğlenceli</option><option value="inspiring">Samimi ve ilham veren</option></select></label>
+            </div>
+            <label class="automatic-files">Projeye fotoğraf ekle <span class="optional-label">İsteğe bağlı</span><input id="automatic-files" type="file" accept="image/jpeg,image/png,image/webp" multiple><span>＋ Bir veya birden fazla fotoğraf seç</span><small id="automatic-files-summary">Fotoğraf seçilmezse konuya göre arşiv veya AI görseli kullanılır.</small><small id="automatic-photo-ai-note" class="hidden">Fotoğraflar hikâyeyi anlayabilmesi için seçtiğin AI sağlayıcısına aktarılır.</small></label>
+            <label id="automatic-story-mode-field" class="hidden">Fotoğraflar hikâyeye nasıl bağlansın?<select id="automatic-story-mode"><option value="shared">Tek ortak hikâye · fotoğraflar ardışık sahneler</option><option value="separate">Her fotoğraf için ayrı bölüm · tek video</option></select></label>
+            <fieldset id="automatic-visual-method-field" class="automatic-visual-method"><legend>Görseller nasıl hazırlansın?</legend><div class="automatic-visual-choices"><label><input type="radio" name="automatic-visual-method" value="archive" checked><span><b>⌕ Açık arşivden bul</b><small>Wikimedia veya NASA arşivinden kullanım bilgili görseller seçilir.</small><em>Daha hızlı · ücretsiz kaynak</em></span></label><label><input type="radio" name="automatic-visual-method" value="ai"><span><b>✦ AI ile yeni görseller oluştur</b><small>Her sahne için konuya özel, dikey bir görsel hazırlanır.</small><em data-ai-visual-access>Daha özgün · biraz daha uzun sürer</em></span></label></div></fieldset>
             <label id="automatic-archive-source">Arşiv kaynağı<select id="automatic-source"><option value="wikimedia">Wikimedia Commons</option><option value="nasa">NASA</option></select></label>
-            <p class="automatic-note">Başlamadan önce oluşturulacak proje ve kullanılacak kaynak sana gösterilir; son düzenleme yine sende kalır.</p>
-            <button class="primary large" type="submit">Otomatik projeyi hazırla <span>→</span></button>
+            <label id="automatic-archive-count">Görsel çeşitliliği<select id="automatic-image-count"><option value="4">Dengeli · 4 farklı görsel</option><option value="6" selected>Zengin · 6 farklı görsel</option><option value="8">Maksimum · 8 farklı görsel</option></select><small>TERZİ güvenli ve lisans bilgili sonuçları sahnelere sırayla dağıtır.</small></label>
+            <p id="automatic-note" class="automatic-note">TERZİ bir taslak hazırlayacak; yayınlamadan önce metni ve görselleri değiştirebilirsin.</p>
+            <div id="automatic-progress" class="automatic-progress hidden" role="status" aria-live="polite"><b></b><span></span></div>
+            <button class="primary large" type="submit">Taslağımı hazırla <span>→</span></button>
+            <small class="automatic-expectation">Yaklaşık 1–2 dakika sürer. Sonraki ekranda metni, görselleri ve video süresini görebilirsin.</small>
           </form>
         </div>
         </div>
       </section>
 
       <section class="view" data-view="story">
-        <div class="section-head"><div><h2>Hikâye kuyruğu</h2><p>Kaynağa bağlı, özgün bir Shorts senaryosu üret.</p></div></div>
+        <div class="section-head"><div><h2>Hazırlanan fikirler</h2><p>Seçtiğin kaynaklardan özgün bir video taslağı oluştur.</p></div></div>
         <div id="ideas" class="stack empty-state">Henüz kaynak seçilmedi.</div>
       </section>
 
       <section class="view" data-view="review">
-        <div class="section-head"><div><h2>Editör masası</h2><p>Senaryoyu ve görseli kontrol et, ardından onayla.</p></div></div>
+        <div class="section-head"><div><h2>Son kontrol</h2><p>Metni ve görselleri gözden geçir, ardından videonu oluştur.</p></div></div>
         <div id="productions-review" class="stack empty-state">İncelenecek senaryo yok.</div>
       </section>
 
       <section class="view" data-view="render">
-        <div class="section-head"><div><h2>Video laboratuvarı</h2><p>Edge sesi, açık lisanslı görseller ve hikâyeyi tek videoda birleştir.</p></div></div>
+        <div class="section-head"><div><h2>Videoyu oluştur</h2><p>Seslendirmeyi, görselleri ve altyazıyı tek videoda birleştir.</p></div></div>
         <div id="productions-render" class="stack empty-state">Onaylanmış üretim yok.</div>
       </section>
 
       <section class="view" data-view="editor">
         <div class="editor-head">
           <button id="editor-back" class="ghost">← Projelere dön</button>
-          <div><span>PROJECT EDITOR</span><h2 id="editor-heading">Projeyi düzenle</h2></div>
+          <div><span>SON KONTROL</span><h2 id="editor-heading">Projeyi düzenle</h2></div>
         </div>
         <form id="project-editor" class="project-editor">
           <input id="editor-id" type="hidden">
           <label>Başlık<input id="editor-title" maxlength="180" required></label>
-          <label>Açılış cümlesi<textarea id="editor-hook" maxlength="500"></textarea></label>
+          <label>Açılış cümlesi<small class="field-help">Videonun ilk saniyelerinde izleyiciyi durduracak cümle.</small><textarea id="editor-hook" maxlength="500"></textarea></label>
           <label>Seslendirme metni<textarea id="editor-narration" maxlength="12000" required></textarea></label>
+          <section id="creator-checklist" class="creator-checklist" aria-live="polite"></section>
           <div id="editor-assets" class="editor-assets"></div>
-          <button id="generate-ai-scenes" class="ghost ai-scenes" type="button">✦ Cloudflare FLUX ile animasyon sahnesi üret</button>
+          <button id="generate-ai-scenes" class="ghost ai-scenes" type="button">✦ Eksik sahneler için özgün görsel üret</button>
           <div class="editor-actions"><span id="editor-updated"></span><div><button id="delete-project" class="ghost danger" type="button">Projeyi sil</button><button class="primary" type="submit">Değişiklikleri kaydet</button></div></div>
         </form>
         <section id="editor-next" class="editor-next"></section>
@@ -326,38 +428,49 @@
 
       <section class="view" data-view="projects">
         <div class="projects-toolbar">
-          <div><span>PROJECT LIBRARY</span><h2>Tüm projeler</h2><p>Projelerini tek ekrandan düzenle, üretime devam et veya kaldır.</p></div>
+          <div><span>PROJELERİM</span><h2>Tüm projeler</h2><p>Projelerini tek ekrandan düzenle, üretime devam et veya kaldır.</p></div>
           <button class="primary large" data-go-step="source">＋ Yeni proje</button>
         </div>
         <div class="project-filters">
           <button class="active" data-project-filter="all">Tümü</button>
           <button data-project-filter="review">İncelemede</button>
-          <button data-project-filter="approved">Render bekliyor</button>
+          <button data-project-filter="approved">Video oluşturulacak</button>
           <button data-project-filter="ready">Hazır</button>
+          <button data-go-step="trash">Çöp kutusu</button>
         </div>
         <div id="all-projects" class="all-projects empty-state">Henüz proje yok.</div>
       </section>
 
       <section class="view" data-view="trash">
-        <div class="section-head"><div><h2>Çöp kutusu</h2><p>Projeler ve render dosyaları korunur; istediğinde geri yükleyebilirsin.</p></div></div>
+        <div class="section-head"><div><h2>Çöp kutusu</h2><p>Projeler ve oluşturulan video dosyaları korunur; istediğinde geri yükleyebilirsin.</p></div></div>
         <div id="trash-list" class="project-list empty-state">Çöp kutusu boş.</div>
       </section>
     </main>
   </div>
   <div id="mobile-flow-action" class="mobile-flow-action hidden"><button id="mobile-flow-prev" type="button">← Geri</button><button id="mobile-flow-next" class="primary" type="button">Sahnelere geç →</button></div>
-  <nav class="mobile-app-nav" aria-label="Mobil ana navigasyon"><button data-mobile-step="dashboard"><svg><use href="#i-home"/></svg><span>Ana Sayfa</span></button><button data-mobile-step="projects"><svg><use href="#i-projects"/></svg><span>Projeler</span></button><button class="create" data-mobile-step="flow"><svg><use href="#i-video"/></svg><span>Oluştur</span></button><button data-mobile-step="files"><svg><use href="#i-files"/></svg><span>Dosyalar</span></button><button data-mobile-settings><svg><use href="#i-settings"/></svg><span>Ayarlar</span></button></nav>
+  <nav class="mobile-app-nav" aria-label="Mobil ana navigasyon"><button data-mobile-step="dashboard"><svg><use href="#i-home"/></svg><span>Ana Sayfa</span></button><button class="create" data-mobile-create><svg><use href="#i-video"/></svg><span>Oluştur</span></button><button data-mobile-step="projects"><svg><use href="#i-projects"/></svg><span>Projeler</span></button></nav>
   <div id="toast" aria-live="polite"></div>
+  <div id="account-modal" class="account-modal hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+    <div><button id="account-close" class="account-close" type="button" aria-label="Kapat">×</button><span>TERZİ HESABI</span>
+      <section id="account-guest"><h2 id="account-title">Projelerini güvenle hesabına bağla.</h2><p>Ücretsiz hesap açtığında bu tarayıcıdaki bulut projelerin hesabına taşınır. Cihaz içi video üretimi ücretsiz kalır.</p><div class="account-mode"><button class="active" data-account-mode="register" type="button">Hesap oluştur</button><button data-account-mode="login" type="button">Giriş yap</button></div><form id="account-form"><label>E-posta<input id="account-email" type="email" autocomplete="email" maxlength="254" required></label><label>Parola<input id="account-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label><small id="account-password-help">En az 12 karakter kullan. Parolan hiçbir zaman düz metin olarak saklanmaz.</small><div id="account-turnstile"></div><button id="account-submit" class="primary" type="submit">Ücretsiz hesap oluştur</button><button id="account-forgot" class="text-button" type="button">Parolamı unuttum</button><small id="account-auth-message" class="hidden" role="status"></small></form></section>
+      <section id="account-signed" class="hidden"><h2>Hesabın hazır.</h2><p id="account-email-view"></p><div id="account-verification" class="account-verification hidden"><b>E-posta doğrulaması gerekiyor</b><small>Otomatik deneme ve ödeme için e-posta adresini doğrula.</small><div id="verify-turnstile"></div><button id="account-resend-verification" class="ghost" type="button">Doğrulama bağlantısını yeniden gönder</button></div><div class="account-plan"><span id="account-plan-name">Ücretsiz</span><small id="account-plan-copy">Cihaz içi üretim ücretsiz</small></div><button id="account-upgrade" class="primary" type="button">Atölye Pro'ya geç</button><button id="account-manage" class="ghost hidden" type="button">Üyeliği yönet</button><button id="account-logout" class="text-button" type="button">Çıkış yap</button><details class="account-danger"><summary>Hesap ve veriler</summary><p>Hesabını silmek kalıcıdır. Aktif Pro üyeliğini önce iptal etmelisin.</p><label>Parolan<input id="account-delete-password" type="password" autocomplete="current-password" minlength="12" maxlength="128"></label><button id="account-delete" class="danger" type="button">Hesabımı ve verilerimi sil</button></details></section>
+    </div>
+  </div>
+  <div id="auth-action-modal" class="account-modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-action-title"><div><button id="auth-action-close" class="account-close" type="button" aria-label="Kapat">×</button><span>HESAP GÜVENLİĞİ</span><h2 id="auth-action-title">Parolanı yenile</h2><p>Yeni parolanı belirle; diğer cihazlardaki oturumların kapatılır.</p><form id="password-reset-form"><label>Yeni parola<input id="password-reset-value" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label><div id="reset-turnstile"></div><button class="primary" type="submit">Parolayı yenile</button></form></div></div>
+  <div id="language-gate" class="language-gate hidden" role="dialog" aria-modal="true" aria-labelledby="language-gate-title">
+    <div><img class="language-gate-logo" src="/logo.svg" alt="TERZİ"><span>TERZİ</span><div class="language-gate-icon">◎</div><h2 id="language-gate-title">Choose your language</h2><p>Dilini seç · Elige tu idioma</p><div class="language-options"><button type="button" data-language-choice="tr"><b>TR</b><span>Türkçe<small>Devam et →</small></span></button><button type="button" data-language-choice="en"><b>EN</b><span>English<small>Continue →</small></span></button><button type="button" data-language-choice="es"><b>ES</b><span>Español<small>Continuar →</small></span></button></div><small class="language-gate-note">You can change this later in Settings.</small></div>
+  </div>
   <div id="ios-install-guide" class="install-guide hidden" role="dialog" aria-modal="true" aria-labelledby="ios-install-title">
-    <div><button id="ios-install-close" type="button" aria-label="Kapat">×</button><span>ORBIT STUDIO</span><h2 id="ios-install-title">Ana ekranına ekle</h2><p>Safari araç çubuğundaki <b>Paylaş</b> simgesine dokun, ardından <b>“Ana Ekrana Ekle”</b> seçeneğini seç.</p><button id="ios-install-ok" class="primary" type="button">Anladım</button></div>
+    <div><button id="ios-install-close" type="button" aria-label="Kapat">×</button><span>TERZİ</span><h2 id="ios-install-title">Ana ekranına ekle</h2><p>Safari araç çubuğundaki <b>Paylaş</b> simgesine dokun, ardından <b>“Ana Ekrana Ekle”</b> seçeneğini seç.</p><button id="ios-install-ok" class="primary" type="button">Anladım</button></div>
   </div>
   <div id="welcome-guide" class="welcome-guide hidden" role="dialog" aria-modal="true" aria-labelledby="welcome-guide-title">
-    <div><button id="welcome-guide-close" class="welcome-guide-close" type="button" aria-label="Kapat">×</button><span>ORBIT STUDIO'YA HOŞ GELDİN</span><h2 id="welcome-guide-title">İlk videon birkaç dakika uzakta.</h2><p>Fotoğraflarını seç, sahne yazılarını düzenle ve videoyu hiçbir dosyayı sunucuya göndermeden cihazında oluştur.</p><div class="welcome-guide-steps"><article><b>1</b><span>Şablon seç<small>Stil ve format hazır gelsin.</small></span></article><article><b>2</b><span>Görselleri ekle<small>Kendi fotoğrafların veya demo.</small></span></article><article><b>3</b><span>Oluştur ve paylaş<small>MP4 ya da WebM olarak indir.</small></span></article></div><div class="welcome-guide-actions"><button id="welcome-guide-skip" class="ghost" type="button">Kendim başlayacağım</button><button id="welcome-guide-demo" class="primary" type="button">Örnek projeyi aç →</button></div><small>Bu tanıtım yalnızca ilk ziyaretinde gösterilir.</small></div>
+    <div><button id="welcome-guide-close" class="welcome-guide-close" type="button" aria-label="Kapat">×</button><span>TERZİ'YE HOŞ GELDİN</span><h2 id="welcome-guide-title">İlk videonu birlikte hazırlayalım.</h2><p>Bir konu yaz veya fotoğraflarını ekle. TERZİ hikâyeyi ve sahneleri hazırlasın; son karar her zaman sende kalsın.</p><div class="welcome-guide-steps"><article><b>1</b><span>Fikrini ekle<small>Konu veya kendi fotoğrafların.</small></span></article><article><b>2</b><span>TERZİ hazırlasın<small>Hikâye, sahneler ve görseller.</small></span></article><article><b>3</b><span>Kontrol et<small>Düzenle, seslendir ve indir.</small></span></article></div><div class="welcome-guide-actions"><button id="welcome-guide-skip" class="ghost" type="button">Ana sayfayı incele</button><button id="welcome-guide-demo" class="primary" type="button">İlk videomu oluştur →</button></div><small id="welcome-guide-access">Demo için API anahtarı gerekmez.</small></div>
   </div>
   <div id="flow-bulk-text-modal" class="bulk-text-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bulk-text-title"><div><button id="flow-bulk-text-close" type="button" aria-label="Kapat">×</button><span>TOPLU DÜZENLEME</span><h2 id="bulk-text-title">Her satır bir sahne metni</h2><p>Satır sırası sahne sırasıyla eşleşir. Boş bıraktığın satırdaki sahne yazısız kalır.</p><textarea id="flow-bulk-textarea" rows="10" placeholder="Birinci sahnenin metni&#10;İkinci sahnenin metni&#10;Üçüncü sahnenin metni"></textarea><div><button id="flow-bulk-text-cancel" class="ghost" type="button">Vazgeç</button><button id="flow-bulk-text-apply" class="primary" type="button">Metinleri uygula</button></div></div></div>
   <div id="flow-crop-modal" class="crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="crop-modal-title"><div><button id="flow-crop-close" type="button" aria-label="Kapat">×</button><span>SAHNE KADRAJI</span><h2 id="crop-modal-title">Önemli bölgeyi kadrajda tut</h2><p>Yakınlaştır ve odak noktasını taşı. Kesikli çerçeve platformların güvenli alanını gösterir.</p><div id="flow-crop-preview" class="crop-preview"><img id="flow-crop-image" alt="Kadraj önizlemesi"><i></i></div><div class="crop-controls"><label>Yakınlaştır <output id="flow-crop-zoom-value">%100</output><input id="flow-crop-zoom" type="range" min="100" max="180" value="100"></label><label>Yatay odak <output id="flow-crop-x-value">%50</output><input id="flow-crop-x" type="range" min="0" max="100" value="50"></label><label>Dikey odak <output id="flow-crop-y-value">%50</output><input id="flow-crop-y" type="range" min="0" max="100" value="50"></label></div><div class="crop-actions"><button id="flow-crop-reset" class="ghost" type="button">Ortala</button><button id="flow-crop-cancel" class="ghost" type="button">Vazgeç</button><button id="flow-crop-apply" class="primary" type="button">Kadrajı uygula</button></div></div></div>
-  <div id="ai-key-modal" class="ai-key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ai-key-modal-title"><div><button id="ai-key-modal-close" type="button" aria-label="Kapat">×</button><span>AI ENTEGRASYONU</span><div class="ai-key-icon">✦</div><h2 id="ai-key-modal-title">AI bağlantısı gerekli</h2><p id="ai-key-modal-copy">Bu özelliği kullanmak için kullanmak istediğin AI sağlayıcısının API anahtarını eklemelisin.</p><label class="ai-key-provider"><small>AI sağlayıcını seç</small><select id="ai-key-modal-provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option><option value="cloudflare">Cloudflare Workers AI</option></select></label><ol class="ai-key-guide"><li>Seçtiğin sağlayıcının sayfasında bir API anahtarı oluştur.</li><li>Anahtarı kopyala; kimseyle paylaşma.</li><li>Orbit Entegrasyonlar ekranına yapıştır ve kaydet.</li></ol><a id="ai-key-guide-link" class="ai-key-guide-link" href="#" target="_blank" rel="noopener noreferrer">Anahtar oluşturma sayfasını aç ↗</a><label class="ai-transfer-consent"><input id="ai-transfer-consent" type="checkbox"><span><b>AI veri aktarımı için açık rıza</b><small>Prompt, hikâye ve seçtiğim dosyaların bu sağlayıcı tarafından yurt dışında işlenebileceğini anladım. Bu rızayı Ayarlar’dan geri çekebilirim.</small></span></label><div class="ai-key-actions"><button id="ai-key-modal-cancel" class="ghost" type="button">Şimdi değil</button><button id="ai-key-modal-settings" class="primary" type="button" disabled>Anahtarımı bağla →</button></div><button id="ai-key-modal-pro" class="ai-key-pro" type="button"><b>Orbit Pro</b><span>API anahtarı girmeden devam et</span><em>Yakında →</em></button><small class="ai-key-privacy">Anahtarın tarayıcıya geri gönderilmez ve arayüzde gösterilmez.</small></div></div>
-  <footer class="legal-footer"><span>© Orbit Studio · Bağımsız içerik üretim aracı</span><div><button data-legal-doc="privacy" type="button">KVKK Aydınlatma Metni</button><button data-legal-doc="terms" type="button">Kullanım Koşulları</button><button data-legal-doc="rights" type="button">Veri Hakların</button></div></footer>
-  <div id="legal-gate" class="legal-gate hidden" role="dialog" aria-modal="true" aria-labelledby="legal-gate-title"><div><span>ORBIT STUDIO</span><h2 id="legal-gate-title">Başlamadan önce</h2><p>Orbit Studio yetişkin içerik üreticileri için hazırlanmıştır. Çocuklara yönelik içerik üretebilirsin; uygulama çocukların doğrudan kullanımına yönelik değildir.</p><label><input id="legal-age" type="checkbox"><span>18 yaşında veya daha büyük olduğumu ve <button data-legal-doc="terms" type="button">Kullanım Koşulları’nı</button> kabul ettiğimi beyan ederim.</span></label><p class="legal-notice">Kişisel verilerinin nasıl işlendiği hakkında <button data-legal-doc="privacy" type="button">KVKK Aydınlatma Metni’ni</button> okuyabilirsin. Bu metni okumak bir açık rıza değildir.</p><button id="legal-enter" class="primary" type="button" disabled>Stüdyoya gir →</button></div></div>
+  <div id="ai-key-modal" class="ai-key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ai-key-modal-title"><div><button id="ai-key-modal-close" type="button" aria-label="Kapat">×</button><span>AI ENTEGRASYONU</span><div class="ai-key-icon">✦</div><h2 id="ai-key-modal-title">AI bağlantısı gerekli</h2><p id="ai-key-modal-copy">Bu özelliği kullanmak için kullanmak istediğin AI sağlayıcısının API anahtarını eklemelisin.</p><label class="ai-key-provider"><small>AI sağlayıcını seç</small><select id="ai-key-modal-provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option><option value="cloudflare">Cloudflare Workers AI</option></select></label><ol class="ai-key-guide"><li>Seçtiğin sağlayıcının sayfasında bir API anahtarı oluştur.</li><li>Anahtarı kopyala; kimseyle paylaşma.</li><li>TERZİ Entegrasyonlar ekranına yapıştır ve kaydet.</li></ol><a id="ai-key-guide-link" class="ai-key-guide-link" href="#" target="_blank" rel="noopener noreferrer">Anahtar oluşturma sayfasını aç ↗</a><label class="ai-transfer-consent"><input id="ai-transfer-consent" type="checkbox"><span><b>AI veri aktarımı için açık rıza</b><small>Prompt, hikâye ve seçtiğim dosyaların bu sağlayıcı tarafından yurt dışında işlenebileceğini anladım. Bu rızayı Ayarlar’dan geri çekebilirim.</small></span></label><div class="ai-key-actions"><button id="ai-key-modal-cancel" class="ghost" type="button">Şimdi değil</button><button id="ai-key-modal-settings" class="primary" type="button" disabled>Anahtarımı bağla →</button></div><button id="ai-key-modal-pro" class="ai-key-pro" type="button"><b>Atölye Pro</b><span>API anahtarı girmeden devam et</span><em>Yakında →</em></button><small class="ai-key-privacy">Anahtarın tarayıcıya geri gönderilmez ve arayüzde gösterilmez.</small></div></div>
+  <footer class="legal-footer"><span>© TERZİ · Bağımsız içerik üretim aracı</span><div><button data-legal-doc="privacy" type="button">KVKK Aydınlatma Metni</button><button data-legal-doc="terms" type="button">Kullanım Koşulları</button><button data-legal-doc="rights" type="button">Veri Hakların</button></div></footer>
+  <div id="legal-gate" class="legal-gate hidden" role="dialog" aria-modal="true" aria-labelledby="legal-gate-title"><div><span>TERZİ</span><h2 id="legal-gate-title">Başlamadan önce</h2><p>TERZİ yetişkin içerik üreticileri için hazırlanmıştır. Çocuklara yönelik içerik üretebilirsin; uygulama çocukların doğrudan kullanımına yönelik değildir.</p><label><input id="legal-age" type="checkbox"><span>18 yaşında veya daha büyük olduğumu ve <button data-legal-doc="terms" type="button">Kullanım Koşulları’nı</button> kabul ettiğimi beyan ederim.</span></label><p class="legal-notice">Kişisel verilerinin nasıl işlendiği hakkında <button data-legal-doc="privacy" type="button">KVKK Aydınlatma Metni’ni</button> okuyabilirsin. Bu metni okumak bir açık rıza değildir.</p><button id="legal-enter" class="primary" type="button" disabled>Stüdyoya gir →</button></div></div>
   <div id="legal-modal" class="legal-modal hidden" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title"><article><button id="legal-modal-close" type="button" aria-label="Kapat">×</button><span>YASAL BİLGİLENDİRME</span><h2 id="legal-modal-title"></h2><div id="legal-modal-content"></div></article></div>
   <script type="module" src="/app.js"></script>
 </body>

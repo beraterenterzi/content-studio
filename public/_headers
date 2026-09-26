@@ -4,4 +4,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), geolocation=(), microphone=()
   Cross-Origin-Opener-Policy: same-origin
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images-assets.nasa.gov https://*.wikimedia.org https://*.wikipedia.org; media-src 'self' blob: data:; connect-src 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images-assets.nasa.gov https://*.wikimedia.org https://*.wikipedia.org https://i.ytimg.com; media-src 'self' blob: data:; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com

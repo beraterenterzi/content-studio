@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "orbit-studio",
+  "name": "terzi",
   "account_id": "07a207f4f093ef6e524418607476edcd",
   "main": "./cloudflare/worker.js",
   "compatibility_date": "2026-07-30",

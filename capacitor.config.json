@@ -1,0 +1,17 @@
+{
+  "appId": "com.orbitvideolab.terzi",
+  "appName": "TERZİ",
+  "webDir": "public",
+  "server": {
+    "url": "https://terzi.orbitvideolab.workers.dev",
+    "cleartext": false,
+    "allowNavigation": [
+      "terzi.orbitvideolab.workers.dev",
+      "accounts.google.com",
+      "www.googleapis.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -1,4 +1,4 @@
-const CACHE = "orbit-studio-v2";
+const CACHE = "terzi-content-studio-v40";
 const SHELL = ["/", "/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
