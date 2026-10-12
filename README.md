@@ -1,215 +1,61 @@
-# TERZİ
+<p align="center"><img src="public/logo.svg" width="88" alt="TERZİ Content Manager logo"></p>
 
-Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı hazırlayan,
-self-host edilebilen açık kaynak içerik üretim atölyesi.
+<h1 align="center">TERZİ Content Manager</h1>
 
-- Cihazında fotoğraflardan video üret; medya tarayıcında kalır.
-- Açık arşiv kaynakları, senaryo, sahne ve yayın kontrolünü tek akışta düzenle.
-- Yönetilen AI, ödeme ve hesap özellikleri isteğe bağlı Cloudflare dağıtımıdır;
-  varsayılan yerel akış bunlara ihtiyaç duymaz.
+<p align="center">A local-first, open-source workspace for turning ideas and photos into editable short-form video projects.</p>
 
-## Açık kaynak ve marka
+<p align="center">
+  <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-6c5ce7.svg"></a>
+  <img alt="Node.js 20 or newer" src="https://img.shields.io/badge/node-%E2%89%A520-339933.svg">
+</p>
 
-Kod [GNU AGPL v3.0](LICENSE) ile lisanslanmıştır. TERZİ adı ve logosu bu lisansa dahil
-değildir; ayrıntılar için [TRADEMARK.md](TRADEMARK.md) dosyasına bak. Katkı
-kuralları [CONTRIBUTING.md](CONTRIBUTING.md) içinde, güvenlik bildirimi
-[SECURITY.md](SECURITY.md) içindedir.
+<p align="center"><strong>English</strong> · <a href="README.tr.md">Türkçe</a> · <a href="README.es.md">Español</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.pt-BR.md">Português (Brasil)</a></p>
 
-## Hızlı başlangıç
+## What it does
 
-Node.js 20+ ile:
+| Local-first by default | Optional managed services | Built for review |
+| --- | --- | --- |
+| Turn photos into video in the browser; media stays on your device. | Connect Cloudflare, AI, and other integrations only when you choose to. | Edit scenes, narration, timing, source notes, and publishing assets before export. |
 
-```powershell
+## Start locally
+
+**Requires Node.js 20 or newer.**
+
+```bash
 npm install
 npm start
 ```
 
-Ardından `http://127.0.0.1:4310` adresini aç. Yerel Görsel Akış; fotoğraf,
-metin ve tarayıcının video yetenekleriyle çalışır. Gerçek sağlayıcı anahtarları
-yalnızca isteğe bağlı AI ve üçüncü taraf entegrasyonları içindir; `.env.example`
-dosyasını kopyalayıp kendi gizli değerlerinle doldur.
+Open [http://127.0.0.1:4310](http://127.0.0.1:4310). The local visual flow works without cloud credentials. Use `.env.example` only for optional third-party integrations.
 
-## Kontrol
+## Validate a change
 
-```powershell
+```bash
 npm run check
 node --check public/app.js
 node --check cloudflare/worker.js
 ```
 
-## Cloudflare ile self-host etme
+## Optional Cloudflare deployment
 
-`wrangler.jsonc` güvenli bir örnek yapılandırmadır; içindeki D1 ve rate-limit
-yer tutucularını kendi Cloudflare kaynaklarınla değiştir. Yerel üretim
-ayarlarını repoda tutmamak için ayrı bir dosya kullan:
+`wrangler.jsonc` is a safe template, not a production configuration. Copy it to an ignored file, replace the D1 and rate-limit placeholders with resources in your own Cloudflare account, then deploy it:
 
-```powershell
-Copy-Item wrangler.jsonc wrangler.production.jsonc
-# wrangler.production.jsonc içindeki yer tutucuları kendi değerlerinle değiştir.
-npx wrangler d1 migrations apply <d1-veritabani-adi> --remote --config wrangler.production.jsonc
+```bash
+cp wrangler.jsonc wrangler.production.jsonc
+npx wrangler d1 migrations apply <your-d1-database-name> --remote --config wrangler.production.jsonc
 npx wrangler deploy --config wrangler.production.jsonc
 ```
 
-`wrangler.production.jsonc`, `.dev.vars` ve diğer gizli değerler Git tarafından
-yok sayılır. Gerekli Worker secret'larını `npx wrangler secret put <AD>` ile
-tanımla; ayrıntılar için [SECURITY.md](SECURITY.md) dosyasını oku.
+Keep `wrangler.production.jsonc`, `.dev.vars`, `.env`, and secrets out of Git. Read [SECURITY.md](SECURITY.md) before a public deployment.
 
-## Android uygulaması
+## Project guide
 
-Android kabuğu Capacitor ile `android/` dizininde tutulur. Uygulama kimliği
-`com.orbitvideolab.terzi` olarak ayarlanmıştır. Mobil uygulama, gizli API
-anahtarlarını telefona gömmek yerine HTTPS üzerinden Cloudflare backend'ine bağlanır.
+- [Contributing](CONTRIBUTING.md)
+- [Security reporting and deployment baseline](SECURITY.md)
+- [Trademark policy](TRADEMARK.md)
+- [Android release checklist](docs/mobile-release.md)
+- [Product review](docs/product-review.md)
 
-Android Studio ve JDK 21 kurulduktan sonra:
+## License and name
 
-```powershell
-& 'C:\Program Files\nodejs\npm.cmd' run mobile:sync
-& 'C:\Program Files\nodejs\npm.cmd' run mobile:open
-```
-
-Android Studio içinden bir telefon veya emülatör seçip `Run` ile başlatılabilir.
-Komut satırından bağlı cihaza kurmak için `npm run mobile:run` kullanılabilir.
-
-## YouTube trend keşfi
-
-Google Cloud Console'da YouTube Data API v3 hizmetini etkinleştirip bir API
-anahtarı oluştur. Anahtarı arayüzde `Ayarlar > Entegrasyonlar > YouTube Data
-API` bölümünden ekleyebilir veya `.env` dosyasına yazabilirsin:
-
-```powershell
-$env:YOUTUBE_API_KEY='...'
-& 'C:\Program Files\nodejs\npm.cmd' start
-```
-
-Kaynak ekranındaki YouTube Pulse paneli `mostPopular` listesini ülke ve
-kategoriye göre getirir. Bir sonuç fikir kuyruğuna aktarılırken video yalnızca
-araştırma sinyali olarak kaydedilir; başlık, metin veya küçük resim üretim
-varlığı olarak kopyalanmaz.
-
-### YouTube kanalına gizli yükleme
-
-Google Cloud Console'da `Web application` türünde bir OAuth istemcisi oluştur
-ve izin verilen yönlendirme adresine
-`http://127.0.0.1:4310/api/youtube/oauth/callback` değerini ekle. Ardından
-`.env` içindeki `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET` ve
-`YOUTUBE_OAUTH_REDIRECT_URI` alanlarını doldur. Renderı hazır bir projede
-`YouTube'a gizli yükle` düğmesi ilk kullanımda kanal iznini ister. Yenileme
-tokenı yerel `.env` dosyasında tutulur ve arayüze geri gönderilmez.
-
-Yüklemeler her zaman `private` başlar. Yayına alma, planlama veya görünürlüğü
-değiştirme işlemi YouTube Studio'da ayrıca yapılır.
-
-## Telegram editör onayı
-
-BotFather ile bir bot oluştur ve botla hedef sohbetten en az bir mesaj paylaş.
-Yerel sunucuda bot tokenı ile sayısal Chat ID değerini `Ayarlar > Entegrasyonlar
-> Telegram Bot` bölümüne girebilirsin. Cloudflare sürümünde bu bilgiler arayüzden
-kaydedilmez; Worker secret'ları olarak tanımlanmalıdır:
-
-```text
-TELEGRAM_BOT_TOKEN=123456789:...
-TELEGRAM_CHAT_ID=123456789
-TELEGRAM_EDITOR_USER_IDS=123456789
-TELEGRAM_WEBHOOK_SECRET=uzun-rastgele-bir-deger
-```
-
-Grup sohbeti kullanılıyorsa `TELEGRAM_EDITOR_USER_IDS` alanına onay verebilecek
-Telegram kullanıcı kimliklerini virgülle ayırarak yaz. Bu allowlist olmadan grup
-üyelerinden gelen onay ve ret işlemleri kabul edilmez.
-
-Cloudflare dağıtımından sonra Telegram webhook'unu bir kez kaydet. Aşağıdaki
-değerleri kendi bot tokenın, alan adın ve aynı webhook secret ile değiştir:
-
-```powershell
-$body = @{ url = "https://uygulaman.example/api/telegram/webhook"; secret_token = "uzun-rastgele-bir-deger" } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" -ContentType "application/json" -Body $body
-```
-
-Proje editöründeki `Telegram'a gönder` düğmesi başlık, format ve kancayı iki
-inline düğmeyle yollar. Telegram'da verilen onay veya ret, `Yanıtı kontrol et`
-düğmesiyle projeye işlenir. Yalnızca yapılandırılmış Chat ID'den gelen ve hâlâ
-bekleyen istekler kabul edilir.
-
-## Hesaplar ve Atölye Pro ödemeleri
-
-Cloudflare sürümü e-posta/parola hesabı, e-posta doğrulama, parola sıfırlama,
-30 günlük güvenli oturum, anonim workspace'i hesaba bağlama ve `free`/`pro`
-yetkilendirmesi içerir. Üretim öncesi tüm D1 migration'larını uygula. Yeni
-hesapların yönetilen denemeyi kullanabilmesi ve ödeme başlatabilmesi için
-e-posta adresi doğrulanmış olmalıdır.
-
-### Canlı lansman kapısı
-
-Worker `/api/state` yanıtında `runtime.launchReadiness` alanıyla eksikleri
-raporlar ve tüm kontroller geçmeden ödeme düğmelerini kapalı tutar. Canlıda şu
-değerlerin secret/var olarak tamamlanması gerekir:
-
-```text
-APP_ORIGIN=https://uygulaman.example
-BUSINESS_NAME=Gerçek ticari unvan
-BUSINESS_ADDRESS=Tebligat adresi
-SUPPORT_EMAIL=destek@uygulaman.example
-RESEND_API_KEY=re_...
-EMAIL_FROM=TERZI <noreply@uygulaman.example>
-TURNSTILE_SITE_KEY=...
-TURNSTILE_SECRET_KEY=...
-OPENAI_API_KEY=... # veya GEMINI_API_KEY; yönetilen ses için
-MANAGED_DAILY_PROJECT_CAP=100
-MANAGED_DAILY_TTS_CAP=200
-MANAGED_DAILY_IMAGE_CAP=300
-```
-
-Migration ve dağıtım sırası:
-
-```powershell
-npx wrangler d1 migrations apply <d1-veritabani-adi> --remote --config wrangler.production.jsonc
-npm run check
-npx wrangler deploy --config wrangler.production.jsonc
-```
-
-Ardından gerçek bir doğrulama e-postası, parola sıfırlama bağlantısı, Stripe test
-checkout/webhook/portal akışı ve hesap silme engeli test edilmelidir. `BUSINESS_*`
-ve `SUPPORT_EMAIL` gerçek bilgiler olmadan ücretli lansman açılmaz.
-
-Atölye Pro için Stripe'ta aylık bir recurring Price oluştur ve Worker secret'ları
-olarak aşağıdaki değerleri tanımla:
-
-```text
-STRIPE_SECRET_KEY=sk_...
-STRIPE_PRICE_PRO=price_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-Stripe webhook adresini `https://<alan-adı>/api/billing/webhook` olarak ekle;
-`checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`,
-`customer.subscription.updated` ve `customer.subscription.deleted` olaylarını
-seç. İmza doğrulaması ham istek gövdesiyle yapılır ve tekrar gelen event'ler D1
-üzerinde idempotent işlenir. Checkout ve müşteri portalı yalnız giriş yapmış
-kullanıcının sunucu taraflı kimliğiyle oluşturulur; istemciden Price veya Customer
-ID kabul edilmez.
-
-## Çalışan akış
-
-1. Kanal nişi ve hedef kitle ayarı
-2. Konu ve kaynak notu ekleme
-3. OpenAI ile özgün Shorts paketi (veya anahtarsız demo)
-4. Senaryo ve sahne planını editör incelemesine sunma
-5. Onaylama/reddetme ve yerel kayıt
-6. Edge TTS ile Türkçe MP3 seslendirme
-7. NASA görseli, ses ve hareketten 1080x1920 H.264/AAC MP4
-
-## Uçtan uca üretim
-
-Arayüz dört adımdır: NASA kaynağı seç, Gemini ile hikâye üret, editör
-onayı ver ve Video Laboratuvarı'nda render başlat. Hazır olduğunda MP4,
-MP3 ve SRT ayrı ayrı oynatılabilir veya indirilebilir.
-
-## Ücretsiz NASA akışı
-
-Arayüzde NASA arşivinde konu aranabilir. Seçilen içeriğin NASA ID, başlık,
-açıklama, tarih, merkez, fotoğrafçı ve kaynak sayfası senaryo girdisine
-eklenir. Belirgin üçüncü taraf telif ibaresi bulunan içeriklerin otomatik
-içe aktarımı durdurulur; kişi ve logo riski ayrıca gösterilir.
-
-Sonraki aşama: YouTube trend toplama, MoneyPrinterTurbo/FFmpeg render,
-gizli YouTube yüklemesi ve Telegram onayı.
+The source code is licensed under the [GNU AGPL v3.0](LICENSE). The **TERZİ Content Manager** name and TERZİ logo are governed by [TRADEMARK.md](TRADEMARK.md).

@@ -470,15 +470,15 @@ test("TERZİ marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
     readFile(new URL("../cloudflare/worker.js", import.meta.url), "utf8"),
     readFile(new URL("../src/render_video.py", import.meta.url), "utf8")
   ]);
-  assert.match(html, /<title>TERZİ<\/title>/);
+  assert.match(html, /<title>TERZİ Content Manager<\/title>/);
   assert.doesNotMatch(html, /Orbit Content Factory|ORBIT CONTENT FACTORY/);
   assert.match(html, /YOUTUBE SHORTS ATÖLYESİ/);
   assert.match(html, /accept="\.terzi,\.orbit,application\/json"/);
   assert.match(app, /Fikrinden düzenlenebilir Shorts taslağına/);
   assert.doesNotMatch(app, /Orbit Content Factory|Orbit Studio/);
-  assert.equal(JSON.parse(manifestText).name, "TERZİ");
+  assert.equal(JSON.parse(manifestText).name, "TERZİ Content Manager");
   assert.equal(JSON.parse(manifestText).short_name, "TERZİ");
-  assert.equal(JSON.parse(configText).appName, "TERZİ");
+  assert.equal(JSON.parse(configText).appName, "TERZİ Content Manager");
   assert.match(worker, /TERZİ Görsel AI/);
   assert.match(render, /"TERZİ"/);
 });

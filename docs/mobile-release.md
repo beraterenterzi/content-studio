@@ -1,4 +1,4 @@
-# TERZİ Android yayın kontrol listesi
+# TERZİ Content Manager Android yayın kontrol listesi
 
 Android uygulaması Capacitor 8 kabuğudur ve üretimde
 `https://terzi.orbitvideolab.workers.dev` adresini açar. Paket kimliği

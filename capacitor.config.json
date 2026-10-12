@@ -1,6 +1,6 @@
 {
   "appId": "com.orbitvideolab.terzi",
-  "appName": "TERZİ",
+  "appName": "TERZİ Content Manager",
   "webDir": "public",
   "server": {
     "url": "https://terzi.orbitvideolab.workers.dev",

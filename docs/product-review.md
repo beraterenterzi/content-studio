@@ -1,4 +1,4 @@
-# TERZİ — ürün ve ekip incelemesi
+# TERZİ Content Manager — ürün ve ekip incelemesi
 
 Tarih: 2026-09-10. Ürün, UX ve teknik kalite üç ayrı ajanla incelendi.
 Kullanıcı hedefi: gelir üreten, tutarlı ürün ve kapsam içinde özerk geliştirme.
