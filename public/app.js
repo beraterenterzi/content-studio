@@ -3068,9 +3068,9 @@ $("#niche-custom").addEventListener("keydown", (event) => {
 document.querySelectorAll("[data-settings-tab]").forEach((button) =>
   button.addEventListener("click", () => {
     document.querySelectorAll("[data-settings-tab]").forEach((node) =>
-      node.classList.toggle("active", node === button));
+      { const active = node === button; node.classList.toggle("active", active); node.setAttribute("aria-selected", String(active)); });
     document.querySelectorAll("[data-settings-pane]").forEach((pane) =>
-      pane.classList.toggle("active", pane.dataset.settingsPane === button.dataset.settingsTab));
+      { const active = pane.dataset.settingsPane === button.dataset.settingsTab; pane.classList.toggle("active", active); pane.hidden = !active; });
   }));
 const modelCatalog = {
   gemini: [

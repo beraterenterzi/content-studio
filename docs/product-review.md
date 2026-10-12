@@ -1,5 +1,11 @@
 # Content Studio — ürün ve ekip incelemesi
 
+## 12 Ekim 2026 — Shadcn esintili görsel sistem
+
+Arayüz, ürün akışını değiştirmeden daha sakin nötr yüzeyler, tek mor vurgu,
+standartlaştırılmış kart yarıçapları, belirgin hover/focus durumları ve reduced-motion
+desteğiyle güncellendi. Masaüstü ve mobil ana akışlar için görsel kontrol gerekir.
+
 Tarih: 2026-09-10. Ürün, UX ve teknik kalite üç ayrı ajanla incelendi.
 Kullanıcı hedefi: gelir üreten, tutarlı ürün ve kapsam içinde özerk geliştirme.
 

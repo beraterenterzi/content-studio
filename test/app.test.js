@@ -462,17 +462,19 @@ test("mobil alt navigasyon üç gerçek hedefle Oluştur'u merkezde tutar", asyn
   assert.match(mobile, /#settings-toggle\{display:grid\}/);
 });
 test("Content Studio marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
-  const [html, app, manifestText, configText, worker, render] = await Promise.all([
+  const [html, app, manifestText, configText, worker, render, polish] = await Promise.all([
     readFile(new URL("../public/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../capacitor.config.json", import.meta.url), "utf8"),
     readFile(new URL("../cloudflare/worker.js", import.meta.url), "utf8"),
-    readFile(new URL("../src/render_video.py", import.meta.url), "utf8")
+    readFile(new URL("../src/render_video.py", import.meta.url), "utf8"),
+    readFile(new URL("../public/polish.css", import.meta.url), "utf8")
   ]);
   assert.match(html, /<title>Content Studio<\/title>/);
   assert.doesNotMatch(html, /Orbit Content Factory|ORBIT CONTENT FACTORY/);
-  assert.match(html, /YOUTUBE SHORTS ATÖLYESİ/);
+  assert.match(html, /CONTENT STUDIO/);
+  assert.match(html, /href="\/polish\.css"/);
   assert.match(html, /accept="\.terzi,\.orbit,application\/json"/);
   assert.match(app, /Fikrinden düzenlenebilir Shorts taslağına/);
   assert.doesNotMatch(app, /Orbit Content Factory|Orbit Studio/);
@@ -481,6 +483,7 @@ test("Content Studio marka kimliği kullanıcı yüzeyinde tutarlı", async () =
   assert.equal(JSON.parse(configText).appName, "Content Studio");
   assert.match(worker, /Content Studio Görsel AI/);
   assert.match(render, /"Content Studio"/);
+  assert.match(polish, /prefers-reduced-motion:reduce/);
 });
 test("Content Studio URL ve sade başlangıç akışı", async () => {
   const [html, app, css, capacitorText, wranglerText] = await Promise.all([

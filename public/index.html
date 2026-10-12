@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/onboarding.css">
   <link rel="stylesheet" href="/mobile.css">
+  <link rel="stylesheet" href="/polish.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">İçeriğe geç</a>
@@ -88,31 +89,31 @@
       </nav>
 
       <section id="settings-panel" class="settings-panel hidden">
-        <div class="settings-tabs">
-          <button class="active" data-settings-tab="general">Genel</button>
-          <button data-settings-tab="content">İçerik & Kitle</button>
-          <button data-settings-tab="rules">Üretim Kuralları</button>
-          <button data-settings-tab="integrations">Plan & Bağlantılar</button>
+        <div class="settings-tabs" role="tablist" aria-label="Ayar bölümleri">
+          <button id="settings-tab-general" class="active" data-settings-tab="general" role="tab" aria-selected="true" aria-controls="settings-pane-general">Genel</button>
+          <button id="settings-tab-content" data-settings-tab="content" role="tab" aria-selected="false" aria-controls="settings-pane-content">İçerik & Kitle</button>
+          <button id="settings-tab-rules" data-settings-tab="rules" role="tab" aria-selected="false" aria-controls="settings-pane-rules">Üretim Kuralları</button>
+          <button id="settings-tab-integrations" data-settings-tab="integrations" role="tab" aria-selected="false" aria-controls="settings-pane-integrations">Plan & Bağlantılar</button>
         </div>
-        <div class="settings-pane active" data-settings-pane="general">
+        <div id="settings-pane-general" class="settings-pane active" data-settings-pane="general" role="tabpanel" aria-labelledby="settings-tab-general">
           <div class="niche-field"><label for="niche">Kanal nişi</label><div class="niche-picker"><select id="niche"></select><button id="niche-add-toggle" type="button" title="Yeni niş ekle" aria-label="Yeni niş ekle">＋</button></div><div id="niche-add-row" class="niche-add-row hidden"><input id="niche-custom" maxlength="60" placeholder="Yeni niş adı"><button id="niche-add-confirm" type="button">Ekle</button></div></div>
           <div><label for="content-language">İçerik dili</label><select id="content-language"><option value="Turkish">Türkçe</option><option value="English">English</option><option value="Spanish">Español</option><option value="German">Deutsch</option><option value="French">Français</option><option value="Portuguese">Português</option><option value="Italian">Italiano</option><option value="Arabic">العربية</option><option value="Hindi">हिन्दी</option><option value="Chinese">中文</option><option value="Japanese">日本語</option><option value="Korean">한국어</option><option value="Russian">Русский</option><option value="Dutch">Nederlands</option><option value="Polish">Polski</option><option value="Indonesian">Bahasa Indonesia</option><option value="Vietnamese">Tiếng Việt</option><option value="Ukrainian">Українська</option><option value="Thai">ไทย</option></select></div>
           <div><label for="ui-language">Arayüz dili</label><select id="ui-language"><option value="tr">Türkçe</option><option value="en">English</option><option value="es">Español</option></select></div>
         </div>
-        <div class="settings-pane" data-settings-pane="content">
+        <div id="settings-pane-content" class="settings-pane" data-settings-pane="content" role="tabpanel" aria-labelledby="settings-tab-content" hidden>
           <div><label for="content-profile">İçerik profili</label><select id="content-profile"><option value="general">Genel içerik</option><option value="kids">Çocuklara yönelik eğitici</option><option value="educational">Eğitici anlatım</option><option value="storytelling">Hikâye anlatımı</option><option value="documentary">Mini belgesel</option><option value="entertainment">Eğlence</option><option value="explainer">Açıklayıcı / How-to</option></select></div>
           <div><label for="visual-style">Görsel stil</label><select id="visual-style"><option value="documentary">Belgesel</option><option value="animated">Renkli animasyon</option></select></div>
           <div class="age-field"><label>Hedef yaş aralıkları</label><div id="age-groups" class="age-groups"><label><input type="checkbox" value="3-5"><span>3–5</span></label><label><input type="checkbox" value="6-8"><span>6–8</span></label><label><input type="checkbox" value="9-12"><span>9–12</span></label><label><input type="checkbox" value="13-17"><span>13–17</span></label><label><input type="checkbox" value="18-24"><span>18–24</span></label><label><input type="checkbox" value="25-34"><span>25–34</span></label><label><input type="checkbox" value="35-44"><span>35–44</span></label><label><input type="checkbox" value="45+"><span>45+</span></label></div></div>
           <div><label for="audience">Ek hedef kitle notu</label><input id="audience" placeholder="İlgi alanı, bilgi seviyesi, bölge…"></div>
         </div>
-        <div class="settings-pane rules-pane" data-settings-pane="rules">
+        <div id="settings-pane-rules" class="settings-pane rules-pane" data-settings-pane="rules" role="tabpanel" aria-labelledby="settings-tab-rules" hidden>
           <label class="switch-row"><span><b>Son kontrolde duraklat</b><small>Arşivden veya hazır metinden başlayan projelerde videoya geçmeden önce bekle</small></span><input id="rule-approval" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>Çocuk güvenliği</b><small>Korkutucu ve taklit edilebilir davranışlardan kaçın</small></span><input id="rule-child-safe" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>Yalnızca doğrulanabilir bilgi</b><small>Kaynak dışı tarih, sayı ve iddia üretme</small></span><input id="rule-factual" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>CTA ekle</b><small>Metnin sonuna uygun bir harekete geçirici çağrı ekle</small></span><input id="rule-cta" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b>Altyazıyı videoda göster</b><small>Ayrı altyazı dosyasına ek olarak yazıları videonun içine de ekle</small></span><input id="rule-captions" type="checkbox"><i></i></label>
         </div>
-        <div class="settings-pane" data-settings-pane="integrations">
+        <div id="settings-pane-integrations" class="settings-pane" data-settings-pane="integrations" role="tabpanel" aria-labelledby="settings-tab-integrations" hidden>
           <section class="access-overview compact" aria-labelledby="access-overview-title"><div class="access-overview-head"><span>PLANIN</span><h3 id="access-overview-title">Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı.</h3><p>Cihazında ücretsiz video oluştur; doğrulanmış ücretsiz hesabınla otomatik akışı bir kez dene. Son düzenleme sende.</p></div><div class="access-plans"><article class="access-plan demo"><small>ÜCRETSİZ</small><b>Başlangıç</b><p>Cihazda video üretimi ücretsizdir; doğrulanmış ücretsiz hesapla bir tam otomatik Shorts taslağını dene.</p><em id="demo-access-status">Kullanıma hazır</em></article><article class="access-plan pro"><small>ANAHTARSIZ</small><b>Atölye Pro</b><p>Ayda 30 yönetilen hikâye; AI görsellerinde günlük adil kullanım.</p><em id="pro-access-status">Hesap gerekli</em><button id="pro-upgrade" type="button">Pro'ya geç</button></article></div></section>
           <details class="advanced-ai-connection">
             <summary><span><b>Gelişmiş: Kendi AI hesabımı bağla</b><small>İsteğe bağlı · teknik kullanıcılar için</small></span><i>＋</i></summary>
@@ -145,7 +146,7 @@
 
       <section class="view active" data-view="dashboard">
         <div class="dashboard-hero">
-          <div><span>YOUTUBE SHORTS ATÖLYESİ</span><h2>Fikrinden düzenlenebilir<br>Shorts taslağına.</h2><p>Senaryo, lisans bilgili görseller, ses ve video akışı tek yerde.</p></div>
+          <div><span>CONTENT STUDIO</span><h2>Fikrinden düzenlenebilir<br>Shorts taslağına.</h2><p>Senaryo, lisans bilgili görseller, ses ve video akışı tek yerde.</p></div>
           <button class="primary large" type="button" data-control-action="automatic">Ücretsiz taslak oluştur <span>＋</span></button>
         </div>
         <section class="control-center" aria-labelledby="control-center-title">
