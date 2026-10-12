@@ -1,7 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "content-factory",
-  "account_id": "07a207f4f093ef6e524418607476edcd",
+  "name": "terzi-redirect",
   "main": "./cloudflare/redirect-worker.js",
   "compatibility_date": "2026-07-30"
 }

@@ -162,9 +162,9 @@ MANAGED_DAILY_IMAGE_CAP=300
 Migration ve dağıtım sırası:
 
 ```powershell
-npx wrangler d1 migrations apply orbit-ai-studio-db --remote
+npx wrangler d1 migrations apply <d1-veritabani-adi> --remote --config wrangler.production.jsonc
 npm run check
-npx wrangler deploy
+npx wrangler deploy --config wrangler.production.jsonc
 ```
 
 Ardından gerçek bir doğrulama e-postası, parola sıfırlama bağlantısı, Stripe test
