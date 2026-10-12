@@ -1,7 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "terzi",
-  "account_id": "07a207f4f093ef6e524418607476edcd",
   "main": "./cloudflare/worker.js",
   "compatibility_date": "2026-07-30",
   "compatibility_flags": ["global_fetch_strictly_public"],
@@ -17,15 +16,15 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "orbit-ai-studio-db",
-      "database_id": "ee46501a-c7ba-4d8d-8d40-eeb42ea035de",
+      "database_name": "replace-with-your-d1-name",
+      "database_id": "replace-with-your-d1-database-id",
       "migrations_dir": "migrations"
     }
   ],
   "ratelimits": [
     {
       "name": "API_RATE_LIMITER",
-      "namespace_id": "1001",
+      "namespace_id": "replace-with-your-rate-limit-namespace-id",
       "simple": {
         "limit": 60,
         "period": 60

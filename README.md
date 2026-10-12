@@ -10,7 +10,7 @@ self-host edilebilen açık kaynak içerik üretim atölyesi.
 
 ## Açık kaynak ve marka
 
-Kod AGPL-3.0-or-later ile lisanslanmıştır. TERZİ adı ve logosu bu lisansa dahil
+Kod [GNU AGPL v3.0](LICENSE) ile lisanslanmıştır. TERZİ adı ve logosu bu lisansa dahil
 değildir; ayrıntılar için [TRADEMARK.md](TRADEMARK.md) dosyasına bak. Katkı
 kuralları [CONTRIBUTING.md](CONTRIBUTING.md) içinde, güvenlik bildirimi
 [SECURITY.md](SECURITY.md) içindedir.
@@ -29,7 +29,7 @@ metin ve tarayıcının video yetenekleriyle çalışır. Gerçek sağlayıcı a
 yalnızca isteğe bağlı AI ve üçüncü taraf entegrasyonları içindir; `.env.example`
 dosyasını kopyalayıp kendi gizli değerlerinle doldur.
 
-## Yayın öncesi kontrol
+## Kontrol
 
 ```powershell
 npm run check
@@ -37,14 +37,27 @@ node --check public/app.js
 node --check cloudflare/worker.js
 ```
 
-Canlı Cloudflare kurulumu için gizli değerleri Git'e eklemeyin. Worker,
-veritabanı migration ve güvenlik yapılandırması ayrıntıları aşağıdaki bölümlerde
-yer alır.
+## Cloudflare ile self-host etme
+
+`wrangler.jsonc` güvenli bir örnek yapılandırmadır; içindeki D1 ve rate-limit
+yer tutucularını kendi Cloudflare kaynaklarınla değiştir. Yerel üretim
+ayarlarını repoda tutmamak için ayrı bir dosya kullan:
+
+```powershell
+Copy-Item wrangler.jsonc wrangler.production.jsonc
+# wrangler.production.jsonc içindeki yer tutucuları kendi değerlerinle değiştir.
+npx wrangler d1 migrations apply <d1-veritabani-adi> --remote --config wrangler.production.jsonc
+npx wrangler deploy --config wrangler.production.jsonc
+```
+
+`wrangler.production.jsonc`, `.dev.vars` ve diğer gizli değerler Git tarafından
+yok sayılır. Gerekli Worker secret'larını `npx wrangler secret put <AD>` ile
+tanımla; ayrıntılar için [SECURITY.md](SECURITY.md) dosyasını oku.
 
 ## Android uygulaması
 
 Android kabuğu Capacitor ile `android/` dizininde tutulur. Uygulama kimliği
-`com.orbitcontentfactory.app` olarak ayarlanmıştır. Mobil uygulama, gizli API
+`com.orbitvideolab.terzi` olarak ayarlanmıştır. Mobil uygulama, gizli API
 anahtarlarını telefona gömmek yerine HTTPS üzerinden Cloudflare backend'ine bağlanır.
 
 Android Studio ve JDK 21 kurulduktan sonra:
@@ -56,40 +69,6 @@ Android Studio ve JDK 21 kurulduktan sonra:
 
 Android Studio içinden bir telefon veya emülatör seçip `Run` ile başlatılabilir.
 Komut satırından bağlı cihaza kurmak için `npm run mobile:run` kullanılabilir.
-
-Türkçe YouTube Shorts için konu kuyruğu, özgün AI içerik paketi ve insan
-onayı sağlayan yerel kontrol merkezi.
-
-## Çalıştırma
-
-```powershell
-& 'C:\Program Files\nodejs\npm.cmd' run setup-render
-& 'C:\Program Files\nodejs\npm.cmd' start
-```
-
-Ardından `http://127.0.0.1:4310` adresini aç. Anahtarsız kullanımda demo
-içerik oluşur. Gerçek AI için:
-
-```powershell
-$env:OPENAI_API_KEY='...'
-$env:OPENAI_MODEL='gpt-5-mini'
-& 'C:\Program Files\nodejs\npm.cmd' start
-```
-
-Gemini ile senaryo ve dikey sahne görselleri için:
-
-```powershell
-$env:GEMINI_API_KEY='...'
-$env:GEMINI_TEXT_MODEL='gemini-3.6-flash'
-$env:GEMINI_IMAGE_MODEL='gemini-3.1-flash-image'
-$env:GEMINI_IMAGES_PER_RUN='1'
-& 'C:\Program Files\nodejs\npm.cmd' start
-```
-
-Arayüzde sağlayıcı olarak Gemini seçilir. Görseller yalnızca içerik paketi
-onaylandıktan sonra üretilir ve `outputs` klasörüne kaydedilir.
-Gemini görsel kotası sıfırsa sistem otomatik olarak ücretsiz yerel SVG
-sahneleri üretir; süreç durmaz ve ek API ücreti oluşmaz.
 
 ## YouTube trend keşfi
 

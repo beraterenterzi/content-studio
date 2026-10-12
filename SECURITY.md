@@ -1,5 +1,12 @@
 # TERZİ security baseline
 
+## Reporting a vulnerability
+
+Please do not open a public issue for a suspected vulnerability. Report it
+privately through [GitHub Security Advisories](https://github.com/beraterenterzi/youtube-ai-studio/security/advisories/new)
+with reproduction steps, potential impact, and the affected version or
+deployment configuration. We aim to acknowledge reports within seven days.
+
 ## Cloudflare secrets
 
 The production Worker requires an HMAC secret for anonymous workspace cookies.
