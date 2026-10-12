@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please do not open a public issue for a suspected vulnerability. Report it
-privately through [GitHub Security Advisories](https://github.com/beraterenterzi/terzi-creator-studio/security/advisories/new)
+privately through [GitHub Security Advisories](https://github.com/beraterenterzi/creator-studio/security/advisories/new)
 with reproduction steps, potential impact, and the affected version or
 deployment configuration. We aim to acknowledge reports within seven days.
 

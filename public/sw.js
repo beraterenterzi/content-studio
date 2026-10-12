@@ -1,4 +1,4 @@
-const CACHE = "terzi-creator-studio-v44";
+const CACHE = "creator-studio-v45";
 const SHELL = ["/", "/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
