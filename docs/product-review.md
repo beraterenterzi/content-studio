@@ -11,6 +11,13 @@
 - Bu değişiklik, akışı veya üretim davranışını değiştirmez. Masaüstü ve mobil görünüm
   gerçek tarayıcıda doğrulanmalıdır; canlı Cloudflare Worker'a dağıtım yetkisi hâlâ yok.
 
+## 12 Ekim 2026 — Nötr renk paleti
+
+- Kullanıcı geri bildirimiyle mor vurgu tamamen kaldırıldı. Birincil/aktif durumlar
+  kömür siyahı, ikincil durumlar ise gri tonlarıyla gösteriliyor; bu, arayüzün
+  jenerik AI estetiğinden daha da uzaklaşmasını sağlıyor.
+- Görsel değişiklik çalışma akışını veya erişilebilir odak davranışını değiştirmez.
+
 ## 12 Ekim 2026 — Shadcn esintili görsel sistem
 
 Arayüz, ürün akışını değiştirmeden daha sakin nötr yüzeyler, tek mor vurgu,

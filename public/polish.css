@@ -1,5 +1,5 @@
 /* Content Studio interface polish: calm surfaces, clear hierarchy, and predictable states. */
-:root{--bg:#fafafa;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--card:#fff;--nav:#18181b;--purple:#7c3aed;--purple2:#a78bfa;--green:#15803d;--red:#be123c;--shadow:0 1px 2px rgba(24,24,27,.05),0 10px 28px rgba(24,24,27,.06)}
+:root{--bg:#fafafa;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--card:#fff;--nav:#18181b;--purple:#18181b;--purple2:#52525b;--green:#15803d;--red:#be123c;--shadow:0 1px 2px rgba(24,24,27,.05),0 10px 28px rgba(24,24,27,.06)}
 body{background:#fafafa;color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 .shell{grid-template-columns:264px 1fr}.sidebar{width:264px;padding:24px 16px;background:#18181b}.brand{gap:10px;padding:2px 9px;font-size:18px}.brand-name{letter-spacing:-.035em}.brand-mark{width:36px;height:36px;padding:4px;border:1px solid #ffffff1f;border-radius:10px;background:#27272a;box-shadow:none}.workspace-label{margin:38px 11px 12px;color:#a1a1aa;font-size:10px}.sidebar #steps{padding-right:4px}.nav-step{gap:11px;padding:10px;border-radius:8px;color:#a1a1aa}.nav-step b{width:30px;height:30px;border:1px solid #3f3f46;border-radius:7px;background:#27272a}.nav-step:hover{background:#27272a;color:#fafafa}.nav-step.active{background:#27272a;color:#fafafa}.nav-step.active b{border-color:#8b5cf6;background:#7c3aed}.nav-step small{color:#a1a1aa}.workflow-toggle{margin-top:14px;border-color:#3f3f46;border-radius:8px;background:#27272a}.sidebar-foot{padding:18px 10px 0;border-color:#3f3f46}.sidebar-foot small{color:#a1a1aa}
 main{max-width:1480px;padding:0 48px 80px}.topbar{height:104px;margin-bottom:26px;border-bottom-color:var(--line)}.topbar p{margin-bottom:6px;color:var(--purple);font-size:10px;letter-spacing:.16em}.topbar h1{font-size:clamp(25px,2.5vw,35px);letter-spacing:-.045em}.icon-button{width:40px;height:40px;border-color:var(--line);border-radius:8px;background:#fff;color:#3f3f46;box-shadow:none}.icon-button:hover{transform:none;border-color:#c4b5fd;background:#faf5ff;color:#6d28d9}
@@ -41,3 +41,22 @@ input,select,textarea,.project-editor textarea,.story-visual-panel textarea{bord
 .workflow-toggle{border-color:#3f3f46;background:#27272a;box-shadow:none}
 .stat-card,.studio-card,.project-card{box-shadow:none}.stat-card:hover,.studio-card:hover,.project-card:hover{transform:none;box-shadow:0 2px 5px rgba(24,24,27,.08)}
 @media(max-width:650px){.dashboard-hero{padding:24px 20px}.dashboard-hero .primary.large{width:100%;margin-top:20px}.hero-search{padding:22px}}
+
+/* Neutral palette pass: the interface uses charcoal and gray only; purple is removed. */
+.sidebar .nav-step.active b{border-color:#18181b;background:#18181b}
+.brand-mark{background:#27272a!important}.brand-mark img{filter:grayscale(1) brightness(1.35)}
+.sidebar .flow-nav{background:#27272a!important;border-color:#3f3f46!important}
+.sidebar .flow-nav b{border-color:#52525b!important;background:#3f3f46!important}
+.icon-button:hover{border-color:#a1a1aa;background:#f4f4f5;color:#18181b}
+.control-center-grid>button:hover,.control-center-grid>button.featured{border-color:#a1a1aa;background:#fff}
+.control-center-grid>button>b,.control-center-grid>button.featured>b{background:#f4f4f5;color:#3f3f46}
+.settings-tabs button.active{color:#18181b}.settings-tabs button:focus-visible{outline-color:#18181b}
+.resume-project{border-color:#d4d4d8;background:#fafafa}
+.ghost:hover,.project-filters button:hover{border-color:#a1a1aa;background:#f4f4f5}
+.creation-mode-switch button.active{border-color:#71717a;box-shadow:0 0 0 3px #18181b14}
+.workflow-context-methods,.workflow-context-steps span.active,.legal-footer a,.legal-footer button{color:#18181b!important}
+.workflow-context-steps span.active{background:#f4f4f5}
+.flow-hero{background:#27272a!important}.flow-hero span{color:#d4d4d8!important}.flow-upload{color:#18181b!important}
+.mobile-app-nav .create:before{background:#18181b!important;box-shadow:none!important}
+.mobile-flow-steps button.active{background:#f4f4f5!important;color:#18181b!important}.mobile-flow-steps button.active b{background:#18181b!important}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:#18181b}
