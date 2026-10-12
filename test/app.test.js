@@ -484,6 +484,9 @@ test("Content Studio marka kimliği kullanıcı yüzeyinde tutarlı", async () =
   assert.match(worker, /Content Studio Görsel AI/);
   assert.match(render, /"Content Studio"/);
   assert.match(polish, /prefers-reduced-motion:reduce/);
+  assert.match(polish, /Product UI pass: remove the synthetic/);
+  assert.match(polish, /--primary:#18181b/);
+  assert.match(polish, /\.dashboard-hero,.hero-search,.story-visual-panel,.editor-next/);
 });
 test("Content Studio URL ve sade başlangıç akışı", async () => {
   const [html, app, css, capacitorText, wranglerText] = await Promise.all([

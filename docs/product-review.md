@@ -1,5 +1,16 @@
 # Content Studio — ürün ve ekip incelemesi
 
+## 12 Ekim 2026 — Ürün arayüzü sadeleştirme
+
+- Ana giriş, kaynak arama ve düzenleme yüzeylerindeki koyu degrade/ışıma dili kaldırıldı;
+  bu alanlar artık nötr kart yüzeyleriyle başlıyor. Böylece ürün, jenerik “AI yaratıcı
+  araç” görünümü yerine içerik üretim çalışma alanı olarak okunuyor.
+- Ana eylem siyah-beyaz kontrastla ayrıştırıldı; mor vurgu zorunlu odak ve ikincil
+  durumlarla sınırlandı. Kart yükselme animasyonları da bilgi mimarisini gölgelemeyecek
+  kadar hafifletildi.
+- Bu değişiklik, akışı veya üretim davranışını değiştirmez. Masaüstü ve mobil görünüm
+  gerçek tarayıcıda doğrulanmalıdır; canlı Cloudflare Worker'a dağıtım yetkisi hâlâ yok.
+
 ## 12 Ekim 2026 — Shadcn esintili görsel sistem
 
 Arayüz, ürün akışını değiştirmeden daha sakin nötr yüzeyler, tek mor vurgu,
