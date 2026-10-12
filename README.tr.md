@@ -1,4 +1,4 @@
-# TERZİ Content Manager
+# TERZİ Creator Studio
 
 Fikirlerini ve fotoğraflarını düzenlenebilir kısa video projelerine dönüştüren yerel-öncelikli, açık kaynak çalışma alanı.
 
