@@ -18,6 +18,8 @@
   <strong>English</strong> · <a href="README.tr.md">Türkçe</a> · <a href="README.es.md">Español</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.pt-BR.md">Português (Brasil)</a>
 </p>
 
+<p align="center"><a href="https://terzi.orbitvideolab.workers.dev">View the hosted demo</a> <sub>· the deployed build can lag behind <code>main</code></sub></p>
+
 ## The creator workspace for short-form video
 
 Content Studio brings the messy middle of short-form production into one focused workspace: a spark of an idea, the source material, the story, the scenes, the voice, and the final export. It is built for creators who want to stay in control instead of handing every photo, draft, and edit to a black box.
@@ -38,6 +40,10 @@ It runs as a local-first web app. The manual visual flow works in the browser wi
 - **Editorial controls** — rewrite scene text, reorder scenes, adjust duration and motion, and review before export.
 - **Flexible AI setup** — connect your own supported provider for advanced flows, or self-host optional managed services on Cloudflare.
 - **Local project ownership** — save drafts in the browser, export/import a project file, and continue working without a mandatory account.
+
+## Hosted demo
+
+The current hosted build is available at [terzi.orbitvideolab.workers.dev](https://terzi.orbitvideolab.workers.dev). It is a deployed snapshot, so consult this repository's `main` branch for the latest source and release notes.
 
 ## Who it is for
 
