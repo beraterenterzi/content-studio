@@ -1,6 +1,6 @@
 {
   "appId": "com.orbitvideolab.terzi",
-  "appName": "TERZİ Creator Studio",
+  "appName": "Content Studio",
   "webDir": "public",
   "server": {
     "url": "https://terzi.orbitvideolab.workers.dev",

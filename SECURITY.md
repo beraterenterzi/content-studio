@@ -1,4 +1,4 @@
-# TERZİ Creator Studio security baseline
+# Content Studio security baseline
 
 ## Reporting a vulnerability
 

@@ -82,7 +82,7 @@ def create_visual(source: Path, target: Path, title: str, width: int, height: in
         draw.rounded_rectangle(
             (pad, 38, width - pad, header_bottom), 28, fill=(8, 8, 12, 200)
         )
-        draw.text((pad + 34, 65), "TERZİ", font=font(28, True), fill="#ff5369")
+        draw.text((pad + 34, 65), "Content Studio", font=font(28, True), fill="#ff5369")
         title_lines = wrap(title, 48 if width > height else 30)[:2]
         for index, line in enumerate(title_lines):
             draw.text(

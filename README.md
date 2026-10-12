@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/logo.svg" width="96" alt="TERZİ Creator Studio logo">
+  <img src="public/logo.svg" width="96" alt="Content Studio logo">
 </p>
 
-<h1 align="center">TERZİ Creator Studio</h1>
+<h1 align="center">Content Studio</h1>
 
 <p align="center">
   Plan, craft, review, and export short-form video — with your media staying on your device by default.
@@ -20,7 +20,7 @@
 
 ## The creator workspace for short-form video
 
-TERZİ Creator Studio brings the messy middle of short-form production into one focused workspace: a spark of an idea, the source material, the story, the scenes, the voice, and the final export. It is built for creators who want to stay in control instead of handing every photo, draft, and edit to a black box.
+Content Studio brings the messy middle of short-form production into one focused workspace: a spark of an idea, the source material, the story, the scenes, the voice, and the final export. It is built for creators who want to stay in control instead of handing every photo, draft, and edit to a black box.
 
 It runs as a local-first web app. The manual visual flow works in the browser without a cloud account or API key, while Cloudflare and AI integrations are optional layers you can self-host and enable when they genuinely help.
 
@@ -41,7 +41,7 @@ It runs as a local-first web app. The manual visual flow works in the browser wi
 
 ## Who it is for
 
-TERZİ Creator Studio is a practical starting point for social-video creators, small marketing teams, educators, and product builders who need a transparent creative workflow. It is not a promise of instant, finished content: the studio is deliberately designed to leave editorial decisions with the person publishing the work.
+Content Studio is a practical starting point for social-video creators, small marketing teams, educators, and product builders who need a transparent creative workflow. It is not a promise of instant, finished content: the studio is deliberately designed to leave editorial decisions with the person publishing the work.
 
 ## Start locally
 
@@ -87,4 +87,4 @@ Keep `wrangler.production.jsonc`, `.dev.vars`, `.env`, and all secrets out of Gi
 
 ## License and name
 
-The source code is licensed under the [GNU AGPL v3.0](LICENSE). The **TERZİ Creator Studio** name and TERZİ logo are governed separately by [TRADEMARK.md](TRADEMARK.md).
+The source code is licensed under the [GNU AGPL v3.0](LICENSE). The **Content Studio** name and Content Studio logo are governed separately by [TRADEMARK.md](TRADEMARK.md).

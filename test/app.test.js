@@ -7,7 +7,7 @@ test("adımlı Türkçe stüdyo ekranı mevcut", async () => {
     readFile(new URL("../public/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8")
   ]);
-  assert.match(html, /TERZİ/);
+  assert.match(html, /Content Studio/);
   assert.match(html, /id="brand-home"/);
   assert.match(html, /id="close-settings"/);
   assert.match(html, /id="resume-project"/);
@@ -431,7 +431,7 @@ test("anahtarsız Demo yönetilen görseli kullanır, diğer ücretsiz yollar ar
   assert.match(worker, /@cf\/meta\/llama-3\.3-70b-instruct-fp8-fast/);
   assert.match(worker, /demoAvailable = Boolean\(env\.AI && workspace\.user\?\.email_verified_at\) && state\.runtime\.demo\.used < state\.runtime\.demo\.limit/);
   assert.match(worker, /if \(!env\.AI\) throw Object\.assign/);
-  assert.match(worker, /mode: "orbit-demo", model: "TERZİ Deneme"/);
+  assert.match(worker, /mode: "orbit-demo", model: "Content Studio Deneme"/);
   assert.match(worker, /function validateContentPackage/);
   assert.match(worker, /"viewerPromise", "curiosityGap"/);
   assert.match(worker, /required: \["seconds", "type", "text", "visualQuery", "visualRole", "changeReason"\]/);
@@ -461,7 +461,7 @@ test("mobil alt navigasyon üç gerçek hedefle Oluştur'u merkezde tutar", asyn
   assert.match(mobile, /grid-template-columns:minmax\(0,1fr\) 80px minmax\(0,1fr\)/);
   assert.match(mobile, /#settings-toggle\{display:grid\}/);
 });
-test("TERZİ marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
+test("Content Studio marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
   const [html, app, manifestText, configText, worker, render] = await Promise.all([
     readFile(new URL("../public/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
@@ -470,19 +470,19 @@ test("TERZİ marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
     readFile(new URL("../cloudflare/worker.js", import.meta.url), "utf8"),
     readFile(new URL("../src/render_video.py", import.meta.url), "utf8")
   ]);
-  assert.match(html, /<title>TERZİ Creator Studio<\/title>/);
+  assert.match(html, /<title>Content Studio<\/title>/);
   assert.doesNotMatch(html, /Orbit Content Factory|ORBIT CONTENT FACTORY/);
   assert.match(html, /YOUTUBE SHORTS ATÖLYESİ/);
   assert.match(html, /accept="\.terzi,\.orbit,application\/json"/);
   assert.match(app, /Fikrinden düzenlenebilir Shorts taslağına/);
   assert.doesNotMatch(app, /Orbit Content Factory|Orbit Studio/);
-  assert.equal(JSON.parse(manifestText).name, "TERZİ Creator Studio");
-  assert.equal(JSON.parse(manifestText).short_name, "TERZİ");
-  assert.equal(JSON.parse(configText).appName, "TERZİ Creator Studio");
-  assert.match(worker, /TERZİ Görsel AI/);
-  assert.match(render, /"TERZİ"/);
+  assert.equal(JSON.parse(manifestText).name, "Content Studio");
+  assert.equal(JSON.parse(manifestText).short_name, "Content Studio");
+  assert.equal(JSON.parse(configText).appName, "Content Studio");
+  assert.match(worker, /Content Studio Görsel AI/);
+  assert.match(render, /"Content Studio"/);
 });
-test("TERZİ URL ve sade başlangıç akışı", async () => {
+test("Content Studio URL ve sade başlangıç akışı", async () => {
   const [html, app, css, capacitorText, wranglerText] = await Promise.all([
     readFile(new URL("../public/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
@@ -492,7 +492,7 @@ test("TERZİ URL ve sade başlangıç akışı", async () => {
   ]);
   assert.equal(JSON.parse(wranglerText).name, "terzi");
   assert.equal(JSON.parse(capacitorText).server.url, "https://terzi.orbitvideolab.workers.dev");
-  assert.match(html, /TERZİ hazırlasın/);
+  assert.match(html, /Content Studio hazırlasın/);
   assert.match(html, /İçeriğim hazır/);
   assert.match(html, /name="automatic-visual-method" value="archive" checked/);
   assert.match(html, /class="ai-provider-cards"/);
@@ -517,7 +517,7 @@ test("editör yalnızca kullanılabilir eylemleri gösteriyor", async () => {
   assert.match(worker, /contentLanguage: "Turkish"/);
   assert.match(server, /contentLanguage: "Turkish"/);
   assert.match(worker, /if \(geminiKey\)/);
-  assert.match(html, /sahne metinleri ses üretimi için TERZİ sunucusuna/);
+  assert.match(html, /sahne metinleri ses üretimi için Content Studio sunucusuna/);
   assert.doesNotMatch(html, /id="flow-narration-enabled" type="checkbox" checked/);
 });
 

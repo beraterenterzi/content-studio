@@ -1,4 +1,4 @@
-# TERZİ Creator Studio — ürün ve ekip incelemesi
+# Content Studio — ürün ve ekip incelemesi
 
 Tarih: 2026-09-10. Ürün, UX ve teknik kalite üç ayrı ajanla incelendi.
 Kullanıcı hedefi: gelir üreten, tutarlı ürün ve kapsam içinde özerk geliştirme.
@@ -8,7 +8,7 @@ Kullanıcı hedefi: gelir üreten, tutarlı ürün ve kapsam içinde özerk geli
 Mevcut arayüz iki yol içeriyor: AI içerik stüdyosu ve cihazda fotoğraftan video.
 Atölye Pro için güvenli hesap, yetkilendirme ve Stripe Checkout/Portal altyapısı
 eklendi; canlı Stripe anahtarları tanımlanmadığı ve dağıtım yapılmadığı için satış
-henüz açık değildir. Kendi API anahtarını kullanmak TERZİ için gelir değildir.
+henüz açık değildir. Kendi API anahtarını kullanmak Content Studio için gelir değildir.
 Talep veya satış kanıtı bu incelemede bulunmadı.
 
 Ürünü satmak ile üretilen içerikten gelir kazanmak farklı iş modelleridir.
@@ -281,7 +281,7 @@ arşiv araması smoke testinden geçti; gerçek ücretli AI çağrısı yapılma
 - Entegrasyonlar ekranı teknik model listesinden önce tek servis seçimine indirildi. Kullanıcıya
   üç anahtar gerekmediği, Gemini'nin tek anahtarla metin, görsel, fotoğraf analizi ve sesi açtığı;
   OpenAI ve Claude seçeneklerinin sınırları kart üzerinde anlatılıyor.
-- Model seçimi varsayılan akıştan kaldırılıp “Gelişmiş” ayrıntısına taşındı. TERZİ sağlayıcı
+- Model seçimi varsayılan akıştan kaldırılıp “Gelişmiş” ayrıntısına taşındı. Content Studio sağlayıcı
   değiştiğinde dengeli modeli otomatik seçiyor; isteyen kullanıcı modeli ayrıca değiştirebiliyor.
 
 ## Açık arşivden hikâye üretimi
@@ -308,7 +308,7 @@ arşiv araması smoke testinden geçti; gerçek ücretli AI çağrısı yapılma
   projesi üretebiliyor. Yönetilen üretim Cloudflare Workers AI üzerinde yapılandırılmış
   çıktı kullanan Llama 3.3 70B yolunu kullanıyor; başarısız çağrı kotayı geri veriyor ve
   ücretli kullanıcıya düşük kaliteli deterministik fallback gösterilmiyor.
-- Kendi AI anahtarını kullanan metin, görsel ve ses çağrılarından TERZİ ürün kotası
+- Kendi AI anahtarını kullanan metin, görsel ve ses çağrılarından Content Studio ürün kotası
   kaldırıldı; yalnız güvenlik/rate-limit sınırı devam ediyor. Sağlayıcı maliyeti kullanıcıya ait.
 - Hoş geldin ekranındaki `İlk videomu oluştur` eylemi artık İngilizce sabit bir cihaz demosuna
   atlamıyor; örnek Türkçe konuyla gerçek otomatik üretim formunu açıyor.

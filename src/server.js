@@ -1411,7 +1411,7 @@ const server = http.createServer(async (req, res) => {
       if (!tokens.refresh_token) throw new Error("Google yenileme tokenı döndürmedi; erişimi kaldırıp yeniden bağlayın");
       await saveEnvValue("YOUTUBE_OAUTH_REFRESH_TOKEN", tokens.refresh_token);
       res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
-      return res.end("<!doctype html><meta charset=utf-8><title>YouTube bağlandı</title><style>body{font:16px system-ui;padding:48px;text-align:center}</style><h1>YouTube kanalı bağlandı</h1><p>TERZİ'ye dönüp yüklemeyi başlatabilirsiniz.</p><script>setTimeout(()=>window.close(),1200)</script>");
+      return res.end("<!doctype html><meta charset=utf-8><title>YouTube bağlandı</title><style>body{font:16px system-ui;padding:48px;text-align:center}</style><h1>YouTube kanalı bağlandı</h1><p>Content Studio'ye dönüp yüklemeyi başlatabilirsiniz.</p><script>setTimeout(()=>window.close(),1200)</script>");
     }
     const youtubeUpload = url.pathname.match(/^\/api\/productions\/([^/]+)\/youtube-upload$/);
     if (req.method === "POST" && youtubeUpload) {
@@ -1616,7 +1616,7 @@ const server = http.createServer(async (req, res) => {
       const token = crypto.randomBytes(12).toString("hex");
       const message = await telegramCall("sendMessage", {
         chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: [`TERZİ editör onayı`, ``, `Proje: ${item.content?.title || "Adsız proje"}`,
+        text: [`Content Studio editör onayı`, ``, `Proje: ${item.content?.title || "Adsız proje"}`,
           `Format: ${item.contentType || "shorts"}`, `Dil: ${item.contentLanguage || "English"}`,
           ``, `${clean(item.content?.hook, 500)}`, ``, `Bu içeriği üretime alalım mı?`].join("\n"),
         reply_markup: { inline_keyboard: [[
@@ -2034,7 +2034,7 @@ ${item.visualStyle === "animated" ? "Renkli, neşeli, özgün 2D eğitici animas
           );
           item.visualAssets.push({
             assetId: `local-${crypto.randomUUID()}`,
-            source: "local", sourceLabel: "TERZİ",
+            source: "local", sourceLabel: "Content Studio",
             title: scene.text || item.content.title, previewUrl,
             license: "Local generated graphic", sourcePage: ""
           });
@@ -2132,7 +2132,7 @@ ${item.visualStyle === "animated" ? "Renkli, neşeli, özgün 2D eğitici animas
   }
 });
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`TERZİ: http://127.0.0.1:${PORT}`);
+  console.log(`Content Studio: http://127.0.0.1:${PORT}`);
   const providers = [
     process.env.GEMINI_API_KEY ? "Gemini" : null,
     process.env.OPENAI_API_KEY ? "OpenAI" : null,

@@ -1,4 +1,4 @@
-# TERZİ Creator Studio
+# Content Studio
 
 Fikirlerini ve fotoğraflarını düzenlenebilir kısa video projelerine dönüştüren yerel-öncelikli, açık kaynak çalışma alanı.
 

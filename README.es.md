@@ -1,4 +1,4 @@
-# TERZİ Creator Studio
+# Content Studio
 
 Un espacio de trabajo local-first y de código abierto para convertir ideas y fotos en proyectos de vídeo corto editables.
 

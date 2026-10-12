@@ -1,4 +1,4 @@
-# TERZİ Creator Studio
+# Content Studio
 
 一个本地优先、开源的工作区，可将创意和照片转化为可编辑的短视频项目。
 

@@ -1,4 +1,4 @@
-# Contributing to TERZİ
+# Contributing to Content Studio
 
 Thanks for contributing. Please open an issue before large changes so the
 product direction and privacy/cost implications are clear.

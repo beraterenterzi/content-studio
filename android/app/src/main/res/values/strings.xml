@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TERZİ</string>
-    <string name="title_activity_main">TERZİ</string>
+    <string name="app_name">Content Studio</string>
+    <string name="title_activity_main">Content Studio</string>
     <string name="package_name">com.orbitvideolab.terzi</string>
     <string name="custom_url_scheme">com.orbitvideolab.terzi</string>
 </resources>

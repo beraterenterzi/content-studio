@@ -313,7 +313,7 @@ function hasProAccess(workspace) {
 }
 __name(hasProAccess, "hasProAccess");
 function requireAccount(workspace) {
-  if (!workspace.user) throw Object.assign(new Error("Devam etmek için ücretsiz bir TERZİ hesabı oluştur"), { status: 401, code: "ACCOUNT_REQUIRED" });
+  if (!workspace.user) throw Object.assign(new Error("Devam etmek için ücretsiz bir Content Studio hesabı oluştur"), { status: 401, code: "ACCOUNT_REQUIRED" });
   return workspace.user;
 }
 __name(requireAccount, "requireAccount");
@@ -1361,11 +1361,11 @@ another creator's wording, scene order, title, or hook. Do not use markdown fenc
 __name(generateAiPackage, "generateAiPackage");
 async function generateManagedDemoPackage(env, idea, settings) {
   const content = await generateManagedProPackage(env, idea, settings);
-  return { ...content, mode: "orbit-demo", model: "TERZİ Deneme", demo: true, fallback: false };
+  return { ...content, mode: "orbit-demo", model: "Content Studio Deneme", demo: true, fallback: false };
 }
 __name(generateManagedDemoPackage, "generateManagedDemoPackage");
 async function generateManagedProPackage(env, idea, settings) {
-  if (!env.AI) throw Object.assign(new Error("TERZİ yönetilen AI servisi şu anda kullanılamıyor"), { status: 503 });
+  if (!env.AI) throw Object.assign(new Error("Content Studio yönetilen AI servisi şu anda kullanılamıyor"), { status: 503 });
   const targetLanguage = settings.contentLanguage || "Turkish";
   const prompt = `Create an original, publish-ready short-form video story entirely in natural ${targetLanguage}.
 Topic: ${idea.topic}
@@ -1378,7 +1378,7 @@ Use a strong narrative arc rather than summarizing the source metadata. Write a 
   try {
     result = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
       messages: [
-        { role: "system", content: `You are TERZİ's professional short-video story editor. Every user-facing field must be in ${targetLanguage}. Return one valid JSON object and no markdown.` },
+        { role: "system", content: `You are Content Studio's professional short-video story editor. Every user-facing field must be in ${targetLanguage}. Return one valid JSON object and no markdown.` },
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_schema", json_schema: CONTENT_PACKAGE_SCHEMA },
@@ -1386,14 +1386,14 @@ Use a strong narrative arc rather than summarizing the source metadata. Write a 
       temperature: 0.7
     });
   } catch (error) {
-    throw Object.assign(new Error("TERZİ hikâye servisi geçici olarak yanıt vermedi. Hakkın korunarak daha sonra tekrar deneyebilirsin."), { status: 503, cause: error });
+    throw Object.assign(new Error("Content Studio hikâye servisi geçici olarak yanıt vermedi. Hakkın korunarak daha sonra tekrar deneyebilirsin."), { status: 503, cause: error });
   }
   const raw = result?.response ?? result?.choices?.[0]?.message?.content;
   const parsed = raw && typeof raw === "object" ? raw : parseAiJson(raw);
   return validateContentPackage({
     ...parsed,
     mode: "terzi-managed",
-    model: "TERZİ Yönetilen AI"
+    model: "Content Studio Yönetilen AI"
   });
 }
 __name(generateManagedProPackage, "generateManagedProPackage");
@@ -1402,7 +1402,7 @@ async function createManagedImageAsset(env, workspaceId, item, subject, provider
   const imagePrompt = `Professional original vertical 9:16 video scene. ${safeSubject}. Topic: ${cleanText(item.content?.title, 180)}. Strong focal point and mobile composition. No text, logos, watermark, copyrighted characters or identifiable people.`;
   let bytes;
   let source = "cloudflare";
-  let sourceLabel = "TERZİ Görsel AI · FLUX";
+  let sourceLabel = "Content Studio Görsel AI · FLUX";
   let license = "Cloudflare Workers AI output";
   let sourcePage = "https://developers.cloudflare.com/workers-ai/models/flux-1-schnell/";
   if (key && provider === "gemini") {
@@ -1442,7 +1442,7 @@ async function createManagedImageAsset(env, workspaceId, item, subject, provider
     license = "OpenAI API generated output";
     sourcePage = "https://developers.openai.com/api/docs/models/gpt-image-2.5-flare";
   } else {
-    if (!env.AI) throw Object.assign(new Error("TERZİ Görsel AI şu anda kullanılamıyor"), { status: 503 });
+    if (!env.AI) throw Object.assign(new Error("Content Studio Görsel AI şu anda kullanılamıyor"), { status: 503 });
     const output = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt: imagePrompt });
     if (output instanceof Uint8Array) bytes = output;
     else if (typeof output?.image === "string") {
@@ -1686,8 +1686,8 @@ var worker_default = {
         try {
           verificationSent = (await sendTransactionalEmail(env, {
             to: cleanText(input.email, 254),
-            subject: "TERZİ e-posta adresini doğrula",
-            html: `<p>TERZİ hesabını doğrulamak için aşağıdaki bağlantıyı 60 dakika içinde aç.</p><p><a href="${publicOrigin(request, env)}/?verify=${verificationToken}">E-posta adresimi doğrula</a></p><p>Bu hesabı sen oluşturmadıysan bu mesajı yok sayabilirsin.</p>`
+            subject: "Content Studio e-posta adresini doğrula",
+            html: `<p>Content Studio hesabını doğrulamak için aşağıdaki bağlantıyı 60 dakika içinde aç.</p><p><a href="${publicOrigin(request, env)}/?verify=${verificationToken}">E-posta adresimi doğrula</a></p><p>Bu hesabı sen oluşturmadıysan bu mesajı yok sayabilirsin.</p>`
           })).sent;
         } catch {}
         return json({ account: { email: cleanText(input.email, 254), plan: "free", status: "active", emailVerified: false }, verificationRequired: true, verificationSent }, 201, {
@@ -1706,8 +1706,8 @@ var worker_default = {
           const token = await createAuthActionToken(env, user.id, "verify_email", 60);
           await sendTransactionalEmail(env, {
             to: user.email_display,
-            subject: "TERZİ e-posta adresini doğrula",
-            html: `<p>TERZİ hesabını doğrulamak için aşağıdaki bağlantıyı 60 dakika içinde aç.</p><p><a href="${publicOrigin(request, env)}/?verify=${token}">E-posta adresimi doğrula</a></p>`
+            subject: "Content Studio e-posta adresini doğrula",
+            html: `<p>Content Studio hesabını doğrulamak için aşağıdaki bağlantıyı 60 dakika içinde aç.</p><p><a href="${publicOrigin(request, env)}/?verify=${token}">E-posta adresimi doğrula</a></p>`
           }).catch(() => {});
         }
         return json({ ok: true, message: "Hesap varsa doğrulama bağlantısı gönderildi" });
@@ -1732,7 +1732,7 @@ var worker_default = {
           const token = await createAuthActionToken(env, user.id, "reset_password", 30);
           await sendTransactionalEmail(env, {
             to: user.email_display,
-            subject: "TERZİ parola sıfırlama",
+            subject: "Content Studio parola sıfırlama",
             html: `<p>Parolanı yenilemek için aşağıdaki bağlantıyı 30 dakika içinde aç.</p><p><a href="${publicOrigin(request, env)}/?reset=${token}">Parolamı yenile</a></p><p>Bu isteği sen yapmadıysan mesajı yok sayabilirsin.</p>`
           }).catch(() => {});
         }
@@ -2702,7 +2702,7 @@ ${extra.map((asset) => `${asset.sourceLabel}: ${asset.title} (${asset.sourcePage
           message = await telegramCall(env, "sendMessage", {
             chat_id: env.TELEGRAM_CHAT_ID,
             text: [
-              "TERZİ edit\xF6r onay\u0131",
+              "Content Studio edit\xF6r onay\u0131",
               "",
               `Proje: ${item.content?.title || "Ads\u0131z proje"}`,
               `Format: ${item.contentType || "shorts"}`,
