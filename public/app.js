@@ -114,19 +114,19 @@ const messages = {
     dashboard:["TERZİ / GENEL BAKIŞ","İçerik üretim merkezine hoş geldin"],source:["ADIM 1 / KAYNAK","Hikâyenin görselini bul"],story:["ADIM 2 / HİKÂYE","Kaynağı özgün bir hikâyeye dönüştür"],review:["ADIM 3 / İNCELEME","Yayın öncesi son kontrol"],render:["ADIM 4 / VİDEO","Seslendir, birleştir ve izle"],editor:["PROJE DÜZENLEYİCİ","İçeriğini düzenle"],files:["DOSYA KÜTÜPHANESİ","Üretilen dosyaların"],trash:["ÇÖP KUTUSU","Silinen projeler"],
     home:"Ana sayfa",homeSub:"Projeler ve geçmiş",sourceNav:"Kaynak",sourceSub:"Görsel bul veya üret",storyNav:"Hikâye",storySub:"AI senaryo",reviewNav:"İnceleme",reviewSub:"Son kontrol",videoNav:"Video",videoSub:"Ses ve video",
     newProject:"Yeni proje oluştur",projects:"Son projeler",activity:"Aktivite",search:"Arşivde ara",results:"Arşiv sonuçları",edit:"Projeyi düzenle",back:"← Projelere dön",title:"Başlık",hook:"Açılış cümlesi",narration:"Seslendirme metni",save:"Değişiklikleri kaydet",
-    total:"Toplam proje",ready:"Hazır video",inReview:"Kontrol edilecek",queue:"Video sırası",allTime:"Tüm zamanlar",downloadable:"İndirilebilir",waiting:"Kontrol bekliyor",productionReady:"Video oluşturmaya hazır",noProjects:"Henüz proje yok.",noActivity:"Henüz aktivite yok.",saved:"Proje değişiklikleri kaydedildi",edited:"Son düzenleme",settings:"Kanal ayarları kaydedildi",generate:"Hikâyeyi oluştur",approve:"Videoya hazırla",reject:"Düzenlemeye geri gönder",renderVideo:"Videoyu oluştur",addScene:"＋ Görsel ekle",newStory:"Hikâyeyi oluştur",addProject:"Projeye ekle",noIdeas:"Henüz kaynak seçilmedi.",noReview:"Kontrol edilecek taslak yok.",noRender:"Video oluşturmaya hazır proje yok.",niche:"Kanal nişi",audience:"Hedef kitle",storyModel:"Hikâye modeli",contentLang:"İçerik dili",uiLang:"Arayüz dili",contentProfile:"İçerik profili",visualStyle:"Görsel stil",apiKey:"Gemini anahtarı",saveSettings:"Kaydet",hero:"Fikrini kanalına göre bir hikâyeye dönüştür.",heroSub:"Kaynak, senaryo, ses ve video üretimin tek yerde.",sourceHelp:"NASA ve Wikimedia Commons görsellerini kullanım ve kaynak bilgileriyle getir.",storyQueue:"Hazırlanan fikirler",reviewDesk:"Son kontrol",videoLab:"Videoyu oluştur",nextStep:"Sıradaki adım",reviewHelp:"Metni ve görselleri kontrol et; hazır olduğunda videoya geç.",renderHelp:"Proje hazır. Seslendirme, altyazı ve videoyu oluştur.",readyHelp:"Video hazır. Buradan izleyebilir veya dosyaları indirebilirsin.",staleHelp:"Metin değişti. Güncel videoyu oluşturmak için videoyu yeniden hazırla.",download:"Videoyu indir"
+    total:"Toplam proje",ready:"Hazır video",inReview:"Kontrol edilecek",queue:"Video sırası",allTime:"Tüm zamanlar",downloadable:"İndirilebilir",waiting:"Kontrol bekliyor",productionReady:"Video oluşturmaya hazır",noProjects:"Henüz proje yok.",noActivity:"Henüz aktivite yok.",saved:"Proje değişiklikleri kaydedildi",edited:"Son düzenleme",settings:"Kanal ayarları kaydedildi",generate:"Hikâyeyi oluştur",approve:"Videoya hazırla",reject:"Düzenlemeye geri gönder",renderVideo:"Videoyu oluştur",addScene:"＋ Görsel ekle",newStory:"Hikâyeyi oluştur",addProject:"Projeye ekle",noIdeas:"Henüz kaynak seçilmedi.",noReview:"Kontrol edilecek taslak yok.",noRender:"Video oluşturmaya hazır proje yok.",niche:"Kanal nişi",audience:"Hedef kitle",storyModel:"Hikâye modeli",contentLang:"İçerik dili",uiLang:"Arayüz dili",contentProfile:"İçerik profili",visualStyle:"Görsel stil",apiKey:"Gemini anahtarı",saveSettings:"Kaydet",hero:"Fikrinden düzenlenebilir Shorts taslağına.",heroSub:"Senaryo, lisans bilgili görseller, ses ve video akışı tek yerde.",sourceHelp:"NASA ve Wikimedia Commons görsellerini kullanım ve kaynak bilgileriyle getir.",storyQueue:"Hazırlanan fikirler",reviewDesk:"Son kontrol",videoLab:"Videoyu oluştur",nextStep:"Sıradaki adım",reviewHelp:"Metni ve görselleri kontrol et; hazır olduğunda videoya geç.",renderHelp:"Proje hazır. Seslendirme, altyazı ve videoyu oluştur.",readyHelp:"Video hazır. Buradan izleyebilir veya dosyaları indirebilirsin.",staleHelp:"Metin değişti. Güncel videoyu oluşturmak için videoyu yeniden hazırla.",download:"Videoyu indir"
   },
   en: {
     dashboard:["TERZİ / OVERVIEW","Welcome to your content production center"],source:["STEP 1 / SOURCE","Find visuals for your story"],story:["STEP 2 / STORY","Turn a source into an original story"],review:["STEP 3 / REVIEW","Final check before publishing"],render:["STEP 4 / VIDEO","Narrate, combine and preview"],editor:["PROJECT EDITOR","Edit your content"],files:["FILE LIBRARY","Your generated files"],trash:["TRASH","Deleted projects"],
     home:"Home",homeSub:"Projects and history",sourceNav:"Sources",sourceSub:"Find or create visuals",storyNav:"Story",storySub:"AI script",reviewNav:"Review",reviewSub:"Final review",videoNav:"Video",videoSub:"Voice and video",
     newProject:"Create new project",projects:"Recent projects",activity:"Activity",search:"Search archive",results:"Archive results",edit:"Edit project",back:"← Back to projects",title:"Title",hook:"Opening hook",narration:"Narration script",save:"Save changes",
-    total:"Total projects",ready:"Ready videos",inReview:"In review",queue:"Render queue",allTime:"All time",downloadable:"Downloadable",waiting:"Awaiting approval",productionReady:"Ready to produce",noProjects:"No projects yet.",noActivity:"No activity yet.",saved:"Project changes saved",edited:"Last edited",settings:"Channel settings saved",generate:"Generate story",approve:"Prepare video",reject:"Reject",renderVideo:"Create video",addScene:"＋ Add visual",newStory:"Create story",addProject:"Add to project",noIdeas:"No source selected yet.",noReview:"No scripts to review.",noRender:"No approved productions.",niche:"Channel niche",audience:"Target audience",storyModel:"Story model",contentLang:"Content language",uiLang:"Interface language",contentProfile:"Content profile",visualStyle:"Visual style",apiKey:"Gemini key",saveSettings:"Save",hero:"Turn your idea into content that fits your channel.",heroSub:"Sources, scripts, voice and video production in one place.",sourceHelp:"Browse NASA and Wikimedia Commons with metadata, licensing and attribution.",storyQueue:"Story queue",reviewDesk:"Editorial desk",videoLab:"Video lab",nextStep:"Next step",reviewHelp:"Review and save your copy, then approve the project.",renderHelp:"Project is ready. Create narration, captions and the video.",readyHelp:"Your video is ready. Preview or download the files here.",staleHelp:"The copy changed. Render again to create an up-to-date video.",download:"Download MP4"
+    total:"Total projects",ready:"Ready videos",inReview:"In review",queue:"Render queue",allTime:"All time",downloadable:"Downloadable",waiting:"Awaiting approval",productionReady:"Ready to produce",noProjects:"No projects yet.",noActivity:"No activity yet.",saved:"Project changes saved",edited:"Last edited",settings:"Channel settings saved",generate:"Generate story",approve:"Prepare video",reject:"Reject",renderVideo:"Create video",addScene:"＋ Add visual",newStory:"Create story",addProject:"Add to project",noIdeas:"No source selected yet.",noReview:"No scripts to review.",noRender:"No approved productions.",niche:"Channel niche",audience:"Target audience",storyModel:"Story model",contentLang:"Content language",uiLang:"Interface language",contentProfile:"Content profile",visualStyle:"Visual style",apiKey:"Gemini key",saveSettings:"Save",hero:"From your idea to an editable Shorts draft.",heroSub:"Scripts, rights-aware visuals, voice and video in one place.",sourceHelp:"Browse NASA and Wikimedia Commons with metadata, licensing and attribution.",storyQueue:"Story queue",reviewDesk:"Editorial desk",videoLab:"Video lab",nextStep:"Next step",reviewHelp:"Review and save your copy, then approve the project.",renderHelp:"Project is ready. Create narration, captions and the video.",readyHelp:"Your video is ready. Preview or download the files here.",staleHelp:"The copy changed. Render again to create an up-to-date video.",download:"Download MP4"
   },
   es: {
     dashboard:["TERZİ / RESUMEN","Bienvenido a tu centro de producción"],source:["PASO 1 / FUENTE","Encuentra imágenes para tu historia"],story:["PASO 2 / HISTORIA","Convierte una fuente en una historia original"],review:["PASO 3 / REVISIÓN","Control final antes de publicar"],render:["PASO 4 / VÍDEO","Narra, combina y previsualiza"],editor:["EDITOR DE PROYECTO","Edita tu contenido"],files:["ARCHIVOS","Tus archivos generados"],trash:["PAPELERA","Proyectos eliminados"],
     home:"Inicio",homeSub:"Proyectos e historial",sourceNav:"Fuentes",sourceSub:"Busca o crea imágenes",storyNav:"Historia",storySub:"Guion con IA",reviewNav:"Revisión",reviewSub:"Revisión final",videoNav:"Vídeo",videoSub:"Voz y vídeo",
     newProject:"Crear proyecto",projects:"Proyectos recientes",activity:"Actividad",search:"Buscar en archivo",results:"Resultados del archivo",edit:"Editar proyecto",back:"← Volver a proyectos",title:"Título",hook:"Frase inicial",narration:"Texto de narración",save:"Guardar cambios",
-    total:"Proyectos totales",ready:"Vídeos listos",inReview:"En revisión",queue:"Cola de renderizado",allTime:"Todo el tiempo",downloadable:"Descargables",waiting:"Esperando aprobación",productionReady:"Listos para producir",noProjects:"Aún no hay proyectos.",noActivity:"Aún no hay actividad.",saved:"Cambios guardados",edited:"Última edición",settings:"Configuración guardada",generate:"Generar historia",approve:"Preparar vídeo",reject:"Rechazar",renderVideo:"Crear vídeo",addScene:"＋ Añadir imagen",newStory:"Crear historia",addProject:"Añadir al proyecto",noIdeas:"Aún no hay fuente seleccionada.",noReview:"No hay guiones para revisar.",noRender:"No hay producciones aprobadas.",niche:"Nicho del canal",audience:"Público objetivo",storyModel:"Modelo de historia",contentLang:"Idioma del contenido",uiLang:"Idioma de interfaz",contentProfile:"Perfil de contenido",visualStyle:"Estilo visual",apiKey:"Clave de Gemini",saveSettings:"Guardar",hero:"Convierte tu idea en contenido hecho para tu canal.",heroSub:"Fuentes, guiones, voz y vídeo en un solo lugar.",sourceHelp:"Explora NASA y Wikimedia Commons con metadatos, licencia y atribución.",storyQueue:"Cola de historias",reviewDesk:"Mesa editorial",videoLab:"Laboratorio de vídeo",nextStep:"Siguiente paso",reviewHelp:"Revisa y guarda el texto; después aprueba el proyecto.",renderHelp:"El proyecto está listo. Crea la narración, los subtítulos y el vídeo.",readyHelp:"El vídeo está listo. Puedes verlo o descargarlo aquí.",staleHelp:"El texto cambió. Vuelve a renderizar para actualizar el vídeo.",download:"Descargar MP4"
+    total:"Proyectos totales",ready:"Vídeos listos",inReview:"En revisión",queue:"Cola de renderizado",allTime:"Todo el tiempo",downloadable:"Descargables",waiting:"Esperando aprobación",productionReady:"Listos para producir",noProjects:"Aún no hay proyectos.",noActivity:"Aún no hay actividad.",saved:"Cambios guardados",edited:"Última edición",settings:"Configuración guardada",generate:"Generar historia",approve:"Preparar vídeo",reject:"Rechazar",renderVideo:"Crear vídeo",addScene:"＋ Añadir imagen",newStory:"Crear historia",addProject:"Añadir al proyecto",noIdeas:"Aún no hay fuente seleccionada.",noReview:"No hay guiones para revisar.",noRender:"No hay producciones aprobadas.",niche:"Nicho del canal",audience:"Público objetivo",storyModel:"Modelo de historia",contentLang:"Idioma del contenido",uiLang:"Idioma de interfaz",contentProfile:"Perfil de contenido",visualStyle:"Estilo visual",apiKey:"Clave de Gemini",saveSettings:"Guardar",hero:"De tu idea a un borrador de Shorts editable.",heroSub:"Guion, imágenes con información de licencia, voz y vídeo en un solo lugar.",sourceHelp:"Explora NASA y Wikimedia Commons con metadatos, licencia y atribución.",storyQueue:"Cola de historias",reviewDesk:"Mesa editorial",videoLab:"Laboratorio de vídeo",nextStep:"Siguiente paso",reviewHelp:"Revisa y guarda el texto; después aprueba el proyecto.",renderHelp:"El proyecto está listo. Crea la narración, los subtítulos y el vídeo.",readyHelp:"El vídeo está listo. Puedes verlo o descargarlo aquí.",staleHelp:"El texto cambió. Vuelve a renderizar para actualizar el vídeo.",download:"Descargar MP4"
   }
 };
 const flowMessages = {
@@ -224,10 +224,10 @@ const staticTranslationRows = [
   ["Fotoğraflarını seç, sahne yazılarını düzenle ve videoyu hiçbir dosyayı sunucuya göndermeden cihazında oluştur.","Choose photos, edit scene captions and create the video on your device without uploading files.","Elige fotos, edita los textos y crea el vídeo en tu dispositivo sin subir archivos."],
   ["TERZİ HESABI","TERZİ ACCOUNT","CUENTA TERZİ"],["Projelerini güvenle hesabına bağla.","Securely link your projects to your account.","Vincula tus proyectos de forma segura a tu cuenta."],["Ücretsiz hesap açtığında bu tarayıcıdaki bulut projelerin hesabına taşınır. Cihaz içi video üretimi ücretsiz kalır.","When you create a free account, cloud projects in this browser are linked to it. On-device video creation stays free.","Al crear una cuenta gratuita, los proyectos en la nube de este navegador se vinculan a ella. La creación de vídeo en el dispositivo sigue siendo gratis."],["Hesap oluştur","Create account","Crear cuenta"],["Giriş yap","Sign in","Iniciar sesión"],["E-posta","Email","Correo electrónico"],["Parola","Password","Contraseña"],["En az 12 karakter kullan. Parolan hiçbir zaman düz metin olarak saklanmaz.","Use at least 12 characters. Your password is never stored as plain text.","Usa al menos 12 caracteres. Tu contraseña nunca se guarda como texto sin formato."],["Ücretsiz hesap oluştur","Create free account","Crear cuenta gratis"],["Hesabın hazır.","Your account is ready.","Tu cuenta está lista."],["Atölye Pro'ya geç","Upgrade to Atölye Pro","Pasar a Atölye Pro"],["Üyeliği yönet","Manage membership","Gestionar membresía"],["Çıkış yap","Sign out","Cerrar sesión"],
   ["Ücretsiz başla, işin büyüdüğünde yükselt.","Start free and upgrade when your work grows.","Empieza gratis y mejora cuando crezca tu trabajo."],["Cihaz içi video ücretsizdir. Yönetilen AI ve bulut kaydı yalnız kullananlar için Pro üyeliğe dahildir.","On-device video is free. Managed AI and cloud storage are included in Pro for those who need them.","El vídeo en el dispositivo es gratis. La IA gestionada y el almacenamiento en la nube se incluyen en Pro."],["1 otomatik proje, demo AI görselleri ve sınırlı seslendirme.","1 automatic project, demo AI visuals and limited narration.","1 proyecto automático, imágenes de IA de demostración y narración limitada."],["Cihaz içi video ücretsiz; AI kullanımı doğrudan kendi sağlayıcından düşer.","On-device video is free; AI usage is billed directly by your provider.","El vídeo en el dispositivo es gratis; el uso de IA se cobra directamente por tu proveedor."],["API anahtarı yok; yönetilen AI, daha yüksek ses kotası ve güvenli bulut kayıt.","No API key; managed AI, higher narration limits and secure cloud storage.","Sin clave API; IA gestionada, más narración y almacenamiento seguro en la nube."],["Pro'ya geç","Upgrade to Pro","Pasar a Pro"],
-  ["PLANIN","YOUR PLAN","TU PLAN"],["Teknik kurulum yapmadan üret.","Create without technical setup.","Crea sin configuración técnica."],["Normal kullanımda API anahtarı gerekmez. Ücretsiz denemeden sonra Atölye Pro ile TERZİ'nin yönetilen AI servislerini kullanırsın.","No API key is needed for normal use. After the free trial, Atölye Pro gives you TERZİ's managed AI services.","No necesitas una clave API para el uso normal. Tras la prueba gratuita, Atölye Pro te ofrece los servicios de IA gestionados por TERZİ."],
-  ["ÜCRETSİZ","FREE","GRATIS"],["ANAHTARSIZ","NO API KEY","SIN CLAVE API"],["Cihazda manuel video ve ücretsiz hesapla bir tam otomatik deneme.","Manual on-device video and one fully automatic trial with a free account.","Vídeo manual en el dispositivo y una prueba totalmente automática con una cuenta gratuita."],["Ayda 30 yönetilen hikâye; AI görsellerinde günlük adil kullanım.","30 managed stories per month; daily fair-use limits for AI visuals.","30 historias gestionadas al mes; uso razonable diario para imágenes de IA."],
+  ["PLANIN","YOUR PLAN","TU PLAN"],["Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı.","An editable Shorts draft from your idea or photos.","Un borrador de Shorts editable a partir de tu idea o fotos."],["Cihazında ücretsiz video oluştur; doğrulanmış ücretsiz hesabınla otomatik akışı bir kez dene. Son düzenleme sende.","Create video on your device for free; try the automatic flow once with a verified free account. You keep the final say.","Crea vídeo gratis en tu dispositivo; prueba el flujo automático una vez con una cuenta gratuita verificada. Tú tienes la última palabra."],
+  ["ÜCRETSİZ","FREE","GRATIS"],["ANAHTARSIZ","NO API KEY","SIN CLAVE API"],["Cihazda video üretimi ücretsizdir; doğrulanmış ücretsiz hesapla bir tam otomatik Shorts taslağını dene.","On-device video creation is free; try one fully automatic Shorts draft with a verified free account.","La creación de vídeo en el dispositivo es gratuita; prueba un borrador de Shorts totalmente automático con una cuenta gratuita verificada."],["Ayda 30 yönetilen hikâye; AI görsellerinde günlük adil kullanım.","30 managed stories per month; daily fair-use limits for AI visuals.","30 historias gestionadas al mes; uso razonable diario para imágenes de IA."],
   ["Gelişmiş: Kendi AI hesabımı bağla","Advanced: Connect my own AI account","Avanzado: Conectar mi propia cuenta de IA"],["İsteğe bağlı · teknik kullanıcılar için","Optional · for technical users","Opcional · para usuarios técnicos"],["KENDİ AI HESABIN","YOUR OWN AI ACCOUNT","TU PROPIA CUENTA DE IA"],["Sağlayıcı maliyetini doğrudan kendin yönet.","Manage provider costs directly.","Gestiona directamente los costes del proveedor."],["Bu bölüm normal kullanım için gerekli değildir. Yalnızca kendi Gemini, OpenAI veya Claude hesabını kullanmak istiyorsan bağlantı kur.","This section is not required for normal use. Connect only if you want to use your own Gemini, OpenAI or Claude account.","Esta sección no es necesaria para el uso normal. Conecta solo si quieres usar tu propia cuenta de Gemini, OpenAI o Claude."],
-  ["Bir konu yaz veya fotoğraflarını ekle. TERZİ hikâyeyi ve sahneleri hazırlasın; son karar her zaman sende kalsın.","Enter a topic or add your photos. TERZİ prepares the story and scenes; you always keep the final say.","Escribe un tema o añade tus fotos. TERZİ prepara la historia y las escenas; la decisión final siempre es tuya."],["Fikrini ekle","Add your idea","Añade tu idea"],["Konu veya kendi fotoğrafların.","A topic or your own photos.","Un tema o tus propias fotos."],["TERZİ hazırlasın","Let TERZİ prepare it","Deja que TERZİ lo prepare"],["Hikâye, sahneler ve görseller.","Story, scenes and visuals.","Historia, escenas e imágenes."],["Kontrol et","Review","Revisa"],["Düzenle, seslendir ve indir.","Edit, narrate and download.","Edita, narra y descarga."],["Demo için API anahtarı gerekmez.","No API key is needed for the demo.","No necesitas una clave API para la demo."],
+  ["Bir konu yaz veya fotoğraflarını ekle. TERZİ hikâyeyi ve sahneleri hazırlasın; son karar her zaman sende kalsın.","Enter a topic or add your photos. TERZİ prepares the story and scenes; you always keep the final say.","Escribe un tema o añade tus fotos. TERZİ prepara la historia y las escenas; la decisión final siempre es tuya."],["Fikrini ekle","Add your idea","Añade tu idea"],["Konu veya kendi fotoğrafların.","A topic or your own photos.","Un tema o tus propias fotos."],["TERZİ hazırlasın","Let TERZİ prepare it","Deja que TERZİ lo prepare"],["Hikâye, sahneler ve görseller.","Story, scenes and visuals.","Historia, escenas e imágenes."],["Kontrol et","Review","Revisa"],["Düzenle, seslendir ve indir.","Edit, narrate and download.","Edita, narra y descarga."],["İlk taslak için API anahtarı gerekmez.","No API key is needed for your first draft.","No necesitas una clave API para tu primer borrador."],
   ["CİHAZDA VİDEO","VIDEO ON DEVICE","VÍDEO EN EL DISPOSITIVO"],
   ["Açarsan sahne metinleri ses üretimi için TERZİ sunucusuna veya seçtiğin AI sağlayıcısına gönderilir. Fotoğrafların gönderilmez.","If enabled, scene text is sent to the TERZİ server or your selected AI provider for speech generation. Your photos are not sent.","Si la activas, el texto de las escenas se envía al servidor de TERZİ o al proveedor de IA elegido para generar la voz. Tus fotos no se envían."],
   ["Bu kayıt başka bir yerde değişti","This record changed elsewhere","Este registro cambió en otro lugar"],["Bu formdaki değerler korunuyor. Sunucudaki son sürümü istediğinde açabilirsin.","The values in this form are preserved. Open the latest server version when you choose.","Los valores de este formulario se conservan. Puedes abrir la última versión del servidor cuando quieras."],["Bu formda kal","Stay on this form","Seguir en este formulario"],["Son sürümü aç","Open latest version","Abrir la última versión"],
@@ -239,8 +239,8 @@ const staticTranslationRows = [
   ["İnceleme bekliyor","Awaiting review","Esperando revisión"],["Render alınıyor","Rendering","Renderizando"],["Render hatası","Render failed","Error de renderizado"],["Yeni","New","Nuevo"],["Adsız proje","Untitled project","Proyecto sin título"],
   ["KONTROL MERKEZİ","CONTROL CENTER","CENTRO DE CONTROL"],["Ne yapmak istiyorsun?","What do you want to do?","¿Qué quieres hacer?"],
   ["Tüm üretim yolları tek yerde. Birini seç; seni doğrudan doğru adıma götürelim.","Every creation path in one place. Choose one and go straight to the right step.","Todas las formas de creación en un solo lugar. Elige una y ve directamente al paso correcto."],
-  ["Otomatik üret","Automatic creation","Creación automática"],["Konuyu yaz; hikâye, sahne ve görseller hazırlansın.","Enter a topic and generate the story, scenes and visuals.","Escribe un tema y genera la historia, las escenas y las imágenes."],
-  ["Fikirden videoya →","From idea to video →","De la idea al vídeo →"],["Manuel stüdyo","Manual studio","Estudio manual"],["Metni, görselleri ve bütün ayrıntıları kendin belirle.","Choose the text, visuals and every detail yourself.","Elige tú mismo el texto, las imágenes y cada detalle."],
+  ["Otomatik üret","Automatic creation","Creación automática"],["Konunu yaz; ilk AI destekli Shorts taslağın hazırlansın.","Enter your topic and prepare your first AI-assisted Shorts draft.","Escribe tu tema y prepara tu primer borrador de Shorts con IA."],
+  ["Ücretsiz dene →","Try it free →","Pruébalo gratis →"],["Manuel stüdyo","Manual studio","Estudio manual"],["Metni, görselleri ve bütün ayrıntıları kendin belirle.","Choose the text, visuals and every detail yourself.","Elige tú mismo el texto, las imágenes y cada detalle."],
   ["Kontrol sende →","You're in control →","Tú tienes el control →"],["YouTube trendleri","YouTube trends","Tendencias de YouTube"],["Ülke ve kategoriye göre popüler içerikleri keşfet.","Discover popular content by country and category.","Descubre contenido popular por país y categoría."],
   ["Trendleri aç →","Open trends →","Abrir tendencias →"],["Cihazda video oluştur","Create video on device","Crear vídeo en el dispositivo"],["Galerindeki fotoğrafları ücretsiz videoya dönüştür.","Turn your gallery photos into a video for free.","Convierte gratis las fotos de tu galería en un vídeo."],
   ["Görsel Akış'ı aç →","Open Visual Flow →","Abrir Flujo visual →"],["URL'den görsel kullan","Use an image URL","Usar imagen desde URL"],["İzinli bir görsel adresini doğrula ve projeye ekle.","Validate an authorized image URL and add it to the project.","Valida una URL de imagen autorizada y añádela al proyecto."],
@@ -316,16 +316,16 @@ const flowRuntime = (key) => ({
   es:{checking:"Comprobando",device:"Compatibilidad del dispositivo",checkingDetail:"Comprobando las funciones de vídeo del navegador.",unsupported:"El renderizado no está disponible en este navegador",mp4:"El formato más compatible con YouTube, Instagram y TikTok.",webm:"El vídeo se creará; algunas plataformas pueden solicitar conversión a MP4.",renderAs:"Crear vídeo como {format}",noRender:"Este navegador no puede renderizar vídeo",details:"Detalles",hide:"Ocultar"}
 }[lang()]?.[key] || key);
 const flowPanel = (key) => ({
-  tr:{textDesign:"Videodaki metin görünümü",music:"Arka plan müziği",musicPick:"♫ Müzik seç",copyHelper:"Bir anlatı yapısıyla başla",showIdeas:"Önerileri göster",bulkTitle:"Her satır bir sahne metni",bulkApply:"Metinleri uygula",cancel:"Vazgeç",cropTitle:"Önemli bölgeyi kadrajda tut",cropApply:"Kadrajı uygula",reset:"Ortala",welcome:"İlk videonu birlikte hazırlayalım.",welcomeDemo:"İlk videomu oluştur →",welcomeSkip:"Ana sayfayı incele",publishTitle:"Paylaşmadan önce son dokunuşlar",title:"Başlık",description:"Açıklama",hashtags:"Hashtag'ler",checklist:"Yayın kontrolü"},
-  en:{textDesign:"Text appearance in the video",music:"Background music",musicPick:"♫ Choose music",copyHelper:"Start with a story structure",showIdeas:"Show suggestions",bulkTitle:"One scene caption per line",bulkApply:"Apply captions",cancel:"Cancel",cropTitle:"Keep the important area in frame",cropApply:"Apply crop",reset:"Center",welcome:"Let us create your first video together.",welcomeDemo:"Create my first video →",welcomeSkip:"Explore the home page",publishTitle:"Final touches before publishing",title:"Title",description:"Description",hashtags:"Hashtags",checklist:"Publishing checklist"},
-  es:{textDesign:"Apariencia del texto en el vídeo",music:"Música de fondo",musicPick:"♫ Elegir música",copyHelper:"Empieza con una estructura narrativa",showIdeas:"Mostrar sugerencias",bulkTitle:"Un texto de escena por línea",bulkApply:"Aplicar textos",cancel:"Cancelar",cropTitle:"Mantén la zona importante en el encuadre",cropApply:"Aplicar encuadre",reset:"Centrar",welcome:"Creemos juntos tu primer vídeo.",welcomeDemo:"Crear mi primer vídeo →",welcomeSkip:"Explorar la página principal",publishTitle:"Últimos detalles antes de publicar",title:"Título",description:"Descripción",hashtags:"Hashtags",checklist:"Lista de publicación"}
+  tr:{textDesign:"Videodaki metin görünümü",music:"Arka plan müziği",musicPick:"♫ Müzik seç",copyHelper:"Bir anlatı yapısıyla başla",showIdeas:"Önerileri göster",bulkTitle:"Her satır bir sahne metni",bulkApply:"Metinleri uygula",cancel:"Vazgeç",cropTitle:"Önemli bölgeyi kadrajda tut",cropApply:"Kadrajı uygula",reset:"Ortala",welcome:"İlk Shorts taslağını birlikte hazırlayalım.",welcomeDemo:"İlk Shorts taslağımı oluştur →",welcomeSkip:"Ana sayfayı incele",publishTitle:"Paylaşmadan önce son dokunuşlar",title:"Başlık",description:"Açıklama",hashtags:"Hashtag'ler",checklist:"Yayın kontrolü"},
+  en:{textDesign:"Text appearance in the video",music:"Background music",musicPick:"♫ Choose music",copyHelper:"Start with a story structure",showIdeas:"Show suggestions",bulkTitle:"One scene caption per line",bulkApply:"Apply captions",cancel:"Cancel",cropTitle:"Keep the important area in frame",cropApply:"Apply crop",reset:"Center",welcome:"Let us create your first Shorts draft together.",welcomeDemo:"Create my first Shorts draft →",welcomeSkip:"Explore the home page",publishTitle:"Final touches before publishing",title:"Title",description:"Description",hashtags:"Hashtags",checklist:"Publishing checklist"},
+  es:{textDesign:"Apariencia del texto en el vídeo",music:"Música de fondo",musicPick:"♫ Elegir música",copyHelper:"Empieza con una estructura narrativa",showIdeas:"Mostrar sugerencias",bulkTitle:"Un texto de escena por línea",bulkApply:"Aplicar textos",cancel:"Cancelar",cropTitle:"Mantén la zona importante en el encuadre",cropApply:"Aplicar encuadre",reset:"Centrar",welcome:"Preparemos juntos tu primer borrador de Shorts.",welcomeDemo:"Crear mi primer borrador de Shorts →",welcomeSkip:"Explorar la página principal",publishTitle:"Últimos detalles antes de publicar",title:"Título",description:"Descripción",hashtags:"Hashtags",checklist:"Lista de publicación"}
 }[lang()]?.[key] || key);
 const stepMeta = new Proxy({}, { get: (_, key) => {
   if (key === "dashboard") {
     return {
-      tr: ["TERZİ / GENEL BAKIŞ", "Fikirlerin harekete geçsin."],
-      en: ["TERZİ / OVERVIEW", "Put your ideas in motion."],
-      es: ["TERZİ / RESUMEN", "Pon tus ideas en movimiento."]
+      tr: ["TERZİ / GENEL BAKIŞ", "Fikrinden Shorts taslağına."],
+      en: ["TERZİ / OVERVIEW", "From your idea to a Shorts draft."],
+      es: ["TERZİ / RESUMEN", "De tu idea a un borrador de Shorts."]
     }[lang()];
   }
   if (key === "flow") {
@@ -619,9 +619,24 @@ function openAiKeyModal(provider) {
   $("#ai-key-guide-link").href = providerKeyUrls[provider] || providerKeyUrls.gemini;
   $("#ai-transfer-consent").checked = localStorage.getItem(`orbit-ai-consent-${provider}`) === "yes";
   $("#ai-key-modal-settings").disabled = !$("#ai-transfer-consent").checked;
+  updateAiKeyModalPro();
   $(".ai-key-privacy").textContent = copy.privacy;
   modal.classList.remove("hidden");
   $("#ai-key-modal-settings").focus();
+}
+
+function updateAiKeyModalPro() {
+  const available = Boolean(state.runtime?.billingConfigured);
+  const copy = {
+    tr: { action:"Atölye Pro'yu incele →", unavailable:"Yakında", status:"Ödeme altyapısı hazır olduğunda buradan devam edebilirsin." },
+    en: { action:"Explore Studio Pro →", unavailable:"Coming soon", status:"You can continue here when billing is available." },
+    es: { action:"Ver Atölye Pro →", unavailable:"Próximamente", status:"Podrás continuar aquí cuando el pago esté disponible." }
+  }[lang()];
+  const button = $("#ai-key-modal-pro");
+  button.disabled = !available;
+  button.setAttribute("aria-disabled", String(!available));
+  button.querySelector("em").textContent = available ? copy.action : copy.unavailable;
+  $("#ai-key-pro-status").textContent = available ? "" : copy.status;
 }
 
 function updateAiKeyModalProvider(provider) {
@@ -803,14 +818,23 @@ function startServerRenderProgress(button) {
     fail() { clearInterval(timer); node.remove(); }
   };
 }
+function setWorkflowNavigation(open) {
+  const navigation = $("#workflow-nav");
+  const toggle = $("#workflow-toggle");
+  navigation?.classList.toggle("open", open);
+  if (navigation) {
+    navigation.hidden = !open;
+    navigation.setAttribute("aria-hidden", String(!open));
+  }
+  toggle?.classList.toggle("open", open);
+  toggle?.setAttribute("aria-expanded", String(open));
+}
 function showStep(step) {
   $("#settings-panel")?.classList.add("hidden");
   activeStep = step;
   if (step === "source" && !creationMode) setCreationMode("automatic");
   const isWorkflow = ["source", "story", "review", "render"].includes(step);
-  $("#workflow-nav")?.classList.toggle("open", isWorkflow);
-  $("#workflow-toggle")?.classList.toggle("open", isWorkflow);
-  $("#workflow-toggle")?.setAttribute("aria-expanded", String(isWorkflow));
+  setWorkflowNavigation(isWorkflow);
   document.querySelectorAll(".nav-step").forEach((node) =>
     node.classList.toggle("active", node.dataset.step === step));
   document.querySelectorAll(".view").forEach((node) =>
@@ -1530,7 +1554,10 @@ function restoreFlowSnapshot(snapshot) {
   $("#flow-text-position").value = flowTextStyle.position; $("#flow-text-size").value = flowTextStyle.size;
   $("#flow-text-font").value = flowTextStyle.font; $("#flow-text-color").value = flowTextStyle.color;
   $("#flow-text-background").value = flowTextStyle.background; $("#flow-text-safe").checked = flowTextStyle.safe;
-  document.querySelectorAll("[data-flow-template]").forEach((button) => button.classList.toggle("active", button.dataset.flowTemplate === flowTemplate));
+  document.querySelectorAll("[data-flow-template]").forEach((button) => {
+    const selected = button.dataset.flowTemplate === flowTemplate;
+    button.classList.toggle("active", selected); button.setAttribute("aria-pressed", String(selected));
+  });
   $("#flow-template-name").textContent = flowTemplateName(flowTemplate);
   renderFlowScenes(); restoringFlowHistory = false; updateFlowHistoryButtons(); scheduleFlowPersistence();
 }
@@ -1694,7 +1721,10 @@ async function importFlowProject(file) {
   }
   $("#flow-music-volume").value = String(Math.max(0, Math.min(100, Number(project.volume) || 22)));
   $("#flow-volume-value").textContent = `%${$("#flow-music-volume").value}`;
-  document.querySelectorAll("[data-flow-template]").forEach((button) => button.classList.toggle("active", button.dataset.flowTemplate === flowTemplate));
+  document.querySelectorAll("[data-flow-template]").forEach((button) => {
+    const selected = button.dataset.flowTemplate === flowTemplate;
+    button.classList.toggle("active", selected); button.setAttribute("aria-pressed", String(selected));
+  });
   $("#flow-template-name").textContent = flowTemplateName(flowTemplate);
   restoringFlowHistory = false; renderFlowScenes(); flowHistory = []; flowHistoryIndex = -1; captureFlowHistory(); showStep("flow");
   toast("TERZİ proje paketi açıldı");
@@ -1898,8 +1928,10 @@ function selectFlowTemplate(key) {
   $("#flow-template-name").textContent = flowTemplateName(key);
   $("#flow-format").value = template.format;
   $("#flow-duration").value = String(template.seconds);
-  document.querySelectorAll("[data-flow-template]").forEach((button) =>
-    button.classList.toggle("active", button.dataset.flowTemplate === key));
+  document.querySelectorAll("[data-flow-template]").forEach((button) => {
+    const selected = button.dataset.flowTemplate === key;
+    button.classList.toggle("active", selected); button.setAttribute("aria-pressed", String(selected));
+  });
   activeFlowCopy = null;
   $("#flow-copy-active").classList.add("hidden");
   renderFlowCopyPresets();
@@ -2663,6 +2695,7 @@ $("#ai-key-modal-settings").addEventListener("click", () => {
   $("#settings-panel").scrollIntoView?.({ behavior: "smooth", block: "start" });
 });
 $("#ai-key-modal-pro").addEventListener("click", () => {
+  if (!state.runtime?.billingConfigured) return;
   closeAiKeyModal();
   openAccountModal(state.runtime?.account ? "account" : "register");
 });
@@ -2748,7 +2781,7 @@ $("#account-manage").addEventListener("click", () => startProCheckout().catch((e
 $("#pro-upgrade").addEventListener("click", () => startProCheckout().catch((error) => toast(error.message, "error")));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    const visibleModal = ["auth-action-modal","account-modal","ai-key-modal","flow-crop-modal","flow-bulk-text-modal","welcome-guide","ios-install-guide"].map((id) => $(`#${id}`)).find((node) => node && !node.classList.contains("hidden"));
+    const visibleModal = ["auth-action-modal","account-modal","ai-key-modal","flow-crop-modal","flow-bulk-text-modal","welcome-guide","ios-install-guide","legal-modal"].map((id) => $(`#${id}`)).find((node) => node && !node.classList.contains("hidden"));
     if (visibleModal) { visibleModal.classList.add("hidden"); return; }
   }
   if (!(event.ctrlKey || event.metaKey) || !["z", "y"].includes(event.key.toLowerCase())) return;
@@ -2949,9 +2982,9 @@ function updateWelcomeGuideAccess() {
   const needsAccount = serviceReady && !state.runtime?.account;
   const demoReady = Boolean(state.runtime?.demoAvailable && serviceReady);
   const copy = {
-    tr: needsAccount ? { button:"Ücretsiz hesap oluştur →", note:"Demo için API anahtarı gerekmez; yalnızca ücretsiz hesabına bağlanır." } : demoReady ? { button:"İlk videomu oluştur →", note:"Demo için API anahtarı gerekmez." } : { button:"Ücretsiz manuel video oluştur →", note:"Otomatik demo kullanılamıyor; kendi içeriğinle cihazında ücretsiz video oluşturabilirsin." },
-    en: needsAccount ? { button:"Create a free account →", note:"No API key is needed; the demo is simply linked to your free account." } : demoReady ? { button:"Create my first video →", note:"No API key is needed for the demo." } : { button:"Create a free manual video →", note:"The automatic demo is unavailable; you can still create a free on-device video with your own content." },
-    es: needsAccount ? { button:"Crear una cuenta gratis →", note:"No necesitas una clave API; la demo solo se vincula a tu cuenta gratuita." } : demoReady ? { button:"Crear mi primer vídeo →", note:"No necesitas una clave API para la demo." } : { button:"Crear un vídeo manual gratis →", note:"La demo automática no está disponible; aún puedes crear gratis un vídeo en tu dispositivo con tu contenido." }
+    tr: needsAccount ? { button:"Ücretsiz hesap oluştur →", note:"Otomatik demo, doğrulanmış ücretsiz hesabına bir kez bağlanır." } : demoReady ? { button:"İlk Shorts taslağımı oluştur →", note:"Otomatik demo kullanıma hazır; API anahtarı gerekmez." } : { button:"Ücretsiz video oluştur →", note:"Otomatik demo şu anda kullanılamıyor; kendi içeriğinle cihazında ücretsiz video oluşturabilirsin." },
+    en: needsAccount ? { button:"Create a free account →", note:"The automatic demo is available once with your verified free account." } : demoReady ? { button:"Create my first Shorts draft →", note:"The automatic demo is ready; no API key is needed." } : { button:"Create a free video →", note:"The automatic demo is unavailable right now; you can still create a free on-device video with your own content." },
+    es: needsAccount ? { button:"Crear una cuenta gratis →", note:"La demo automática está disponible una vez con tu cuenta gratuita verificada." } : demoReady ? { button:"Crear mi primer borrador de Shorts →", note:"La demo automática está lista; no necesitas una clave API." } : { button:"Crear vídeo gratis →", note:"La demo automática no está disponible ahora; aún puedes crear gratis un vídeo en tu dispositivo con tu contenido." }
   }[lang()];
   $("#welcome-guide-demo").textContent = copy.button;
   $("#welcome-guide-access").textContent = copy.note;
@@ -3002,7 +3035,11 @@ $("#mobile-flow-next").addEventListener("click", () => {
   if (index === mobileFlowOrder.length - 1) return $("#flow-render").click();
   showMobileFlowPanel(mobileFlowOrder[index + 1]);
 });
-$("#workflow-toggle").addEventListener("click", () => openControlAction("automatic"));
+$("#workflow-toggle").addEventListener("click", () => {
+  const navigation = $("#workflow-nav");
+  const open = !navigation.classList.contains("open");
+  setWorkflowNavigation(open);
+});
 $("#settings-toggle").addEventListener("click", () =>
   $("#settings-panel").classList.toggle("hidden"));
 $("#niche-add-toggle").addEventListener("click", () => {
@@ -3240,7 +3277,10 @@ function updateIntegrationForm() {
   const config = integrationCatalog[selected];
   const deviceProvider = selected === "anthropic" ? "claude" : selected;
   const deviceKey = localStorage.getItem(`orbit-device-key-${deviceProvider}`) || "";
-  const managed = selected === "cloudflare" && promptImageGenerationAvailable();
+  const cloudDeployment = state.runtime?.deployment === "cloudflare";
+  // Worker credentials are deployment secrets. The local server is the only
+  // runtime that accepts a user-supplied Cloudflare token and Account ID.
+  const managed = selected === "cloudflare" && (cloudDeployment || promptImageGenerationAvailable());
   const configured = Boolean(managed || state.runtime?.[config.runtimeKey] || deviceKey);
   const aiService = ["gemini", "openai", "anthropic"].includes(selected);
   const ready = aiService ? hasReadyAiCredential(deviceProvider) : configured;
@@ -3336,6 +3376,9 @@ $("#save-settings").addEventListener("click", async () => {
     });
   }
   if (integrationKey && integrationProvider === "cloudflare") {
+    if (cloudDeployment) {
+      throw new Error("Cloudflare AI bağlantısı bu sürümde Worker secret'larıyla yönetilir");
+    }
     if (!cloudflareAccount) {
       throw new Error("Cloudflare Account ID gerekli");
     }

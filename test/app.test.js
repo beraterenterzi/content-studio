@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("adımlı Türkçe stüdyo ekranı mevcut", async () => {
-  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const [html, app] = await Promise.all([
+    readFile(new URL("../public/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/app.js", import.meta.url), "utf8")
+  ]);
   assert.match(html, /TERZİ/);
   assert.match(html, /id="brand-home"/);
   assert.match(html, /id="close-settings"/);
@@ -14,6 +17,41 @@ test("adımlı Türkçe stüdyo ekranı mevcut", async () => {
   assert.match(html, /YouTube trendlerini keşfet/);
   assert.match(html, /value="youtubeUpload"/);
   assert.match(html, /Videoyu oluştur/);
+  assert.match(html, /<section class="trend-discovery">/);
+  assert.doesNotMatch(html, /<section class="trend-discovery product-deferred">/);
+  assert.match(app, /const cloudDeployment = state\.runtime\?\.deployment === "cloudflare";/);
+  assert.match(app, /selected === "cloudflare" && \(cloudDeployment \|\| promptImageGenerationAvailable\(\)\)/);
+  assert.match(app, /Cloudflare AI bağlantısı bu sürümde Worker secret'larıyla yönetilir/);
+});
+
+test("çalışan proje alanları ve şablon seçimi keşfedilebilir kalır", async () => {
+  const [html, app, css] = await Promise.all([
+    readFile(new URL("../public/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/style.css", import.meta.url), "utf8")
+  ]);
+  assert.match(html, /<button class="nav-step" data-step="files">/);
+  assert.match(html, /<button class="nav-step" data-step="trash">/);
+  assert.match(html, /<button class="nav-step flow-nav" data-step="flow">/);
+  assert.doesNotMatch(html, /data-step="(?:files|trash|flow)"[^>]*product-deferred/);
+  assert.match(html, /data-flow-template="travel" aria-pressed="true"/);
+  assert.match(html, /data-flow-template="education" aria-pressed="false"/);
+  assert.match(html, /id="flow-template-name" aria-live="polite"/);
+  assert.match(app, /button\.setAttribute\("aria-pressed", String\(selected\)\)/);
+  assert.match(css, /\.ai-key-pro:disabled/);
+});
+
+test("hazır olmayan Pro teklifi satın alma akışı açmaz", async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL("../public/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/app.js", import.meta.url), "utf8")
+  ]);
+  assert.match(html, /id="ai-key-modal-pro"[^>]*disabled[^>]*aria-describedby="ai-key-pro-status"/);
+  assert.match(html, /id="ai-key-pro-status"/);
+  assert.match(app, /function updateAiKeyModalPro\(\)/);
+  assert.match(app, /button\.disabled = !available/);
+  assert.match(app, /if \(!state\.runtime\?\.billingConfigured\) return;/);
+  assert.match(app, /"legal-modal"/);
 });
 
 test("paket yalnızca resmi Capacitor mobil bağımlılıklarını kullanıyor", async () => {
@@ -313,7 +351,7 @@ test("Manuel projeler anlatım metnini sesli rendera taşıyor", async () => {
   assert.match(app, /audioContext\.decodeAudioData\(audioBytes\.slice\(0\)\)/);
 });
 
-test("ana ürün yüzeyi düşük değerli araçları saklar, veriyi silmez", async () => {
+test("ana ürün yüzeyi üretim yollarını ve durumlarını anlaşılır tutar", async () => {
   const [html, app, css, mobile] = await Promise.all([
     readFile(new URL("../public/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
@@ -321,10 +359,22 @@ test("ana ürün yüzeyi düşük değerli araçları saklar, veriyi silmez", as
     readFile(new URL("../public/mobile.css", import.meta.url), "utf8")
   ]);
   assert.match(css, /\.product-deferred\{display:none!important\}/);
-  assert.match(html, /nav-step product-deferred" data-step="files"/);
-  assert.match(html, /flow-nav product-deferred" data-step="flow"/);
+  assert.match(html, /nav-step" data-step="files"/);
+  assert.match(html, /flow-nav" data-step="flow"/);
+  assert.doesNotMatch(html, /(?:nav-step|flow-nav) product-deferred" data-step="(?:files|trash|flow)"/);
   assert.match(html, /creation-more product-deferred/);
-  assert.match(html, /trend-discovery product-deferred/);
+  assert.match(html, /<section class="trend-discovery">/);
+  assert.doesNotMatch(html, /trend-discovery product-deferred/);
+  assert.match(html, /id="workflow-toggle"[^>]+aria-expanded="false"[^>]+aria-controls="workflow-nav"/);
+  assert.match(html, /id="workflow-nav" class="workflow-nav" hidden aria-hidden="true"/);
+  assert.match(app, /function setWorkflowNavigation\(open\)/);
+  assert.match(app, /navigation\.hidden = !open;/);
+  assert.match(app, /const open = !navigation\.classList\.contains\("open"\);/);
+  assert.doesNotMatch(app, /\$\("#workflow-toggle"\)\.addEventListener\("click", \(\) => openControlAction\("automatic"\)\);/);
+  assert.doesNotMatch(css, /#workflow-nav\{display:none!important\}/);
+  assert.match(css, /#workflow-nav\[hidden\]\{display:none\}/);
+  assert.doesNotMatch(css, /\.control-center,#dashboard-stats/);
+  assert.match(css, /#legal-enter:disabled\{background:#e5e3ea/);
   assert.match(mobile, /grid-template-columns:minmax\(0,1fr\) 80px minmax\(0,1fr\)/);
   assert.match(html, /data-view="files"/);
   assert.match(html, /data-go-step="trash">Çöp kutusu/);
@@ -365,7 +415,8 @@ test("anahtarsız Demo yönetilen görseli kullanır, diğer ücretsiz yollar ar
   assert.match(html, /name="automatic-visual-method" value="archive" checked/);
   assert.match(html, /name="automatic-visual-method" value="ai"/);
   assert.doesNotMatch(html, /<select id="automatic-visual-method"/);
-  assert.match(html, /Normal kullanımda API anahtarı gerekmez/);
+  assert.match(html, /doğrulanmış ücretsiz hesabınla otomatik akışı bir kez dene/);
+  assert.match(html, /Cihazda video üretimi ücretsizdir/);
   assert.match(html, /Gelişmiş: Kendi AI hesabımı bağla/);
   assert.match(html, /Atölye Pro/);
   assert.match(html, /id="pro-upgrade"/);
@@ -421,9 +472,9 @@ test("TERZİ marka kimliği kullanıcı yüzeyinde tutarlı", async () => {
   ]);
   assert.match(html, /<title>TERZİ<\/title>/);
   assert.doesNotMatch(html, /Orbit Content Factory|ORBIT CONTENT FACTORY/);
-  assert.match(html, /İÇERİK ATÖLYESİ/);
+  assert.match(html, /YOUTUBE SHORTS ATÖLYESİ/);
   assert.match(html, /accept="\.terzi,\.orbit,application\/json"/);
-  assert.match(app, /Fikrini kanalına göre bir hikâyeye dönüştür/);
+  assert.match(app, /Fikrinden düzenlenebilir Shorts taslağına/);
   assert.doesNotMatch(app, /Orbit Content Factory|Orbit Studio/);
   assert.equal(JSON.parse(manifestText).name, "TERZİ");
   assert.equal(JSON.parse(manifestText).short_name, "TERZİ");
@@ -449,7 +500,7 @@ test("TERZİ URL ve sade başlangıç akışı", async () => {
   assert.match(html, /class="model-advanced"/);
   assert.match(app, /step === "source" && !creationMode/);
   assert.match(app, /projectId:productionId/);
-  assert.match(css, /#workflow-nav\{display:none!important\}/);
+  assert.doesNotMatch(css, /#workflow-nav\{display:none!important\}/);
   assert.match(css, /#automatic-story-mode-field\{display:none!important\}/);
 });
 test("editör yalnızca kullanılabilir eylemleri gösteriyor", async () => {
@@ -518,7 +569,8 @@ test("plan deneyimi API anahtarını teknik olmayan kullanıcıdan gizler", asyn
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
     readFile(new URL("../public/style.css", import.meta.url), "utf8")
   ]);
-  assert.match(html, /Teknik kurulum yapmadan üret/);
+  assert.match(html, /Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı/);
+  assert.match(html, /doğrulanmış ücretsiz hesapla bir tam otomatik Shorts taslağını dene/);
   assert.match(html, /class="advanced-ai-connection"/);
   assert.doesNotMatch(html, /Kendi anahtarınla ücretsiz başla/);
   assert.equal((html.match(/data-ai-provider=/g) || []).length, 3);

@@ -196,6 +196,30 @@ tarayıcı, gerçek video kodlama, canlı ödeme veya bulut eşzamanlılık test
 Canlı dağıtım sonrası ana sayfa, istemci dosyaları, durum API'si ve Türkçe semantik
 arşiv araması smoke testinden geçti; gerçek ücretli AI çağrısı yapılmadı.
 
+## İşlev denetimi — 2026-09-26
+
+- Kontrol merkezindeki **YouTube trendleri** başlangıç eylemi artık görünür bir
+  sonuç bölümüne yönlenir; bölümün üstünde kalan `product-deferred` sınıfı
+  kaldırıldı.
+- Cloudflare dağıtımında kullanıcıdan Cloudflare API Token ve Account ID istenmez.
+  Bu kimlik bilgileri Worker secret'ı olarak yönetilir; böylece arayüz Worker'da
+  olmayan `/api/config/cloudflare` yoluna istek atmaz. Yerel sunucuda bu isteğe
+  bağlı bağlantı yolu korunur.
+- Doğrulama: `npm run check` (41 test), `node --check public/app.js` ve
+  `node --check cloudflare/worker.js`. Yasal yaş beyanı kullanıcıya ait olduğu
+  için, ilk açılıştaki onay perdesi aşılmadan yalnız salt-okunur tarayıcı kontrolü
+  yapıldı; konsolda hata görülmedi.
+
+## Başlangıç deneyimi iyileştirmesi — 2026-09-26
+
+- Yan menüdeki **Yeni video** artık gerçekten açılır bir üretim adımları menüsüdür;
+  ARIA genişletme durumu ile görünür davranış eşitlendi. Ana ekrandaki birincil
+  CTA ise doğrudan otomatik üretim yolunu açmaya devam eder.
+- Kontrol merkezi görünür bırakıldı; otomatik, manuel ve cihazda video üretim
+  yolları ilk ekranda karşılaştırılabilir.
+- Yaş beyanı yapılmadan önceki **Stüdyoya gir** düğmesi nötr pasif stilde
+  gösterilir; etkin bir eylem izlenimi vermez.
+
 ## Doğal ses ve sade ürün yüzeyi
 
 ## Metin odaklı motivasyon paylaşımı
@@ -325,3 +349,35 @@ arşiv araması smoke testinden geçti; gerçek ücretli AI çağrısı yapılma
   Turnstile/Resend/Stripe secretları, Stripe test webhook senaryosu, Android upload anahtarı,
   mağaza hesabı ve gerçek cihaz kapalı testidir. Bunlar tamamlanmadan ücretli lansman hazır
   sayılmaz; kod ödeme yolunu kapalı tutar.
+
+## 27 Eylül 2026 test ve kullanıcı akışı düzeltmesi
+
+- Birim/regresyon paketi, çalışan `Dosyalar`, `Çöp kutusu` ve masaüstü `Hızlı video`
+  alanlarının gezinmeden CSS ile saklanmadığını; şablonların erişilebilir seçili durumunu ve
+  kullanılmayan Pro teklifinin ödeme/hesap akışını açmadığını doğrular.
+- Şablon seçimi artık hem görünür adla hem `aria-pressed` durumuyla geri bildirim verir.
+  Bu, Canva/CapCut'taki “şablonu kullan, sonra kişiselleştir” davranışına yakındır; seçim
+  üretimi başlatmaz.
+- Ödeme altyapısı kapalıyken AI bağlantı penceresindeki Atölye Pro denetimi açıkça devre dışı
+  ve açıklamalıdır; hazır olduğunda aynı denetim gerçek Pro inceleme eylemine dönüşür.
+- Yasal bilgi penceresi Escape ile kapatılabilir. Yaş beyanı gerektiren giriş kapısı otomatik
+  testte geçilmedi; bu, kullanıcı adına yapılamayan bir beyan olduğu için bilinçli sınırdır.
+- Doğrulama: `npm run check` (43/43) ve istemci/Worker sözdizim kontrolleri geçti. Güncel
+  PWA paketinde masaüstü gezinme alanları görünür, yaş-beyan düğmesi beyan yapılmadan devre dışı
+  ve kapalı iş akışı menüsü doğru `aria-expanded`/`hidden` durumunda; yasal pencere Escape ile
+  kapandı. Gerçek ödeme, ücretli AI, yükleme veya yayın çağrısı yapılmadı. Kalan manuel kapsama:
+  klavye odak hapsi, mobil cihazda medya seçme/render ve gerçek hesabın ağ-hata toparlanması.
+
+## 12 Ekim 2026 pazarlama vaadi ve canlı-test sınırı
+
+- Ürünün ana vaadi `Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı` olarak
+  netleştirildi. Başlangıç ekranı ve karşılama akışı, genel bir AI video aracı vaadi yerine
+  fikir/fotoğraf → taslak → kontrol → indirme yolunu anlatır.
+- Ücretsiz teklif açık sınırlarıyla yazılır: cihazdaki video üretimi ücretsizdir; otomatik demo,
+  yalnız doğrulanmış ücretsiz hesapla bir kez ve yönetilen hizmet hazırsa çalışır. Bu nedenle
+  `ücretsiz AI video`, `sınırsız` ve koşulsuz `API anahtarı gerekmez` iddiaları kullanılmaz.
+- Atölye Pro ödemesi canlılık kontrolleri tamamlanmadıkça kapalı kalır. Açıldığında vaat,
+  ayda 30 yönetilen hikâye ve AI görselleri için günlük adil kullanım sınırıyla sınırlıdır.
+- Canlı smoke testleri; gezinme, modal/klavye, örnek cihaz-içi proje, taslak kurtarma ve mobil
+  görünümle sınırlı tutulmalıdır. Gerçek ödeme, yönetilen AI, YouTube/Telegram, kişisel dosya
+  yükleme veya hesap silme test hesabı ve ayrı test ortamı olmadan yapılmaz.

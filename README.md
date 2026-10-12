@@ -1,5 +1,46 @@
 # TERZİ
 
+Fikrinden veya fotoğraflarından düzenlenebilir Shorts taslağı hazırlayan,
+self-host edilebilen açık kaynak içerik üretim atölyesi.
+
+- Cihazında fotoğraflardan video üret; medya tarayıcında kalır.
+- Açık arşiv kaynakları, senaryo, sahne ve yayın kontrolünü tek akışta düzenle.
+- Yönetilen AI, ödeme ve hesap özellikleri isteğe bağlı Cloudflare dağıtımıdır;
+  varsayılan yerel akış bunlara ihtiyaç duymaz.
+
+## Açık kaynak ve marka
+
+Kod AGPL-3.0-or-later ile lisanslanmıştır. TERZİ adı ve logosu bu lisansa dahil
+değildir; ayrıntılar için [TRADEMARK.md](TRADEMARK.md) dosyasına bak. Katkı
+kuralları [CONTRIBUTING.md](CONTRIBUTING.md) içinde, güvenlik bildirimi
+[SECURITY.md](SECURITY.md) içindedir.
+
+## Hızlı başlangıç
+
+Node.js 20+ ile:
+
+```powershell
+npm install
+npm start
+```
+
+Ardından `http://127.0.0.1:4310` adresini aç. Yerel Görsel Akış; fotoğraf,
+metin ve tarayıcının video yetenekleriyle çalışır. Gerçek sağlayıcı anahtarları
+yalnızca isteğe bağlı AI ve üçüncü taraf entegrasyonları içindir; `.env.example`
+dosyasını kopyalayıp kendi gizli değerlerinle doldur.
+
+## Yayın öncesi kontrol
+
+```powershell
+npm run check
+node --check public/app.js
+node --check cloudflare/worker.js
+```
+
+Canlı Cloudflare kurulumu için gizli değerleri Git'e eklemeyin. Worker,
+veritabanı migration ve güvenlik yapılandırması ayrıntıları aşağıdaki bölümlerde
+yer alır.
+
 ## Android uygulaması
 
 Android kabuğu Capacitor ile `android/` dizininde tutulur. Uygulama kimliği
