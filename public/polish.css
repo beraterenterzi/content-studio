@@ -60,3 +60,24 @@ input,select,textarea,.project-editor textarea,.story-visual-panel textarea{bord
 .mobile-app-nav .create:before{background:#18181b!important;box-shadow:none!important}
 .mobile-flow-steps button.active{background:#f4f4f5!important;color:#18181b!important}.mobile-flow-steps button.active b{background:#18181b!important}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:#18181b}
+
+/* Complete the neutral system across secondary journeys and selected states. */
+.settings-tabs button.active{color:#18181b!important}
+.age-groups input:checked+span{border-color:#71717a!important;background:#f4f4f5!important;color:#18181b!important}
+.switch-row input:checked+i{background:#18181b!important}
+.pill.accent,.project-status.approved,.project-status.processing,.downloads a,.file-row a,.restore-button{background:#f4f4f5!important;color:#3f3f46!important}
+.media-copy button,.media-copy .secondary-action,.flow-scene>b,.analytics-funnel article>div>span{background:#f4f4f5!important;color:#3f3f46!important}
+.script-pane blockquote,.angle-lab,.selected-angle,.retention-map,.access-overview,.creator-checklist{border-color:#d4d4d8!important;background:#fafafa!important}
+.angle-card,.retention-beats>div,.access-plan,.automatic-visual-choices span,.creator-metrics div{border-color:#e4e4e7!important;background:#fff!important}
+.angle-card:hover,.angle-card.active,.automatic-visual-choices input:checked+span{border-color:#71717a!important;background:#f4f4f5!important;box-shadow:none!important}
+.angle-card i,.automatic-visual-choices em,.access-plan em,.ai-provider-cards i{background:#f4f4f5!important;color:#3f3f46!important}
+.selected-angle>span,.angle-lab-head span,.retention-map-head span,.retention-beats span,.access-overview-head span,.creator-checklist-head span{color:#52525b!important}
+.creator-checklist-head>b,.automatic-progress b,.automatic-topic-ideas button{color:#3f3f46!important}
+.automatic-topic-ideas button,.automatic-progress{border-color:#d4d4d8!important;background:#fafafa!important}
+.automatic-topic-ideas button:hover{border-color:#71717a!important;background:#f4f4f5!important}
+.ai-provider-cards button{border-color:#e4e4e7!important}.ai-provider-cards button:hover,.ai-provider-cards button.active{border-color:#71717a!important;background:#fafafa!important;box-shadow:none!important}
+.ai-provider-cards button.active:after{background:#18181b!important}
+.flow-scene{background:#fafafa!important}.flow-device>div{background:#27272a!important}.flow-progress{background:#e4e4e7!important}.flow-progress i{background:#18181b!important}
+.flow-result-actions a,.flow-result-actions button,.platform-share button{color:#3f3f46!important}.flow-result-actions .primary-link{background:#18181b!important;color:#fff!important}
+.analytics-funnel em{background:#18181b!important}
+.mobile-app-nav button.active,.mobile-app-nav .create span{color:#18181b!important}

@@ -488,6 +488,8 @@ test("Content Studio marka kimliği kullanıcı yüzeyinde tutarlı", async () =
   assert.match(polish, /--primary:#18181b/);
   assert.match(polish, /--purple:#18181b/);
   assert.match(polish, /Neutral palette pass: the interface uses charcoal and gray only/);
+  assert.match(polish, /Complete the neutral system across secondary journeys/);
+  assert.match(polish, /\.switch-row input:checked\+i\{background:#18181b!important\}/);
   assert.match(polish, /\.dashboard-hero,.hero-search,.story-visual-panel,.editor-next/);
 });
 test("Content Studio URL ve sade başlangıç akışı", async () => {

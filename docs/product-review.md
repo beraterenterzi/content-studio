@@ -17,6 +17,9 @@
   kömür siyahı, ikincil durumlar ise gri tonlarıyla gösteriliyor; bu, arayüzün
   jenerik AI estetiğinden daha da uzaklaşmasını sağlıyor.
 - Görsel değişiklik çalışma akışını veya erişilebilir odak davranışını değiştirmez.
+- Aynı nötr palet ayarlar, seçili kartlar, sağlayıcı bağlantıları, üretim ilerlemesi,
+  mobil gezinme ve ikincil bilgi panellerine de uygulandı. Yeşil/sarı/kırmızı sadece
+  başarı, uyarı ve hata anlamlarını korumak için bırakıldı.
 
 ## 12 Ekim 2026 — Shadcn esintili görsel sistem
 
