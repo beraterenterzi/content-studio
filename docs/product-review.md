@@ -1,5 +1,10 @@
 # Content Studio — ürün ve ekip incelemesi
 
+## 15 Ekim 2026 — Siyah favicon
+
+Tarayıcı sekmesi için siyah zeminli, beyaz işaretli ayrı SVG favicon eklendi.
+Favicon URL sürümü ve service worker önbellek sürümü güncellendi.
+
 ## 12 Ekim 2026 — Ürün arayüzü sadeleştirme
 
 - Ana giriş, kaynak arama ve düzenleme yüzeylerindeki koyu degrade/ışıma dili kaldırıldı;

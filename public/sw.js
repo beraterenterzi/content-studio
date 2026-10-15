@@ -1,8 +1,9 @@
-const CACHE = "creator-studio-v45";
+const CACHE = "creator-studio-v46";
+const FAVICON = "/favicon.svg?v=2";
 const SHELL = ["/", "/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([...SHELL, FAVICON])));
   self.skipWaiting();
 });
 

@@ -1185,7 +1185,7 @@ async function serveStatic(req, res) {
     res.end(await readFile(join(GENERATED_DIR, name)));
     return true;
   }
-  if (!["/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/polish.css", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest", "/sw.js"].includes(path)) return false;
+  if (!["/index.html", "/app.js", "/style.css", "/onboarding.css", "/mobile.css", "/polish.css", "/favicon.svg", "/logo.svg", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/manifest.webmanifest", "/sw.js"].includes(path)) return false;
   const types = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
